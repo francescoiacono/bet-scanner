@@ -32,3 +32,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Real-data ingestion must be reproducible from committed source data or a documented deterministic acquisition step.
 - Generated/normalized datasets must never silently drop malformed source matches.
 - Benchmark predictions must obey the same causal information boundary as the model being evaluated.
+- Diagnostic milestones must not tune a frozen model using the same evaluation data unless explicitly scoped as a new model version.
+- Statistical uncertainty outputs must be deterministic and reproducible from an explicit seed and method.
+- Comparisons between models or benchmarks must use paired outcomes from the same evaluated matches.
+- Uncertainty intervals are diagnostics, not proof of statistical or betting significance.
+- Diagnostic slices must be defined independently of their observed performance; do not invent post-hoc buckets to make results look stronger.

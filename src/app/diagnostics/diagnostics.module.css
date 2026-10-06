@@ -1,0 +1,11 @@
+.table { min-width: 800px; }
+.wideTable { min-width: 1100px; }
+.table tbody th { padding-left: 24px; font: 12px "SFMono-Regular", Consolas, monospace; }
+.table .description { white-space: normal; min-width: 260px; max-width: 440px; color: #62717d; font: 12px/1.7 Arial, sans-serif; }
+.highlight { background: #eef4f1; font-weight: 600; }
+.panelHeading { font-size: 16px; font-weight: 600; }
+.weakestIntro { margin-top: 32px; }
+
+@media (max-width: 760px) {
+  .table tbody th { padding-left: 20px; }
+}

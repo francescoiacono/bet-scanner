@@ -1,4 +1,5 @@
 import type { FootballFixture, LeagueAverages, MatchPrediction, OutcomeProbabilities } from "../football/types";
+import type { LeaguePoissonPrediction } from "./league-poisson";
 
 export type MatchOutcome = "HOME" | "DRAW" | "AWAY";
 
@@ -18,6 +19,13 @@ export interface BacktestConfig {
   readonly minimumVenueMatches?: number;
 }
 
+export interface VenueHistory {
+  readonly homeTeamHomeMatches: number;
+  readonly homeTeamAwayMatches: number;
+  readonly awayTeamHomeMatches: number;
+  readonly awayTeamAwayMatches: number;
+}
+
 export interface BacktestPrediction extends PlayedMatch {
   readonly trainingMatchCount: number;
   readonly latestTrainingKickoffAt: string;
@@ -28,6 +36,10 @@ export interface BacktestPrediction extends PlayedMatch {
   readonly uniformBrierScore: number;
   readonly leagueBaseRateProbabilities: OutcomeProbabilities;
   readonly leagueBaseRateBrierScore: number;
+  readonly leaguePoissonPrediction: LeaguePoissonPrediction;
+  readonly leaguePoissonBrierScore: number;
+  readonly venueHistory: VenueHistory;
+  readonly historyDepth: number;
   readonly topSelection: MatchOutcome;
   readonly topConfidence: number;
   readonly topSelectionCorrect: boolean;
@@ -55,6 +67,8 @@ export interface BacktestSummary {
   readonly brierSkillScore: number | null;
   readonly leagueBaseRateBrier: number | null;
   readonly brierSkillVsLeagueBaseRate: number | null;
+  readonly leaguePoissonBrier: number | null;
+  readonly brierSkillVsLeaguePoisson: number | null;
   readonly topPickCorrectCount: number;
   readonly topPickAccuracy: number | null;
   readonly topPickCalibrationECE: number | null;

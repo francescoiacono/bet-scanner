@@ -3,6 +3,7 @@ import { eplSeasons } from "../../data/epl-seasons";
 import { predictMatch } from "../football/predict-match";
 import { calculateHistoricalLeagueAverages, deriveTeamProfiles, hasEnoughHistory } from "./history";
 import { calculateLeagueBaseRate } from "./league-base-rate";
+import { predictLeaguePoisson } from "./league-poisson";
 import { runMultiSeasonBacktest } from "./run-multi-season-backtest";
 import type { HistoricalSeason, MultiSeasonBacktestResult, PlayedMatch, SeasonPrediction } from "./types";
 
@@ -26,18 +27,19 @@ describe("season-isolated real EPL evaluation", () => {
       expect(skipped.every((record) => record.reason === "INSUFFICIENT_HISTORY")).toBe(true);
       // Reconstruct each expected prior-date snapshot once, independently of
       // the backtest. Every evaluated record is still checked against it.
-      const snapshots = new Map<string, { prior: readonly PlayedMatch[]; benchmark: ReturnType<typeof calculateLeagueBaseRate> }>();
+      const snapshots = new Map<string, { prior: readonly PlayedMatch[]; benchmark: ReturnType<typeof calculateLeagueBaseRate>; poisson: ReturnType<typeof predictLeaguePoisson> }>();
       for (const record of evaluated) {
         let snapshot = snapshots.get(record.kickoffAt);
         if (!snapshot) {
           const prior = season.matches.filter((match) => match.kickoffAt < record.kickoffAt);
-          snapshot = { prior, benchmark: calculateLeagueBaseRate(prior) };
+          snapshot = { prior, benchmark: calculateLeagueBaseRate(prior), poisson: predictLeaguePoisson(calculateHistoricalLeagueAverages(prior)) };
           snapshots.set(record.kickoffAt, snapshot);
         }
-        const { prior, benchmark } = snapshot;
+        const { prior, benchmark, poisson } = snapshot;
         expect(record.trainingMatchCount).toBe(prior.length);
         expect(Date.parse(record.latestTrainingKickoffAt)).toBeLessThan(Date.parse(record.kickoffAt));
         expect(record.leagueBaseRateProbabilities).toEqual(benchmark);
+        expect(record.leaguePoissonPrediction).toEqual(poisson);
       }
       const first = evaluated[0];
       const prior = season.matches.filter((match) => match.kickoffAt < first.kickoffAt);
@@ -79,7 +81,8 @@ describe("season-isolated real EPL evaluation", () => {
     const target = evaluated.find((record) => evaluated.filter((other) => other.kickoffAt === record.kickoffAt).length >= 2)!;
     const changed = runMultiSeasonBacktest([changedSeason(season, target.id, { homeGoals: 7, awayGoals: 0 })]);
     const select = (records: readonly SeasonPrediction[]) => records.filter((record) => record.kickoffAt === target.kickoffAt).map((record) => ({
-      id: record.id, prediction: record.prediction, benchmark: record.leagueBaseRateProbabilities, trainingMatchCount: record.trainingMatchCount,
+      id: record.id, prediction: record.prediction, benchmark: record.leagueBaseRateProbabilities,
+      leaguePoisson: record.leaguePoissonPrediction, trainingMatchCount: record.trainingMatchCount,
     }));
     expect(select(changed.predictions)).toEqual(select(evaluated));
   });
@@ -97,7 +100,7 @@ describe("season-isolated real EPL evaluation", () => {
     const summaries = result.seasonSummaries.map((season) => season.summary);
     expect(new Set(summaries.map((summary) => summary.evaluatedMatches)).size).toBeGreaterThan(1);
     const total = result.predictions.length;
-    for (const field of ["meanBrierScore", "leagueBaseRateBrier", "uniformBenchmarkBrier", "topPickAccuracy"] as const) {
+    for (const field of ["meanBrierScore", "leagueBaseRateBrier", "leaguePoissonBrier", "uniformBenchmarkBrier", "topPickAccuracy"] as const) {
       const weighted = summaries.reduce((sum, summary) => sum + summary[field]! * summary.evaluatedMatches, 0) / total;
       expect(result.summary[field]).toBeCloseTo(weighted, 12);
     }

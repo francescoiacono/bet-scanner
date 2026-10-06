@@ -7,6 +7,8 @@ import {
 } from "./history";
 import { actualOutcome, calculateBrierScore, summarizeBacktest, topPick, UNIFORM_PROBABILITIES } from "./metrics";
 import { calculateLeagueBaseRate } from "./league-base-rate";
+import { predictLeaguePoisson, type LeaguePoissonPrediction } from "./league-poisson";
+import { calculateHistoryDepth } from "../diagnostics/history-depth";
 import type { BacktestConfig, BacktestPrediction, BacktestResult, PlayedMatch, SkippedMatch } from "./types";
 
 /** Predict the entire kickoff batch before admitting any of its results. */
@@ -31,6 +33,7 @@ export function runBacktest(
     const profiles = new Map(deriveTeamProfiles(history).map((profile) => [profile.team, profile]));
     let leagueAverages: LeagueAverages | undefined;
     let leagueBaseRate: OutcomeProbabilities | undefined;
+    let leaguePoisson: LeaguePoissonPrediction | undefined;
 
     for (const { match } of batch) {
       const home = profiles.get(match.homeTeam);
@@ -41,6 +44,13 @@ export function runBacktest(
       }
       leagueAverages ??= calculateHistoricalLeagueAverages(history);
       leagueBaseRate ??= calculateLeagueBaseRate(history);
+      leaguePoisson ??= predictLeaguePoisson(leagueAverages);
+      const venueHistory = {
+        homeTeamHomeMatches: home.homeMatches,
+        homeTeamAwayMatches: home.awayMatches,
+        awayTeamHomeMatches: away.homeMatches,
+        awayTeamAwayMatches: away.awayMatches,
+      };
       // The model receives fixture identity, never this fixture's final score.
       const fixture = { id: match.id, homeTeam: match.homeTeam, awayTeam: match.awayTeam };
       const prediction = predictMatch(fixture, home, away, leagueAverages);
@@ -57,6 +67,10 @@ export function runBacktest(
         uniformBrierScore: calculateBrierScore(UNIFORM_PROBABILITIES, outcome),
         leagueBaseRateProbabilities: { ...leagueBaseRate },
         leagueBaseRateBrierScore: calculateBrierScore(leagueBaseRate, outcome),
+        leaguePoissonPrediction: { ...leaguePoisson },
+        leaguePoissonBrierScore: calculateBrierScore(leaguePoisson, outcome),
+        venueHistory,
+        historyDepth: calculateHistoryDepth(venueHistory),
         topSelection: pick.selection,
         topConfidence: pick.confidence,
         topSelectionCorrect: pick.selection === outcome,

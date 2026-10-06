@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { eplProvenance, eplSeasons } from "@/data/epl-seasons";
 import { runMultiSeasonBacktest } from "@/lib/backtest/run-multi-season-backtest";
 import ResearchHeader from "../research-header";
@@ -75,6 +76,8 @@ export default function BacktestPage() {
           </div>
           {summary.evaluatedMatches === 0 && <p className={styles.emptyNotice}>No matches have enough prior venue history. Evaluation metrics are unavailable.</p>}
           <div className={styles.supplementary}>
+            <div><span className={shared.eyebrow}>League-average Poisson Brier</span><strong>{decimal(summary.leaguePoissonBrier)}</strong><span>Prior league scoring rates · same Poisson engine · no team identities</span></div>
+            <div><span className={shared.eyebrow}>Skill vs league Poisson</span><strong>{skill(summary.brierSkillVsLeaguePoisson)}</strong><span>1 − model mean / league-Poisson mean</span></div>
             <div><span className={shared.eyebrow}>Uniform Brier</span><strong>{decimal(summary.uniformBenchmarkBrier)}</strong><span>HOME / DRAW / AWAY each at ⅓ · sanity baseline</span></div>
             <div><span className={shared.eyebrow}>Skill vs uniform</span><strong>{skill(summary.brierSkillScore)}</strong><span>1 − model mean / uniform mean</span></div>
             <div><span className={shared.eyebrow}>Top-pick accuracy</span><strong>{percent(summary.topPickAccuracy)}</strong><span>{summary.topPickCorrectCount} correct of {summary.evaluatedMatches} evaluated · supplementary to Brier</span></div>
@@ -83,6 +86,7 @@ export default function BacktestPage() {
           <div className={styles.benchmarkNote}>
             <p>Beating the uniform benchmark is a weak test. The league-base-rate benchmark is stronger because Premier League HOME / DRAW / AWAY outcomes are not naturally equally likely.</p>
             <p>Positive skill versus league base rate means {result.modelVersion} improved probability forecasts relative to simply using prior league outcome frequencies. This is not proof of a betting edge.</p>
+            <p>The league-average Poisson benchmark isolates whether team-specific strengths help beyond league scoring rates. See <Link href="/diagnostics">Model Diagnostics</Link> for paired uncertainty, history depth, outcome calibration, and season robustness.</p>
           </div>
         </section>
 
@@ -91,9 +95,9 @@ export default function BacktestPage() {
           <div className={shared.tableScroll} role="region" aria-label="Per-season evaluation metrics" tabIndex={0}>
             <table className={`${shared.table} ${styles.seasonTable}`}>
               <caption className={shared.srOnly}>Independent season evaluations. Brier is lower-is-better; positive skill beats the named benchmark. ECE is top-pick confidence calibration in percentage points.</caption>
-              <thead><tr><th scope="col">Season</th><th scope="col">Total</th><th scope="col">Evaluated</th><th scope="col">Skipped</th><th scope="col">Model Brier</th><th scope="col">Base-rate Brier</th><th scope="col">Skill vs base</th><th scope="col">Uniform Brier</th><th scope="col">Skill vs uniform</th><th scope="col">Accuracy</th><th scope="col">ECE</th></tr></thead>
+              <thead><tr><th scope="col">Season</th><th scope="col">Total</th><th scope="col">Evaluated</th><th scope="col">Skipped</th><th scope="col">Model Brier</th><th scope="col">Base-rate Brier</th><th scope="col">Skill vs base</th><th scope="col">League-Poisson Brier</th><th scope="col">Skill vs Poisson</th><th scope="col">Uniform Brier</th><th scope="col">Skill vs uniform</th><th scope="col">Accuracy</th><th scope="col">ECE</th></tr></thead>
               <tbody>{result.seasonSummaries.map(({ seasonId, summary: season }) => (
-                <tr key={seasonId}><th scope="row">{seasonId}</th><td>{season.totalHistoricalMatches}</td><td>{season.evaluatedMatches}</td><td>{season.skippedMatches}</td><td className={styles.brierCell}>{decimal(season.meanBrierScore)}</td><td>{decimal(season.leagueBaseRateBrier)}</td><td>{skill(season.brierSkillVsLeagueBaseRate)}</td><td>{decimal(season.uniformBenchmarkBrier)}</td><td>{skill(season.brierSkillScore)}</td><td>{percent(season.topPickAccuracy)}</td><td>{ece(season.topPickCalibrationECE)}</td></tr>
+                <tr key={seasonId}><th scope="row">{seasonId}</th><td>{season.totalHistoricalMatches}</td><td>{season.evaluatedMatches}</td><td>{season.skippedMatches}</td><td className={styles.brierCell}>{decimal(season.meanBrierScore)}</td><td>{decimal(season.leagueBaseRateBrier)}</td><td>{skill(season.brierSkillVsLeagueBaseRate)}</td><td>{decimal(season.leaguePoissonBrier)}</td><td>{skill(season.brierSkillVsLeaguePoisson)}</td><td>{decimal(season.uniformBenchmarkBrier)}</td><td>{skill(season.brierSkillScore)}</td><td>{percent(season.topPickAccuracy)}</td><td>{ece(season.topPickCalibrationECE)}</td></tr>
               ))}</tbody>
             </table>
           </div>
@@ -102,22 +106,22 @@ export default function BacktestPage() {
         <section className={shared.rankingPanel} aria-labelledby="predictions-title">
           <div className={shared.rankingHeading}>
             <h3 id="predictions-title">Recent evaluated matches<span>{recentPredictions.length}</span></h3>
-            <p>Showing the most recent {recentPredictions.length} of {summary.evaluatedMatches} · newest dates first · model / base-rate probabilities</p>
+            <p>Showing the most recent {recentPredictions.length} of {summary.evaluatedMatches} · newest dates first · model / base-rate / league-Poisson probabilities</p>
           </div>
           <div className={shared.tableScroll} role="region" aria-label="Recent evaluated match predictions" tabIndex={0}>
             <table className={`${shared.table} ${styles.predictionTable}`}>
-              <caption className={shared.srOnly}>Model probabilities with league-base-rate probabilities beneath them. Both forecasts use the same strictly earlier dates within the season. Dates are source calendar dates, not actual kickoff times.</caption>
-              <thead><tr><th scope="col">Source date</th><th scope="col">Fixture / season</th><th scope="col">HOME</th><th scope="col">DRAW</th><th scope="col">AWAY</th><th scope="col">Actual result</th><th scope="col">Top pick</th><th scope="col">Model Brier</th><th scope="col">Base Brier</th><th scope="col">Prior matches</th></tr></thead>
+              <caption className={shared.srOnly}>Model probabilities with league-base-rate and league-Poisson probabilities beneath them. All forecasts use the same strictly earlier dates within the season. Dates are source calendar dates, not actual kickoff times. Depth is the minimum of the four prior team/venue counts.</caption>
+              <thead><tr><th scope="col">Source date</th><th scope="col">Fixture / season</th><th scope="col">HOME</th><th scope="col">DRAW</th><th scope="col">AWAY</th><th scope="col">Actual result</th><th scope="col">Top pick</th><th scope="col">Model Brier</th><th scope="col">Base Brier</th><th scope="col">League-Poisson Brier</th><th scope="col">Prior matches</th><th scope="col">Depth</th></tr></thead>
               <tbody>{recentPredictions.map((record) => (
                 <tr key={record.id}>
                   <td><time dateTime={record.kickoffAt.slice(0, 10)}>{record.kickoffAt.slice(0, 10)}</time></td>
                   <th scope="row" className={shared.eventCell}><span>{record.homeTeam} vs {record.awayTeam}</span><span className={shared.tableSelection}>{record.seasonId}</span></th>
-                  <td>{percent(record.prediction.homeProbability)}<span className={styles.cellDetail}>Base {percent(record.leagueBaseRateProbabilities.homeProbability)}</span></td>
-                  <td>{percent(record.prediction.drawProbability)}<span className={styles.cellDetail}>Base {percent(record.leagueBaseRateProbabilities.drawProbability)}</span></td>
-                  <td>{percent(record.prediction.awayProbability)}<span className={styles.cellDetail}>Base {percent(record.leagueBaseRateProbabilities.awayProbability)}</span></td>
+                  <td>{percent(record.prediction.homeProbability)}<span className={styles.cellDetail}>Base {percent(record.leagueBaseRateProbabilities.homeProbability)}</span><span className={styles.cellDetail}>League P {percent(record.leaguePoissonPrediction.homeProbability)}</span></td>
+                  <td>{percent(record.prediction.drawProbability)}<span className={styles.cellDetail}>Base {percent(record.leagueBaseRateProbabilities.drawProbability)}</span><span className={styles.cellDetail}>League P {percent(record.leaguePoissonPrediction.drawProbability)}</span></td>
+                  <td>{percent(record.prediction.awayProbability)}<span className={styles.cellDetail}>Base {percent(record.leagueBaseRateProbabilities.awayProbability)}</span><span className={styles.cellDetail}>League P {percent(record.leaguePoissonPrediction.awayProbability)}</span></td>
                   <td>{record.actualOutcome}<span className={styles.cellDetail}>{record.homeGoals}–{record.awayGoals}</span></td>
                   <td>{record.topSelection}<span className={styles.cellDetail}>{record.topSelectionCorrect ? "Correct" : "Miss"}</span></td>
-                  <td className={styles.brierCell}>{decimal(record.brierScore)}</td><td>{decimal(record.leagueBaseRateBrierScore)}</td><td>{record.trainingMatchCount}</td>
+                  <td className={styles.brierCell}>{decimal(record.brierScore)}</td><td>{decimal(record.leagueBaseRateBrierScore)}</td><td>{decimal(record.leaguePoissonBrierScore)}</td><td>{record.trainingMatchCount}</td><td>{record.historyDepth}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -162,7 +166,7 @@ export default function BacktestPage() {
             <div><span className={shared.methodNumber}>03 / PROVENANCE</span><h3>Local, reproducible results</h3><p>Five complete seasons from <a href={sourceUrl}>OpenFootball / england</a>, snapshot {eplProvenance.commit.slice(0, 8)}, CC0. Every season passes 380-match, 20-team, and 19-home / 19-away checks. No runtime data acquisition.</p></div>
           </div>
         </section>
-        <footer className={shared.footer}><span>BET SCANNER<span className={shared.footerSeparator}> / </span>MODEL RESEARCH</span><span>Real results. No historical prices. V0.4.</span></footer>
+        <footer className={shared.footer}><span>BET SCANNER<span className={shared.footerSeparator}> / </span>MODEL RESEARCH</span><span>Real results. No historical prices. V0.5.</span></footer>
       </main>
     </div>
   );
