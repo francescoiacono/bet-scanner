@@ -44,3 +44,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Optimisation failures must fail explicitly; never silently fall back to another model or stale parameters.
 - Model fitting must obey the same causal boundary as prediction: target-date results may never enter target-date fitting.
 - General-purpose numerical optimisation algorithms should use a small, established library rather than being reimplemented without a strong reason.
+- Private/local source datasets must never be committed when redistribution rights are unclear or intentionally restricted.
+- Unused market-price columns in source files must not leak into model inputs.
+- Count-model distribution truncation must retain tail probability explicitly.
+- Model-selection criteria must be specified before external-validation results are viewed.
+- Different proper scoring-rule definitions must not be compared as though their numeric scales were interchangeable.

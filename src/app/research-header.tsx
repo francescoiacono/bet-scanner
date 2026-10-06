@@ -1,7 +1,7 @@
 import Link from "next/link";
 import styles from "./scanner-dashboard.module.css";
 
-export default function ResearchHeader({ activePage }: { activePage: "scanner" | "backtest" | "diagnostics" | "models" }) {
+export default function ResearchHeader({ activePage }: { activePage: "scanner" | "backtest" | "diagnostics" | "models" | "corners" }) {
   return (
     <header className={styles.topbar}>
       <div className={styles.brand}>
@@ -17,10 +17,11 @@ export default function ResearchHeader({ activePage }: { activePage: "scanner" |
         <Link href="/backtest" aria-current={activePage === "backtest" ? "page" : undefined}>Backtest</Link>
         <Link href="/diagnostics" aria-current={activePage === "diagnostics" ? "page" : undefined}>Diagnostics</Link>
         <Link href="/models" aria-current={activePage === "models" ? "page" : undefined}>Models</Link>
+        <Link href="/corners" aria-current={activePage === "corners" ? "page" : undefined}>Corners</Link>
       </nav>
       <div className={styles.headerMeta}>
         <span className={styles.simulationBadge}>{activePage !== "scanner" ? "REAL HISTORICAL RESULTS" : "SIMULATION / FICTIONAL MARKET SCANNER"}</span>
-        <span className={styles.version}>V0.6</span>
+        <span className={styles.version}>V0.7</span>
       </div>
     </header>
   );

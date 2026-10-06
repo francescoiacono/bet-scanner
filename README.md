@@ -1,13 +1,14 @@
-# Bet Scanner V0.6
+# Bet Scanner V0.7
 
-A local football research dashboard with four research views:
+A local football research dashboard with five research views:
 
 - **Model comparison (`/models`)**: compare frozen `poisson-v1` with independently fitted `dixon-coles-v1`, reporting development and external historical validation separately.
+- **Corner research (`/corners`)**: compare jointly fitted `corner-poisson-v1` and `corner-negative-binomial-v1` on manually supplied private historical corner counts, with public aggregate reports only.
 - **Real historical backtest (`/backtest`)**: evaluate the frozen `poisson-v1` model against uniform, causal league-base-rate, and league-average Poisson forecasts on five completed Premier League seasons.
 - **Model diagnostics (`/diagnostics`)**: investigate paired uncertainty, fixed history-depth slices, outcome calibration, and season robustness without changing the model.
 - **Fictional market scanner (`/`)**: retain the existing fictional match history, upcoming fixtures, and independent mock prices for implied probability, edge, and expected ROI analysis.
 
-V0.6 adds a separate fitted score model and external historical validation. `poisson-v1` remains frozen. V0.6 does not tune Dixon–Coles after viewing the external-validation results. Neither model evaluation establishes betting profitability because no market prices are evaluated. The scanner remains a simulation, not a source of real betting recommendations. No bookmakers, live prices, sports APIs, AI services, authentication, databases, deployment, or bet execution are added. The application makes no runtime network requests for data; assets and fonts are local.
+V0.7 adds separate corner-count research models. Both result models and their V0.6 data/artifact remain frozen; the fictional scanner still uses `poisson-v1`. Neither corner model is promoted to the scanner. Neither model evaluation establishes betting profitability because no market prices are evaluated. The scanner remains a simulation, not a source of real betting recommendations. No bookmakers, live prices, sports APIs, AI services, authentication, databases, deployment, or bet execution are added. The application makes no runtime network requests for data; assets and fonts are local.
 
 ## Run locally
 
@@ -16,7 +17,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, or http://localhost:3000/models. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
+Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, or http://localhost:3000/corners. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
 
 Offline generation uses Node's native TypeScript stripping (Node 22.18+; verified with Node 24.21). The existing data generator needs no added dependency; model generation uses the pinned Numeric.js optimiser documented below. Neither script needs a new TypeScript loader:
 
@@ -437,7 +438,161 @@ Near-boundary means `abs(rho) >= 0.199`, a fixed reporting definition. **90 of 9
 
 Only Premier League raw-goal data is evaluated. History is within season, with no previous-season priors, regularisation, shrinkage, or time decay. Sparse early fits, locally convergent optimisation, the fixed rho safety constraint, and the 0–10 prediction grid limit interpretation. There is no xG, lineup/injury/player data, other market, odds, or profitability analysis. No model fitting occurs on the external dataset across seasons: its individual date fits use only their own prior history under the frozen specification.
 
-External evidence is consistent with improved forecasts from the fitted Dixon–Coles model, particularly under sparse history; all ten seasons improve Brier and both separate bootstrap intervals remain positive. However, DRAW gains are small, late-history gains nearly disappear in some buckets, and numerical/boundary limitations remain. These joint findings support further separately scoped investigation, without selecting changes from this validation set or automatically promoting a model. The fictional scanner remains on `poisson-v1`; no V0.7 work is implemented.
+External evidence is consistent with improved forecasts from the fitted Dixon–Coles model, particularly under sparse history; all ten seasons improve Brier and both separate bootstrap intervals remain positive. However, DRAW gains are small, late-history gains nearly disappear in some buckets, and numerical/boundary limitations remain. These joint findings support further separately scoped investigation, without selecting changes from this validation set or automatically promoting a model. The fictional scanner remains on `poisson-v1`; V0.7 corner research is independent of these frozen results.
+
+## V0.7 corner-count research
+
+### Local sources and privacy
+
+The ten CSVs were manually supplied from Football-Data.co.uk. There is no scraper, downloader, automated refresh, or network request to that source. Required local paths are `data/private/football-data/{1415,1516,1617,1718,1819,2122,2223,2324,2425,2526}-E0.csv`. The fixed datasets are development **2021-22 → 2025-26** and external historical validation **2014-15 → 2018-19**; 2019-20, 2020-21 and 2026-27 are excluded. Historical validation is not future unseen data.
+
+`data/private/` is gitignored. Original CSVs, normalized rows, per-match predictions, actual corner results, fit audits and team coefficients stay private. The public [provenance manifest](data/provenance/football-data-corners-v07.json) contains only source/acquisition metadata, selected seasons, filenames, required columns and exact source-byte SHA-256 hashes. Hashes were established only after all ten files passed integrity checks and are verified on every subsequent build; existing hashes are never silently replaced.
+
+Only **Date, HomeTeam, AwayTeam, HC and AC** enter normalized records. All odds, goals, cards, shots and other statistics are ignored. Source dates support dd/mm/yy and dd/mm/yyyy, resolve into the explicitly selected season, and become noon-UTC ordering keys, not historical kickoff times. Team names use NFKC and whitespace normalization; IDs use season/date/encoded team identities and never scores. CSV quoting, escaped quotes and quoted newlines are supported. Entirely blank trailing records are ignored; any row containing content must be a complete, correctly structured match. Invalid dates/counts, missing fields, duplicate fixtures/IDs and partial schedules fail. Every source season has 380 matches, 20 teams, and 19 home plus 19 away fixtures per team: **3,800 matches total**.
+
+The initially supplied 1415 file duplicated 2025-26 data. It was rejected; the user replaced it with the correct 2014-15 source before provenance establishment or external evaluation. No source rows were fabricated or edited by the implementation.
+
+```sh
+pnpm corners:data:build   # verify hashes, validate all seasons, write private normalized JSON
+pnpm corners:model:build  # fit causally, write private audits and public aggregates
+pnpm corners:build        # run both steps offline
+```
+
+Missing sources report every missing path. Malformed, checksum-mismatched, or non-converged inputs fail without replacing the public report with partial/fabricated results. Unit tests work without local source data; two local hash/audit/regeneration tests skip when those files are absent. The already generated public research report can render without distributing private data.
+
+### Shared means and distributions
+
+Both models use exactly the same jointly fitted mean structure:
+
+```text
+lambdaHome = exp(homeCornerAdvantage + cornerAttack_home + cornerDefenceWeakness_away)
+lambdaAway = exp(cornerAttack_away + cornerDefenceWeakness_home)
+sum(cornerAttack) = 0
+
+corner-poisson-v1:
+HC ~ Poisson(lambdaHome), AC ~ Poisson(lambdaAway), conditionally independent
+log P(k;mu) = k log(mu) - mu - log(k!)
+
+corner-negative-binomial-v1:
+HC ~ NB2(lambdaHome,alpha), AC ~ NB2(lambdaAway,alpha), conditionally independent
+alpha = exp(rawAlpha) > 0, r = 1/alpha
+P(k;mu,alpha) = Gamma(k+r)/(Gamma(r) Gamma(k+1))
+                 * (r/(r+mu))^r * (mu/(r+mu))^k
+variance = mu + alpha * mu^2
+```
+
+Higher attack generates more corners; higher defence weakness concedes more. Home advantage affects only home lambda. Lexical teams and N−1 free attacks with the final attack derived structurally give 40 mean parameters for 20 teams; NB adds one global dispersion parameter. There is no post-fit recentering, team-specific dispersion, decay, prior-season history, regularisation, smoothing or shrinkage.
+
+The local positive-real `logGamma` uses a standard nine-term g=7 [Lanczos approximation](https://www.boost.org/doc/libs/1_71_0/libs/math/doc/html/math_toolkit/lanczos.html), reflection below 0.5 and exact Gamma(1)/Gamma(2) identities. For integer counts, the NB Gamma ratio is evaluated by the equivalent rising-factorial identity with `log1p`, avoiding cancellation when alpha approaches zero:
+
+```text
+log P(k;mu,alpha) = k log(mu) - logGamma(k+1)
+                    + sum(j=0..k-1) log1p(alpha*j)
+                    - log1p(alpha*mu)/alpha - k log1p(alpha*mu)
+```
+
+Alpha near zero approaches Poisson; larger alpha permits greater conditional variance. Invalid/non-positive alpha, rates, likelihood contributions, gradients or probability states fail explicitly. No statistical library or new optimizer was added.
+
+### Fitting, causality and frozen configuration
+
+The existing **numeric@1.2.6 BFGS** minimizes mean joint negative log likelihood, weighting every strictly earlier within-season match equally. Poisson mean gradients are analytic. NB mean gradients for negative log likelihood are `(mu-k)/(1+alpha*mu)`; the rawAlpha derivative uses deterministic centered differences with fixed **epsilon 1e-5**, checked against full numerical gradients.
+
+Every eligible date starts independently with all mean coordinates zero; NB starts at **alpha=0.1**, rawAlpha=log(0.1). No warm starts or random initialization. Prespecified convergence settings are 2,000 iterations, step tolerance 1e-10, mean-gradient L2 target 1e-6, relative objective tolerance 1e-10 for five stable accepted iterations. A finite valid final fit must meet a gradient, objective-stability or library step criterion. Failures abort; no skipped eligible fixture, substituted model, or stale parameters. Numerical convergence does not guarantee the global maximum. All stopping criteria and residual gradients remain in private audits and aggregate diagnostics.
+
+Each season starts empty. Both target teams require two prior HOME and two AWAY appearances. A date with eligible fixtures fits each model once using all earlier matches, including prior warm-up skips. Both models and both benchmarks predict identical eligible IDs from that snapshot; only after the entire batch do its results enter history. No target-date score reaches fitting or prediction. The benchmarks are unsmoothed prior empirical total counts/Over rates and prior league-average home/away corner means through independent Poisson convolution.
+
+All corner modules/configuration were SHA-256 locked before external evaluation. **V0.7 does not change model choices after viewing external-validation results.** The predeclared research preference uses only the external interval for Poisson RPS minus NB RPS: entirely positive → NB; entirely negative → Poisson; includes zero or unavailable → **NONE / INCONCLUSIVE**. No scanner promotion follows this label.
+
+### Predictions and scoring
+
+The total distribution is the exact convolution of independent home/away PMFs. Evaluation categories are **0,1,…,30,31+**, with ALL remaining mass retained as `1 - sum(P(0..30))` in 31+. There is no tail renormalization. Only rounding errors within 1e-10 may be resolved to a zero remainder; invalid mass otherwise fails. Over probabilities are calculated from the exact finite CDF at each line's integer boundary independently of the 30 cutoff.
+
+Fixed lines are **Over 7.5, 8.5, 9.5, 10.5, 11.5, 12.5**; UNDER is the complement. Nine corners is UNDER 9.5, ten is OVER. Conventional binary Brier is `(pOver-yOver)^2` in [0,1], unlike the existing result-market three-component Brier in [0,2]. Do not compare their magnitudes as interchangeable scores.
+
+Primary normalized RPS is `sum(k=0..30)(forecastCDF(k)-observedCDF(k))^2 / 31`. Brier measures the probability of a particular Over line; RPS measures the entire ordered count distribution. The paired primary advantage is **Poisson RPS − NB RPS**, positive favouring NB. Each dataset has a separate season-stratified, source-date-clustered paired percentile bootstrap with **5,000 resamples, seed 202607, 95% confidence**, using the unchanged project resampler and match-weighted means. Intervals do not capture all temporal dependence and are not betting evidence.
+
+Each line separately retains observed frequency, both mean forecasts, four Briers, ten fixed calibration bins and both ECEs. Bins are [0,.1),…,[.9,1], with 1 in the last bin; ECE displays percentage points. Empty cohorts return null, not NaN. History depth reuses the minimum of four venue counts and unchanged 2–3 / 4–6 / 7–10 / 11–15 / 16+ buckets.
+
+### Artifacts and verification
+
+`src/lib/corners/` owns the independent model, likelihood, fitting, prediction, metrics, causality and aggregation. `scripts/corner-sources.mjs` performs local source verification. The data builder writes `data/private/generated/epl-corners-v07.json`; the model builder writes `data/private/generated/corners-v07-audit.json` and aggregate-only `src/data/generated/corners-v07-summary.json`. The latter is **77,886 bytes**, containing configuration/hash/runtime metadata, aggregate dataset/season/line/depth metrics, calibration bins, intervals, dispersion/fit diagnostics and research preference. It contains no source rows, actual per-match counts, predictions, team coefficients or market prices. `/corners` imports only this compact artifact and never fits models in Next.js or the browser.
+
+Same source bytes, hashes, Node and dependency versions, and configuration produce byte-identical public JSON. Verified with Node 24.21.0 and numeric 1.2.6; no generation timestamps, random IDs or machine paths are embedded. Tests lock the specification, regenerate the full report locally, check privacy/ignored files, all paired/date/season boundaries, Gamma/PMF/CDF/gradient identities, RPS, line bins and frozen V0.6 results. Cross-Node aggregate comparisons use 12 decimal places; byte equality is required on the recorded Node version.
+
+### Recorded corner results
+
+The following tables are aggregate research results from the supplied, hash-verified private sources. The external research preference is **NONE / INCONCLUSIVE**. Both intervals include zero; NB's small development improvement does not generalize into a clear external RPS advantage. Both team-specific models have higher RPS than the simpler causal benchmarks on both datasets. Variance-to-mean is about 1.11, indicating modest descriptive overdispersion, which alone does not prove NB's conditional superiority. Per-line ECE remains material and line-dependent; these are not established calibrated betting probabilities. No post-validation adjustments were made.
+
+| Dataset | Evaluated / skipped | Poisson RPS | NB RPS | NB advantage | 95% interval | Empirical RPS | League-Poisson RPS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Development | 1688 / 212 | 0.065787 | 0.065676 | +0.000111 | [-0.000023, +0.000249] | 0.061962 | 0.061811 |
+| External historical | 1691 / 209 | 0.066420 | 0.066423 | -0.000003 | [-0.000130, +0.000127] | 0.062166 | 0.061953 |
+
+| Dataset | Season | Evaluated / skipped | Poisson RPS | NB RPS | NB advantage | Empirical RPS | League-Poisson RPS | Observed mean | Poisson mean | NB mean | Final alpha |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Development | 2021-22 | 340 / 40 | 0.064503 | 0.064385 | +0.000117 | 0.062140 | 0.061899 | 10.365 | 10.592 | 10.594 | 0.034547 |
+| Development | 2022-23 | 340 / 40 | 0.064220 | 0.064288 | -0.000068 | 0.059461 | 0.059266 | 10.129 | 10.033 | 10.036 | 0.056811 |
+| Development | 2023-24 | 328 / 52 | 0.067084 | 0.067180 | -0.000096 | 0.065168 | 0.065056 | 10.835 | 10.757 | 10.757 | 0.057419 |
+| Development | 2024-25 | 340 / 40 | 0.068124 | 0.067607 | +0.000517 | 0.063248 | 0.063091 | 10.259 | 10.749 | 10.749 | 0.081969 |
+| Development | 2025-26 | 340 / 40 | 0.065051 | 0.064975 | +0.000076 | 0.059906 | 0.059860 | 10.047 | 9.912 | 9.913 | 0.052524 |
+| External historical | 2014-15 | 340 / 40 | 0.068618 | 0.068739 | -0.000121 | 0.064399 | 0.064293 | 10.738 | 10.678 | 10.678 | 0.073486 |
+| External historical | 2015-16 | 340 / 40 | 0.070077 | 0.069991 | +0.000086 | 0.065283 | 0.065011 | 10.938 | 10.621 | 10.622 | 0.053479 |
+| External historical | 2016-17 | 337 / 43 | 0.066908 | 0.066868 | +0.000040 | 0.062554 | 0.062299 | 10.436 | 10.367 | 10.367 | 0.039170 |
+| External historical | 2017-18 | 337 / 43 | 0.064315 | 0.064153 | +0.000162 | 0.060225 | 0.059913 | 10.205 | 10.484 | 10.486 | 0.046187 |
+| External historical | 2018-19 | 337 / 43 | 0.062128 | 0.062310 | -0.000181 | 0.058323 | 0.058199 | 10.306 | 10.237 | 10.238 | 0.048225 |
+
+| Dataset | Over | Observed % | Poisson predicted % | NB predicted % | Poisson Brier | NB Brier | League-Poisson Brier | Empirical Brier | Poisson ECE (pp) | NB ECE (pp) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Development | 7.5 | 78.02 | 78.67 | 76.49 | 0.18023 | 0.17969 | 0.17260 | 0.17219 | 7.19 | 5.93 |
+| Development | 8.5 | 69.43 | 68.57 | 66.66 | 0.22694 | 0.22619 | 0.21208 | 0.21298 | 9.31 | 7.97 |
+| Development | 9.5 | 58.18 | 57.38 | 56.09 | 0.26331 | 0.26141 | 0.24398 | 0.24439 | 10.49 | 9.69 |
+| Development | 10.5 | 46.62 | 46.04 | 45.57 | 0.26446 | 0.26244 | 0.24903 | 0.24960 | 8.79 | 8.42 |
+| Development | 11.5 | 34.42 | 35.42 | 35.77 | 0.23779 | 0.23619 | 0.22617 | 0.22645 | 8.30 | 7.53 |
+| Development | 12.5 | 25.65 | 26.15 | 27.17 | 0.20093 | 0.19993 | 0.19016 | 0.19113 | 7.49 | 6.47 |
+| External historical | 7.5 | 81.31 | 79.16 | 77.15 | 0.16338 | 0.16387 | 0.15238 | 0.15264 | 5.66 | 6.61 |
+| External historical | 8.5 | 71.97 | 69.31 | 67.48 | 0.21684 | 0.21682 | 0.20231 | 0.20314 | 8.00 | 8.59 |
+| External historical | 9.5 | 60.20 | 58.32 | 57.00 | 0.25799 | 0.25674 | 0.24033 | 0.24175 | 10.62 | 10.41 |
+| External historical | 10.5 | 48.20 | 47.08 | 46.49 | 0.27149 | 0.26966 | 0.25056 | 0.25206 | 12.34 | 11.07 |
+| External historical | 11.5 | 36.43 | 36.45 | 36.62 | 0.24862 | 0.24700 | 0.23188 | 0.23285 | 10.17 | 9.30 |
+| External historical | 12.5 | 26.85 | 27.08 | 27.90 | 0.21346 | 0.21248 | 0.19743 | 0.19802 | 9.12 | 8.74 |
+
+| Dataset | Depth | Matches | Poisson RPS | NB RPS | NB advantage |
+| --- | --- | --- | --- | --- | --- |
+| Development | 2–3 | 200 | 0.076591 | 0.076546 | +0.000045 |
+| Development | 4–6 | 311 | 0.069353 | 0.069222 | +0.000131 |
+| Development | 7–10 | 407 | 0.064606 | 0.064270 | +0.000336 |
+| Development | 11–15 | 497 | 0.062414 | 0.062362 | +0.000051 |
+| Development | 16+ | 273 | 0.061713 | 0.061805 | -0.000092 |
+| External historical | 2–3 | 200 | 0.078359 | 0.078359 | -0.000000 |
+| External historical | 4–6 | 323 | 0.070485 | 0.070287 | +0.000198 |
+| External historical | 7–10 | 401 | 0.065438 | 0.065418 | +0.000020 |
+| External historical | 11–15 | 516 | 0.061846 | 0.061989 | -0.000143 |
+| External historical | 16+ | 251 | 0.062647 | 0.062659 | -0.000012 |
+
+| Dataset | Source matches | Mean | Population variance | Variance / mean | Poisson / NB successful fits | Failures | Alpha min / median / max |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Development | 1900 | 10.3326 | 11.4915 | 1.1122 | 522 / 522 | 0 | 1.541e-11 / 0.034937 / 0.081969 |
+| External historical | 1900 | 10.4974 | 11.7079 | 1.1153 | 458 / 458 | 0 | 1.820e-11 / 0.036448 / 0.098866 |
+
+Exact manually supplied input hashes:
+
+| Season | Private local filename | SHA-256 |
+| --- | --- | --- |
+| 2014-15 | 1415-E0.csv | `76b7858051ff6b17f46f49f26fdc70c1f29537270492606f5cc63d67fad5d149` |
+| 2015-16 | 1516-E0.csv | `bd3502a18c38a1597fd9af62e2366b4015006d3528dd4d18b311bd6237bbc085` |
+| 2016-17 | 1617-E0.csv | `9625a7652b5f98fbd3e2e4d378c851fc246693f3343e34a72428d5b6e864d3e0` |
+| 2017-18 | 1718-E0.csv | `4f3389365ef3f7ac966764ed8ba67cf3b79f5aebed18dd224099c4b2c98bc67b` |
+| 2018-19 | 1819-E0.csv | `7c096b3c2ecd54c6993d22eeea73450c2bde11e3457238b226b8f43c62dfc35e` |
+| 2021-22 | 2122-E0.csv | `335afcbabeb2939fa10ab39ba3e8215072d0b577cb8d0705c1e44c56e934e703` |
+| 2022-23 | 2223-E0.csv | `8442792d3b614c94ea3cf381bd2736805889cc1713169035368fff19c3d02380` |
+| 2023-24 | 2324-E0.csv | `b2e057b0ed959f198b0f63d2391c01239f3608e6de5db68edab3f88e04d07ff3` |
+| 2024-25 | 2425-E0.csv | `d0c8ce4a96d886cf60cf101f570f4a3893844226f91c7bd769eb568c49edbfa4` |
+| 2025-26 | 2526-E0.csv | `3e3a8352f9ada6789c508d6ca184424421fed56a30400904a4a327c583407e62` |
+
+
+### Corner limitations
+
+Premier League only, raw corner counts, within-season history, no prior-season priors, shrinkage, regularisation or time decay; sparse early fits; possible local optimization/near-zero-dispersion instability; conditional home/away independence; empirical dispersion includes between-match variation; ten-bin ECE depends on binning; fixed ordered category support coarsens all 31+ counts but retains their probability. No player/lineup/injury data, live data, prices, value analysis, profitability or recommendations are introduced. No V0.8 work is implemented.
 
 ## Value analysis and ranking
 
@@ -499,19 +654,20 @@ V0.5 evaluates the frozen model without fitting, tuning, or adjusting its predic
 
 Five seasons from one league provide limited evidence, and match outcomes are not independent experimental samples. The paired intervals cross zero, despite positive pooled and leave-one-season-out skill. ECE depends on binning; top-pick and the three one-vs-rest ECEs answer different questions. Passing causal tests does not establish model quality. The fictional scanner prices remain artificial; there are no historical odds or profitability metrics.
 
-V0.5 supplied the development evidence motivating the separately versioned V0.6 comparison: uncertain pooled gains, positive season-exclusion estimates, improving history-depth performance, and weaker DRAW forecasts. V0.6 preserves those recorded results and uses the already requested older seasons for an external check. Future model changes require separate scope and fresh prespecified evaluation; V0.6 does not tune to these diagnostic slices or start V0.7.
+V0.5 supplied the development evidence motivating the separately versioned V0.6 comparison: uncertain pooled gains, positive season-exclusion estimates, improving history-depth performance, and weaker DRAW forecasts. V0.6 preserves those recorded results and uses the already requested older seasons for an external check. Future result-model changes require separate scope and fresh prespecified evaluation; V0.6 remains frozen and V0.7 corner research is evaluated independently.
 
 ## Verification
 
 ```sh
 pnpm data:build
 pnpm model:build
+pnpm corners:build
 pnpm test
 pnpm typecheck
 pnpm lint
 pnpm build
 ```
 
-`pnpm test:watch` runs Vitest in watch mode. Unit tests use a Node environment and cover mathematical properties, invalid inputs, independent data boundaries, the complete scanner pipeline, retained V0.1 value/ranking behaviour, causal walk-forward invariants, warm-up, history aggregation, Brier conventions, benchmark skill, calibration boundaries/ECE, and empty evaluation. V0.5 adds 26 focused tests for paired/clustered/stratified bootstrap invariants, invalid configuration and empty data, the league-Poisson benchmark, fixed history boundaries and causal counts, outcome components/calibration, pooled season exclusions, dynamic weakest-season selection, and exact V0.4 metric regressions. Existing causal tests also check the new benchmark on every evaluated real match, including previous-season, same-date, and future-result isolation. V0.6 adds 23 focused tests for tau/zero-rho invariants, parameter signs and identification, analytic gradient checks, deterministic fitting and failure, causal paired eligibility, external data/provenance, dataset separation, model-specification locking, and full-artifact regeneration. All 220 tests pass, retaining all 197 meaningful V0.1–V0.5 tests. The only new dependency is the pinned numerical optimiser described above.
+`pnpm test:watch` runs Vitest in watch mode. Unit tests use a Node environment and cover mathematical properties, invalid inputs, independent data boundaries, the complete scanner pipeline, retained V0.1 value/ranking behaviour, causal walk-forward invariants, warm-up, history aggregation, Brier conventions, benchmark skill, calibration boundaries/ECE, and empty evaluation. V0.5 adds 26 focused tests for paired/clustered/stratified bootstrap invariants, invalid configuration and empty data, the league-Poisson benchmark, fixed history boundaries and causal counts, outcome components/calibration, pooled season exclusions, dynamic weakest-season selection, and exact V0.4 metric regressions. Existing causal tests also check the new benchmark on every evaluated real match, including previous-season, same-date, and future-result isolation. V0.6 adds 23 focused tests for tau/zero-rho invariants, parameter signs and identification, analytic gradient checks, deterministic fitting and failure, causal paired eligibility, external data/provenance, dataset separation, model-specification locking, and full-artifact regeneration. V0.7 adds 36 focused corner tests across six files, including private integrity/audit and byte-for-byte aggregate regeneration checks. All **256 tests pass**, retaining all 220 V0.1–V0.6 tests. V0.7 reuses the pinned numerical optimiser and adds no dependencies.
 
 If an execution sandbox blocks Turbopack's local CSS-worker port, `pnpm build --webpack` is the supported alternative for verifying the production build; the project's default bundler remains unchanged.

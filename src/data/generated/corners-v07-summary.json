@@ -1,0 +1,2423 @@
+{
+  "status": "AVAILABLE",
+  "schemaVersion": 1,
+  "modelSpecificationSha256": "9c4eea8628581cb45bf07c4cf1f46f6612a78dbc7ac10fd459afe1c1ceec1229",
+  "runtime": {
+    "node": "24.21.0",
+    "numeric": "1.2.6"
+  },
+  "configuration": {
+    "fitting": {
+      "optimiser": "numeric@1.2.6 / BFGS",
+      "maximumIterations": 2000,
+      "stepTolerance": 1e-10,
+      "meanGradientTolerance": 0.000001,
+      "relativeObjectiveTolerance": 1e-10,
+      "stableIterations": 5,
+      "rawAlphaDifferenceEpsilon": 0.00001,
+      "initialAlpha": 0.1,
+      "initialisation": "mean parameters zero, NB rawAlpha = log(0.1); independent fit per date; no warm starts"
+    },
+    "minimumVenueMatches": 2,
+    "maximumExplicitTotal": 30,
+    "overLines": [
+      7.5,
+      8.5,
+      9.5,
+      10.5,
+      11.5,
+      12.5
+    ],
+    "bootstrap": {
+      "samples": 5000,
+      "seed": 202607,
+      "confidenceLevel": 0.95
+    },
+    "promotionRule": "External paired RPS interval entirely above zero: NB; entirely below zero: Poisson; includes zero or unavailable: NONE / INCONCLUSIVE",
+    "meanStructure": "sum attacks = 0; log home = h+a_home+d_away; log away = a_away+d_home; NB alpha=exp(rawAlpha)",
+    "assumptions": "independent home/away counts; equal prior within-season weights; no decay, shrinkage, regularisation or previous-season prior"
+  },
+  "provenance": {
+    "schemaVersion": 1,
+    "sourceName": "Football-Data.co.uk / English Premier League",
+    "sourcePage": "https://www.football-data.co.uk/englandm.php",
+    "acquisitionMethod": "Manually downloaded and supplied locally by the user; no automated acquisition",
+    "rawSourcePolicy": "Original CSVs and normalized match rows are intentionally not redistributed; data/private/ is gitignored",
+    "requiredColumns": [
+      "Date",
+      "HomeTeam",
+      "AwayTeam",
+      "HC",
+      "AC"
+    ],
+    "files": [
+      {
+        "season": "2014-15",
+        "localFile": "1415-E0.csv",
+        "sha256": "76b7858051ff6b17f46f49f26fdc70c1f29537270492606f5cc63d67fad5d149"
+      },
+      {
+        "season": "2015-16",
+        "localFile": "1516-E0.csv",
+        "sha256": "bd3502a18c38a1597fd9af62e2366b4015006d3528dd4d18b311bd6237bbc085"
+      },
+      {
+        "season": "2016-17",
+        "localFile": "1617-E0.csv",
+        "sha256": "9625a7652b5f98fbd3e2e4d378c851fc246693f3343e34a72428d5b6e864d3e0"
+      },
+      {
+        "season": "2017-18",
+        "localFile": "1718-E0.csv",
+        "sha256": "4f3389365ef3f7ac966764ed8ba67cf3b79f5aebed18dd224099c4b2c98bc67b"
+      },
+      {
+        "season": "2018-19",
+        "localFile": "1819-E0.csv",
+        "sha256": "7c096b3c2ecd54c6993d22eeea73450c2bde11e3457238b226b8f43c62dfc35e"
+      },
+      {
+        "season": "2021-22",
+        "localFile": "2122-E0.csv",
+        "sha256": "335afcbabeb2939fa10ab39ba3e8215072d0b577cb8d0705c1e44c56e934e703"
+      },
+      {
+        "season": "2022-23",
+        "localFile": "2223-E0.csv",
+        "sha256": "8442792d3b614c94ea3cf381bd2736805889cc1713169035368fff19c3d02380"
+      },
+      {
+        "season": "2023-24",
+        "localFile": "2324-E0.csv",
+        "sha256": "b2e057b0ed959f198b0f63d2391c01239f3608e6de5db68edab3f88e04d07ff3"
+      },
+      {
+        "season": "2024-25",
+        "localFile": "2425-E0.csv",
+        "sha256": "d0c8ce4a96d886cf60cf101f570f4a3893844226f91c7bd769eb568c49edbfa4"
+      },
+      {
+        "season": "2025-26",
+        "localFile": "2526-E0.csv",
+        "sha256": "3e3a8352f9ada6789c508d6ca184424421fed56a30400904a4a327c583407e62"
+      }
+    ]
+  },
+  "development": {
+    "dataset": "DEVELOPMENT",
+    "seasonIds": [
+      "2021-22",
+      "2022-23",
+      "2023-24",
+      "2024-25",
+      "2025-26"
+    ],
+    "summary": {
+      "historicalMatches": 1900,
+      "evaluatedMatches": 1688,
+      "warmUpSkips": 212,
+      "poissonRPS": 0.0657872115848728,
+      "negativeBinomialRPS": 0.06567643443725063,
+      "pairedAdvantage": 0.00011077714762213862,
+      "leaguePoissonRPS": 0.061811466054367235,
+      "empiricalRPS": 0.06196195473914151,
+      "observedMeanTotal": 10.32345971563981,
+      "poissonMeanTotal": 10.406295182447879,
+      "negativeBinomialMeanTotal": 10.407357530761287
+    },
+    "bootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202607,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1688,
+      "dateClusters": 522,
+      "strata": [
+        {
+          "seasonId": "2021-22",
+          "dateClusters": 112,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2022-23",
+          "dateClusters": 106,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2023-24",
+          "dateClusters": 103,
+          "evaluatedMatches": 328
+        },
+        {
+          "seasonId": "2024-25",
+          "dateClusters": 99,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2025-26",
+          "dateClusters": 102,
+          "evaluatedMatches": 340
+        }
+      ],
+      "interval": {
+        "observedMean": 0.00011077714762213877,
+        "lowerBound": -0.000023326328022343242,
+        "upperBound": 0.00024881161863428105
+      }
+    },
+    "seasons": [
+      {
+        "seasonId": "2021-22",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 340,
+          "warmUpSkips": 40,
+          "poissonRPS": 0.06450253118249974,
+          "negativeBinomialRPS": 0.06438537887076567,
+          "pairedAdvantage": 0.00011715231173397108,
+          "leaguePoissonRPS": 0.06189896279803444,
+          "empiricalRPS": 0.06213980651208494,
+          "observedMeanTotal": 10.364705882352942,
+          "poissonMeanTotal": 10.592495563776032,
+          "negativeBinomialMeanTotal": 10.594259315395817
+        },
+        "finalAlpha": 0.03454650526931386
+      },
+      {
+        "seasonId": "2022-23",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 340,
+          "warmUpSkips": 40,
+          "poissonRPS": 0.06422037629249921,
+          "negativeBinomialRPS": 0.06428809786344204,
+          "pairedAdvantage": -0.00006772157094287361,
+          "leaguePoissonRPS": 0.059265555546776795,
+          "empiricalRPS": 0.05946134059715014,
+          "observedMeanTotal": 10.129411764705882,
+          "poissonMeanTotal": 10.03328427195754,
+          "negativeBinomialMeanTotal": 10.035970905513613
+        },
+        "finalAlpha": 0.05681088810948619
+      },
+      {
+        "seasonId": "2023-24",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 328,
+          "warmUpSkips": 52,
+          "poissonRPS": 0.06708377822302856,
+          "negativeBinomialRPS": 0.06718000408660084,
+          "pairedAdvantage": -0.00009622586357232512,
+          "leaguePoissonRPS": 0.0650559362484715,
+          "empiricalRPS": 0.0651676072049968,
+          "observedMeanTotal": 10.835365853658537,
+          "poissonMeanTotal": 10.75711401225086,
+          "negativeBinomialMeanTotal": 10.757224535549227
+        },
+        "finalAlpha": 0.057419030187701385
+      },
+      {
+        "seasonId": "2024-25",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 340,
+          "warmUpSkips": 40,
+          "poissonRPS": 0.06812421653237584,
+          "negativeBinomialRPS": 0.06760678563339391,
+          "pairedAdvantage": 0.0005174308989818703,
+          "leaguePoissonRPS": 0.06309141373639691,
+          "empiricalRPS": 0.0632482639045595,
+          "observedMeanTotal": 10.258823529411766,
+          "poissonMeanTotal": 10.748505413009697,
+          "negativeBinomialMeanTotal": 10.748749878770122
+        },
+        "finalAlpha": 0.0819685910995144
+      },
+      {
+        "seasonId": "2025-26",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 340,
+          "warmUpSkips": 40,
+          "poissonRPS": 0.06505091686942503,
+          "negativeBinomialRPS": 0.06497497289614539,
+          "pairedAdvantage": 0.00007594397327965696,
+          "leaguePoissonRPS": 0.05985997265488909,
+          "empiricalRPS": 0.05990589615218175,
+          "observedMeanTotal": 10.047058823529412,
+          "poissonMeanTotal": 9.912458492297175,
+          "negativeBinomialMeanTotal": 9.912931265805517
+        },
+        "finalAlpha": 0.05252427015067979
+      }
+    ],
+    "lines": [
+      {
+        "line": 7.5,
+        "evaluatedMatches": 1688,
+        "observedOverFrequency": 0.7802132701421801,
+        "poissonBrier": 0.18022542154337956,
+        "negativeBinomialBrier": 0.17968649765499345,
+        "leaguePoissonBrier": 0.17260238463148206,
+        "empiricalBrier": 0.17218933321210325,
+        "poissonMeanPredicted": 0.7867227704408389,
+        "negativeBinomialMeanPredicted": 0.76494227595611,
+        "poissonECE": 0.07190736200317056,
+        "negativeBinomialECE": 0.059312455689253814,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 0,
+            "meanPredictedProbability": null,
+            "observedFrequency": null
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 1,
+            "meanPredictedProbability": 0.16152889470376885,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 2,
+            "meanPredictedProbability": 0.2825343819639713,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 9,
+            "meanPredictedProbability": 0.36376959308668533,
+            "observedFrequency": 0.8888888888888888
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 33,
+            "meanPredictedProbability": 0.4575712963578832,
+            "observedFrequency": 0.7878787878787878
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 75,
+            "meanPredictedProbability": 0.5569645496690697,
+            "observedFrequency": 0.7733333333333333
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 213,
+            "meanPredictedProbability": 0.6590497647053525,
+            "observedFrequency": 0.7136150234741784
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 499,
+            "meanPredictedProbability": 0.7546170076908827,
+            "observedFrequency": 0.7735470941883767
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 580,
+            "meanPredictedProbability": 0.8486836497277392,
+            "observedFrequency": 0.7862068965517242
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 276,
+            "meanPredictedProbability": 0.9345917207994782,
+            "observedFrequency": 0.8260869565217391
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 0,
+            "meanPredictedProbability": null,
+            "observedFrequency": null
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 1,
+            "meanPredictedProbability": 0.16605173623721814,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 2,
+            "meanPredictedProbability": 0.2856420893590026,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 9,
+            "meanPredictedProbability": 0.36407235080958844,
+            "observedFrequency": 0.8888888888888888
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 34,
+            "meanPredictedProbability": 0.4564622095815926,
+            "observedFrequency": 0.7647058823529411
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 89,
+            "meanPredictedProbability": 0.5573409219023269,
+            "observedFrequency": 0.7865168539325843
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 289,
+            "meanPredictedProbability": 0.6582730518549457,
+            "observedFrequency": 0.6955017301038062
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 566,
+            "meanPredictedProbability": 0.7520735195615275,
+            "observedFrequency": 0.7773851590106007
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 530,
+            "meanPredictedProbability": 0.8468022535753211,
+            "observedFrequency": 0.8207547169811321
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 168,
+            "meanPredictedProbability": 0.9367011852009933,
+            "observedFrequency": 0.7976190476190477
+          }
+        ]
+      },
+      {
+        "line": 8.5,
+        "evaluatedMatches": 1688,
+        "observedOverFrequency": 0.6943127962085308,
+        "poissonBrier": 0.226938764216119,
+        "negativeBinomialBrier": 0.22618844913669753,
+        "leaguePoissonBrier": 0.21208349618698516,
+        "empiricalBrier": 0.21298029233262056,
+        "poissonMeanPredicted": 0.6857362614044834,
+        "negativeBinomialMeanPredicted": 0.6665933175421437,
+        "poissonECE": 0.0930767648619121,
+        "negativeBinomialECE": 0.07974681281132762,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 1,
+            "meanPredictedProbability": 0.08615082327783596,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 2,
+            "meanPredictedProbability": 0.1729976811162416,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 19,
+            "meanPredictedProbability": 0.26539269208319144,
+            "observedFrequency": 0.8421052631578947
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 44,
+            "meanPredictedProbability": 0.35811751841527883,
+            "observedFrequency": 0.6363636363636364
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 108,
+            "meanPredictedProbability": 0.4565660194986432,
+            "observedFrequency": 0.6666666666666666
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 255,
+            "meanPredictedProbability": 0.5578200876700758,
+            "observedFrequency": 0.615686274509804
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 436,
+            "meanPredictedProbability": 0.6523384965019351,
+            "observedFrequency": 0.7041284403669725
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 436,
+            "meanPredictedProbability": 0.7481737400778055,
+            "observedFrequency": 0.6880733944954128
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 296,
+            "meanPredictedProbability": 0.8407136343072729,
+            "observedFrequency": 0.7567567567567568
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 91,
+            "meanPredictedProbability": 0.9369583268127624,
+            "observedFrequency": 0.7142857142857143
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 1,
+            "meanPredictedProbability": 0.09034301436805103,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 2,
+            "meanPredictedProbability": 0.1783107081353153,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 18,
+            "meanPredictedProbability": 0.2650283632351946,
+            "observedFrequency": 0.8333333333333334
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 46,
+            "meanPredictedProbability": 0.35934016221006926,
+            "observedFrequency": 0.6521739130434783
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 120,
+            "meanPredictedProbability": 0.4571916886939681,
+            "observedFrequency": 0.6416666666666667
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 313,
+            "meanPredictedProbability": 0.5576446483998468,
+            "observedFrequency": 0.6357827476038339
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 472,
+            "meanPredictedProbability": 0.65073209739374,
+            "observedFrequency": 0.6885593220338984
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 428,
+            "meanPredictedProbability": 0.7456120270325118,
+            "observedFrequency": 0.7289719626168224
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 226,
+            "meanPredictedProbability": 0.8391990816774919,
+            "observedFrequency": 0.7300884955752213
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 62,
+            "meanPredictedProbability": 0.9375827417629293,
+            "observedFrequency": 0.7419354838709677
+          }
+        ]
+      },
+      {
+        "line": 9.5,
+        "evaluatedMatches": 1688,
+        "observedOverFrequency": 0.5817535545023697,
+        "poissonBrier": 0.26331183419367893,
+        "negativeBinomialBrier": 0.2614149762092341,
+        "leaguePoissonBrier": 0.24398477324364207,
+        "empiricalBrier": 0.24439050952885832,
+        "poissonMeanPredicted": 0.5738336377189428,
+        "negativeBinomialMeanPredicted": 0.5608910930779116,
+        "poissonECE": 0.10492004098931217,
+        "negativeBinomialECE": 0.09694489578785308,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 2,
+            "meanPredictedProbability": 0.0675664241956141,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 23,
+            "meanPredictedProbability": 0.1667052828518154,
+            "observedFrequency": 0.8260869565217391
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 62,
+            "meanPredictedProbability": 0.25984115824190246,
+            "observedFrequency": 0.532258064516129
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 144,
+            "meanPredictedProbability": 0.35613314250891137,
+            "observedFrequency": 0.5555555555555556
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 303,
+            "meanPredictedProbability": 0.4546151676997784,
+            "observedFrequency": 0.5181518151815182
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 406,
+            "meanPredictedProbability": 0.548403943695839,
+            "observedFrequency": 0.5812807881773399
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 367,
+            "meanPredictedProbability": 0.6464949252691369,
+            "observedFrequency": 0.5749318801089919
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 251,
+            "meanPredictedProbability": 0.7442223708276962,
+            "observedFrequency": 0.6573705179282868
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 93,
+            "meanPredictedProbability": 0.8407783882915287,
+            "observedFrequency": 0.6129032258064516
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 37,
+            "meanPredictedProbability": 0.9354665423548519,
+            "observedFrequency": 0.5945945945945946
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 2,
+            "meanPredictedProbability": 0.06915766062116646,
+            "observedFrequency": 1
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 21,
+            "meanPredictedProbability": 0.16681954668407675,
+            "observedFrequency": 0.8571428571428571
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 61,
+            "meanPredictedProbability": 0.2611787801713284,
+            "observedFrequency": 0.5409836065573771
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 147,
+            "meanPredictedProbability": 0.3564940958552295,
+            "observedFrequency": 0.54421768707483
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 347,
+            "meanPredictedProbability": 0.45550371587696714,
+            "observedFrequency": 0.521613832853026
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 441,
+            "meanPredictedProbability": 0.5499608562828204,
+            "observedFrequency": 0.5850340136054422
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 361,
+            "meanPredictedProbability": 0.6463601465546369,
+            "observedFrequency": 0.6066481994459834
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 209,
+            "meanPredictedProbability": 0.7419372583694495,
+            "observedFrequency": 0.631578947368421
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 73,
+            "meanPredictedProbability": 0.8413515222406467,
+            "observedFrequency": 0.6027397260273972
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 26,
+            "meanPredictedProbability": 0.9382312912961173,
+            "observedFrequency": 0.5769230769230769
+          }
+        ]
+      },
+      {
+        "line": 10.5,
+        "evaluatedMatches": 1688,
+        "observedOverFrequency": 0.4662322274881517,
+        "poissonBrier": 0.264456046843941,
+        "negativeBinomialBrier": 0.2624353691966435,
+        "leaguePoissonBrier": 0.24903184355810487,
+        "empiricalBrier": 0.24959784355221626,
+        "poissonMeanPredicted": 0.46040310856077843,
+        "negativeBinomialMeanPredicted": 0.45566775711462065,
+        "poissonECE": 0.08786695022423824,
+        "negativeBinomialECE": 0.08422374065212745,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 14,
+            "meanPredictedProbability": 0.0756183113599915,
+            "observedFrequency": 0.5714285714285714
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 76,
+            "meanPredictedProbability": 0.1594310837944117,
+            "observedFrequency": 0.4605263157894737
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 184,
+            "meanPredictedProbability": 0.2566486473032658,
+            "observedFrequency": 0.391304347826087
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 368,
+            "meanPredictedProbability": 0.3534185900397081,
+            "observedFrequency": 0.41847826086956524
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 393,
+            "meanPredictedProbability": 0.4490170653186046,
+            "observedFrequency": 0.45038167938931295
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 317,
+            "meanPredictedProbability": 0.5474271973627308,
+            "observedFrequency": 0.5236593059936908
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 201,
+            "meanPredictedProbability": 0.6456506200635188,
+            "observedFrequency": 0.5323383084577115
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 84,
+            "meanPredictedProbability": 0.7445207381147538,
+            "observedFrequency": 0.4880952380952381
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 40,
+            "meanPredictedProbability": 0.8495986058202938,
+            "observedFrequency": 0.55
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 11,
+            "meanPredictedProbability": 0.9460042893954896,
+            "observedFrequency": 0.45454545454545453
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 12,
+            "meanPredictedProbability": 0.07369186058094879,
+            "observedFrequency": 0.6666666666666666
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 67,
+            "meanPredictedProbability": 0.15890509218682633,
+            "observedFrequency": 0.43283582089552236
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 173,
+            "meanPredictedProbability": 0.25538241072020146,
+            "observedFrequency": 0.3930635838150289
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 390,
+            "meanPredictedProbability": 0.35485093755879354,
+            "observedFrequency": 0.4153846153846154
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 437,
+            "meanPredictedProbability": 0.4505601457398888,
+            "observedFrequency": 0.4668192219679634
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 311,
+            "meanPredictedProbability": 0.5478953987214692,
+            "observedFrequency": 0.5241157556270096
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 190,
+            "meanPredictedProbability": 0.6435305287729339,
+            "observedFrequency": 0.5210526315789473
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 66,
+            "meanPredictedProbability": 0.7438450569339115,
+            "observedFrequency": 0.5
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 34,
+            "meanPredictedProbability": 0.8460889335881272,
+            "observedFrequency": 0.5
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 8,
+            "meanPredictedProbability": 0.9551696432833399,
+            "observedFrequency": 0.5
+          }
+        ]
+      },
+      {
+        "line": 11.5,
+        "evaluatedMatches": 1688,
+        "observedOverFrequency": 0.34419431279620855,
+        "poissonBrier": 0.23779093871770504,
+        "negativeBinomialBrier": 0.23619268586759826,
+        "leaguePoissonBrier": 0.2261709397518521,
+        "empiricalBrier": 0.22644697308483636,
+        "poissonMeanPredicted": 0.35418177015777974,
+        "negativeBinomialMeanPredicted": 0.35770733677229855,
+        "poissonECE": 0.08304204318881711,
+        "negativeBinomialECE": 0.07526825487618802,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 54,
+            "meanPredictedProbability": 0.0684669397582555,
+            "observedFrequency": 0.2962962962962963
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 212,
+            "meanPredictedProbability": 0.15672823424473412,
+            "observedFrequency": 0.2688679245283019
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 423,
+            "meanPredictedProbability": 0.25157997436164253,
+            "observedFrequency": 0.3120567375886525
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 420,
+            "meanPredictedProbability": 0.34759384994988796,
+            "observedFrequency": 0.33095238095238094
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 278,
+            "meanPredictedProbability": 0.4461414983000893,
+            "observedFrequency": 0.42805755395683454
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 176,
+            "meanPredictedProbability": 0.5427021381873967,
+            "observedFrequency": 0.3977272727272727
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 69,
+            "meanPredictedProbability": 0.6452177840776473,
+            "observedFrequency": 0.34782608695652173
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 34,
+            "meanPredictedProbability": 0.7463088934035452,
+            "observedFrequency": 0.5294117647058824
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 17,
+            "meanPredictedProbability": 0.8402697254048088,
+            "observedFrequency": 0.29411764705882354
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 5,
+            "meanPredictedProbability": 0.961090765641597,
+            "observedFrequency": 0.2
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 46,
+            "meanPredictedProbability": 0.06802582792525903,
+            "observedFrequency": 0.30434782608695654
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 185,
+            "meanPredictedProbability": 0.1576835133427666,
+            "observedFrequency": 0.2648648648648649
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 417,
+            "meanPredictedProbability": 0.25558260687612366,
+            "observedFrequency": 0.3069544364508393
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 454,
+            "meanPredictedProbability": 0.34842004645674685,
+            "observedFrequency": 0.33259911894273125
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 299,
+            "meanPredictedProbability": 0.4455014224948671,
+            "observedFrequency": 0.42474916387959866
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 180,
+            "meanPredictedProbability": 0.5417356089350411,
+            "observedFrequency": 0.3888888888888889
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 62,
+            "meanPredictedProbability": 0.6481821147939104,
+            "observedFrequency": 0.4032258064516129
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 26,
+            "meanPredictedProbability": 0.7469954481615368,
+            "observedFrequency": 0.46153846153846156
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 15,
+            "meanPredictedProbability": 0.8367013998306423,
+            "observedFrequency": 0.26666666666666666
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 4,
+            "meanPredictedProbability": 0.9679173897012264,
+            "observedFrequency": 0.25
+          }
+        ]
+      },
+      {
+        "line": 12.5,
+        "evaluatedMatches": 1688,
+        "observedOverFrequency": 0.2565165876777251,
+        "poissonBrier": 0.20092621375981204,
+        "negativeBinomialBrier": 0.19993383849784882,
+        "leaguePoissonBrier": 0.19015798919503227,
+        "empiricalBrier": 0.19113251855989694,
+        "poissonMeanPredicted": 0.26152323115529025,
+        "negativeBinomialMeanPredicted": 0.27173487889139764,
+        "poissonECE": 0.07486378939968788,
+        "negativeBinomialECE": 0.06474048245011567,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 169,
+            "meanPredictedProbability": 0.06574967183792937,
+            "observedFrequency": 0.20710059171597633
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 488,
+            "meanPredictedProbability": 0.15379068491134903,
+            "observedFrequency": 0.21311475409836064
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 482,
+            "meanPredictedProbability": 0.24663697108792523,
+            "observedFrequency": 0.25933609958506226
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 279,
+            "meanPredictedProbability": 0.34575184442628754,
+            "observedFrequency": 0.3046594982078853
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 159,
+            "meanPredictedProbability": 0.44118769522001033,
+            "observedFrequency": 0.3081761006289308
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 58,
+            "meanPredictedProbability": 0.5489855257741594,
+            "observedFrequency": 0.27586206896551724
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 29,
+            "meanPredictedProbability": 0.6507630575215906,
+            "observedFrequency": 0.4482758620689655
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 17,
+            "meanPredictedProbability": 0.7492743517620916,
+            "observedFrequency": 0.29411764705882354
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 3,
+            "meanPredictedProbability": 0.8456691802953379,
+            "observedFrequency": 0
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 4,
+            "meanPredictedProbability": 0.9522691324041719,
+            "observedFrequency": 0.25
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 138,
+            "meanPredictedProbability": 0.06592620257095302,
+            "observedFrequency": 0.21739130434782608
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 427,
+            "meanPredictedProbability": 0.15853682329866509,
+            "observedFrequency": 0.20374707259953162
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 520,
+            "meanPredictedProbability": 0.24694275210215563,
+            "observedFrequency": 0.25
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 326,
+            "meanPredictedProbability": 0.3446122428148727,
+            "observedFrequency": 0.3067484662576687
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 171,
+            "meanPredictedProbability": 0.4405608394955386,
+            "observedFrequency": 0.30409356725146197
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 61,
+            "meanPredictedProbability": 0.548614019682611,
+            "observedFrequency": 0.3114754098360656
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 23,
+            "meanPredictedProbability": 0.6506212341696681,
+            "observedFrequency": 0.43478260869565216
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 15,
+            "meanPredictedProbability": 0.7395108591933544,
+            "observedFrequency": 0.26666666666666666
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 3,
+            "meanPredictedProbability": 0.8334127035799294,
+            "observedFrequency": 0
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 4,
+            "meanPredictedProbability": 0.9457664189175901,
+            "observedFrequency": 0.25
+          }
+        ]
+      }
+    ],
+    "historyDepth": [
+      {
+        "label": "2–3",
+        "matches": 200,
+        "poissonRPS": 0.07659057265753595,
+        "negativeBinomialRPS": 0.07654586844432605,
+        "pairedAdvantage": 0.00004470421320986616
+      },
+      {
+        "label": "4–6",
+        "matches": 311,
+        "poissonRPS": 0.06935294272442237,
+        "negativeBinomialRPS": 0.06922191543999041,
+        "pairedAdvantage": 0.00013102728443193092
+      },
+      {
+        "label": "7–10",
+        "matches": 407,
+        "poissonRPS": 0.06460626994840851,
+        "negativeBinomialRPS": 0.06426978292472614,
+        "pairedAdvantage": 0.0003364870236823483
+      },
+      {
+        "label": "11–15",
+        "matches": 497,
+        "poissonRPS": 0.06241360908147718,
+        "negativeBinomialRPS": 0.06236236010342348,
+        "pairedAdvantage": 0.00005124897805365385
+      },
+      {
+        "label": "16+",
+        "matches": 273,
+        "poissonRPS": 0.06171288591196451,
+        "negativeBinomialRPS": 0.06180489859931076,
+        "pairedAdvantage": -0.00009201268734621114
+      }
+    ],
+    "dispersion": {
+      "sourceMatches": 1900,
+      "meanTotal": 10.33263157894737,
+      "varianceTotal": 11.491461495844817,
+      "varianceToMean": 1.1121524471324955,
+      "varianceConvention": "population variance; divisor N; all source matches"
+    },
+    "fitDiagnostics": {
+      "successfulPoissonFits": 522,
+      "successfulNegativeBinomialFits": 522,
+      "failures": 0,
+      "alphaMinimum": 1.5413489812864293e-11,
+      "alphaMedian": 0.03493695433237497,
+      "alphaMaximum": 0.0819685910995144,
+      "maximumPoissonMeanGradientNorm": 0.0000015581145183553349,
+      "maximumNegativeBinomialMeanGradientNorm": 0.000006658915939890997,
+      "poissonConvergence": {
+        "gradient": 514,
+        "objective": 8,
+        "step": 0
+      },
+      "negativeBinomialConvergence": {
+        "gradient": 478,
+        "objective": 44,
+        "step": 0
+      }
+    }
+  },
+  "externalValidation": {
+    "dataset": "EXTERNAL_VALIDATION",
+    "seasonIds": [
+      "2014-15",
+      "2015-16",
+      "2016-17",
+      "2017-18",
+      "2018-19"
+    ],
+    "summary": {
+      "historicalMatches": 1900,
+      "evaluatedMatches": 1691,
+      "warmUpSkips": 209,
+      "poissonRPS": 0.06641981381937244,
+      "negativeBinomialRPS": 0.06642274324607479,
+      "pairedAdvantage": -0.0000029294267022439315,
+      "leaguePoissonRPS": 0.06195283131042007,
+      "empiricalRPS": 0.06216630664683164,
+      "observedMeanTotal": 10.525724423418096,
+      "poissonMeanTotal": 10.47779184236977,
+      "negativeBinomialMeanTotal": 10.478636576189416
+    },
+    "bootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202607,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1691,
+      "dateClusters": 458,
+      "strata": [
+        {
+          "seasonId": "2014-15",
+          "dateClusters": 85,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2015-16",
+          "dateClusters": 87,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2016-17",
+          "dateClusters": 95,
+          "evaluatedMatches": 337
+        },
+        {
+          "seasonId": "2017-18",
+          "dateClusters": 94,
+          "evaluatedMatches": 337
+        },
+        {
+          "seasonId": "2018-19",
+          "dateClusters": 97,
+          "evaluatedMatches": 337
+        }
+      ],
+      "interval": {
+        "observedMean": -0.0000029294267022438086,
+        "lowerBound": -0.00013016671757972776,
+        "upperBound": 0.0001273529555920565
+      }
+    },
+    "seasons": [
+      {
+        "seasonId": "2014-15",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 340,
+          "warmUpSkips": 40,
+          "poissonRPS": 0.06861819235057089,
+          "negativeBinomialRPS": 0.06873946383475449,
+          "pairedAdvantage": -0.000121271484183555,
+          "leaguePoissonRPS": 0.06429332293186624,
+          "empiricalRPS": 0.0643988499270007,
+          "observedMeanTotal": 10.738235294117647,
+          "poissonMeanTotal": 10.677565225313893,
+          "negativeBinomialMeanTotal": 10.67800894832248
+        },
+        "finalAlpha": 0.07348619133400343
+      },
+      {
+        "seasonId": "2015-16",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 340,
+          "warmUpSkips": 40,
+          "poissonRPS": 0.07007742867294806,
+          "negativeBinomialRPS": 0.06999133202737946,
+          "pairedAdvantage": 0.00008609664556859137,
+          "leaguePoissonRPS": 0.06501148074833145,
+          "empiricalRPS": 0.06528319879945683,
+          "observedMeanTotal": 10.938235294117646,
+          "poissonMeanTotal": 10.620762424522145,
+          "negativeBinomialMeanTotal": 10.621853249310778
+        },
+        "finalAlpha": 0.053479111006655464
+      },
+      {
+        "seasonId": "2016-17",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 337,
+          "warmUpSkips": 43,
+          "poissonRPS": 0.06690821299971957,
+          "negativeBinomialRPS": 0.06686797067400861,
+          "pairedAdvantage": 0.0000402423257109846,
+          "leaguePoissonRPS": 0.06229914702440128,
+          "empiricalRPS": 0.0625537621382279,
+          "observedMeanTotal": 10.43620178041543,
+          "poissonMeanTotal": 10.366639996802533,
+          "negativeBinomialMeanTotal": 10.36670144748653
+        },
+        "finalAlpha": 0.03917025229611203
+      },
+      {
+        "seasonId": "2017-18",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 337,
+          "warmUpSkips": 43,
+          "poissonRPS": 0.06431462527482339,
+          "negativeBinomialRPS": 0.06415276507936317,
+          "pairedAdvantage": 0.00016186019546023117,
+          "leaguePoissonRPS": 0.05991288628157151,
+          "empiricalRPS": 0.06022547308047688,
+          "observedMeanTotal": 10.204747774480712,
+          "poissonMeanTotal": 10.483647863332374,
+          "negativeBinomialMeanTotal": 10.48606516823008
+        },
+        "finalAlpha": 0.04618728936840092
+      },
+      {
+        "seasonId": "2018-19",
+        "summary": {
+          "historicalMatches": 380,
+          "evaluatedMatches": 337,
+          "warmUpSkips": 43,
+          "poissonRPS": 0.062128479293891536,
+          "negativeBinomialRPS": 0.06230979313679693,
+          "pairedAdvantage": -0.00018131384290536058,
+          "leaguePoissonRPS": 0.058199255995668116,
+          "empiricalRPS": 0.05832262820205632,
+          "observedMeanTotal": 10.305637982195845,
+          "poissonMeanTotal": 10.237292568657365,
+          "negativeBinomialMeanTotal": 10.237504313485173
+        },
+        "finalAlpha": 0.04822545036825019
+      }
+    ],
+    "lines": [
+      {
+        "line": 7.5,
+        "evaluatedMatches": 1691,
+        "observedOverFrequency": 0.8131283264340626,
+        "poissonBrier": 0.16338307885557193,
+        "negativeBinomialBrier": 0.16386914563019947,
+        "leaguePoissonBrier": 0.15238096646026403,
+        "empiricalBrier": 0.15263586052113995,
+        "poissonMeanPredicted": 0.7916271976167084,
+        "negativeBinomialMeanPredicted": 0.7714899858845407,
+        "poissonECE": 0.056592548363673736,
+        "negativeBinomialECE": 0.06606500369108018,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 1,
+            "meanPredictedProbability": 0.030111765875755703,
+            "observedFrequency": 0
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 4,
+            "meanPredictedProbability": 0.13552460821996595,
+            "observedFrequency": 0.75
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 6,
+            "meanPredictedProbability": 0.262697220779619,
+            "observedFrequency": 0.8333333333333334
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 10,
+            "meanPredictedProbability": 0.34385909035896123,
+            "observedFrequency": 0.9
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 28,
+            "meanPredictedProbability": 0.4610311667611072,
+            "observedFrequency": 0.8214285714285714
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 83,
+            "meanPredictedProbability": 0.556238258072722,
+            "observedFrequency": 0.8072289156626506
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 191,
+            "meanPredictedProbability": 0.6599201356278984,
+            "observedFrequency": 0.7539267015706806
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 457,
+            "meanPredictedProbability": 0.7577538934092317,
+            "observedFrequency": 0.7702407002188184
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 602,
+            "meanPredictedProbability": 0.8525578132883238,
+            "observedFrequency": 0.8521594684385382
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 309,
+            "meanPredictedProbability": 0.9333329445338744,
+            "observedFrequency": 0.8381877022653722
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 1,
+            "meanPredictedProbability": 0.03011094565690664,
+            "observedFrequency": 0
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 4,
+            "meanPredictedProbability": 0.13552365310222325,
+            "observedFrequency": 0.75
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 6,
+            "meanPredictedProbability": 0.26300124503970596,
+            "observedFrequency": 0.8333333333333334
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 11,
+            "meanPredictedProbability": 0.34859980242626976,
+            "observedFrequency": 0.9090909090909091
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 29,
+            "meanPredictedProbability": 0.46374585767602655,
+            "observedFrequency": 0.8275862068965517
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 95,
+            "meanPredictedProbability": 0.5564759811556809,
+            "observedFrequency": 0.8105263157894737
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 235,
+            "meanPredictedProbability": 0.6587600855291909,
+            "observedFrequency": 0.7531914893617021
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 531,
+            "meanPredictedProbability": 0.7533564130177565,
+            "observedFrequency": 0.7909604519774012
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 588,
+            "meanPredictedProbability": 0.8483459167364824,
+            "observedFrequency": 0.8520408163265306
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 191,
+            "meanPredictedProbability": 0.9351970300551329,
+            "observedFrequency": 0.8272251308900523
+          }
+        ]
+      },
+      {
+        "line": 8.5,
+        "evaluatedMatches": 1691,
+        "observedOverFrequency": 0.719692489651094,
+        "poissonBrier": 0.21683632928261967,
+        "negativeBinomialBrier": 0.216819242827936,
+        "leaguePoissonBrier": 0.20230891313403895,
+        "empiricalBrier": 0.2031404920246509,
+        "poissonMeanPredicted": 0.693148659175933,
+        "negativeBinomialMeanPredicted": 0.6748143751918863,
+        "poissonECE": 0.07995113941235424,
+        "negativeBinomialECE": 0.08594283724022887,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 4,
+            "meanPredictedProbability": 0.046964121680515725,
+            "observedFrequency": 0.5
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 8,
+            "meanPredictedProbability": 0.15497583557504002,
+            "observedFrequency": 0.75
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 16,
+            "meanPredictedProbability": 0.2534782162453732,
+            "observedFrequency": 0.875
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 49,
+            "meanPredictedProbability": 0.36356646473708887,
+            "observedFrequency": 0.6326530612244898
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 100,
+            "meanPredictedProbability": 0.45514068869388913,
+            "observedFrequency": 0.7
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 225,
+            "meanPredictedProbability": 0.5567747091869919,
+            "observedFrequency": 0.6755555555555556
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 416,
+            "meanPredictedProbability": 0.6559424353852842,
+            "observedFrequency": 0.6778846153846154
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 442,
+            "meanPredictedProbability": 0.7543512777116584,
+            "observedFrequency": 0.744343891402715
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 345,
+            "meanPredictedProbability": 0.8445986459548939,
+            "observedFrequency": 0.7565217391304347
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 86,
+            "meanPredictedProbability": 0.9342567686442511,
+            "observedFrequency": 0.813953488372093
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 4,
+            "meanPredictedProbability": 0.04696365982523773,
+            "observedFrequency": 0.5
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 8,
+            "meanPredictedProbability": 0.15589022586011342,
+            "observedFrequency": 0.75
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 14,
+            "meanPredictedProbability": 0.24767497956281617,
+            "observedFrequency": 0.8571428571428571
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 51,
+            "meanPredictedProbability": 0.3617551386258723,
+            "observedFrequency": 0.6470588235294118
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 109,
+            "meanPredictedProbability": 0.45525751486148586,
+            "observedFrequency": 0.6788990825688074
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 268,
+            "meanPredictedProbability": 0.5571243809945029,
+            "observedFrequency": 0.6865671641791045
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 455,
+            "meanPredictedProbability": 0.6529814151246544,
+            "observedFrequency": 0.701098901098901
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 467,
+            "meanPredictedProbability": 0.7509661538875912,
+            "observedFrequency": 0.7366167023554604
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 252,
+            "meanPredictedProbability": 0.8412733050312367,
+            "observedFrequency": 0.7619047619047619
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 63,
+            "meanPredictedProbability": 0.9367961329837703,
+            "observedFrequency": 0.8095238095238095
+          }
+        ]
+      },
+      {
+        "line": 9.5,
+        "evaluatedMatches": 1691,
+        "observedOverFrequency": 0.6020106445890006,
+        "poissonBrier": 0.2579912845641653,
+        "negativeBinomialBrier": 0.2567422221359782,
+        "leaguePoissonBrier": 0.24033237362473123,
+        "empiricalBrier": 0.2417507320535668,
+        "poissonMeanPredicted": 0.5832326168017737,
+        "negativeBinomialMeanPredicted": 0.5700426811864672,
+        "poissonECE": 0.10622003359248317,
+        "negativeBinomialECE": 0.10410656199085017,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 11,
+            "meanPredictedProbability": 0.06021669595228474,
+            "observedFrequency": 0.5454545454545454
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 19,
+            "meanPredictedProbability": 0.15829242358479398,
+            "observedFrequency": 0.7368421052631579
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 65,
+            "meanPredictedProbability": 0.2591164452836026,
+            "observedFrequency": 0.47692307692307695
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 127,
+            "meanPredictedProbability": 0.3528718971073691,
+            "observedFrequency": 0.5748031496062992
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 278,
+            "meanPredictedProbability": 0.4530417082905787,
+            "observedFrequency": 0.579136690647482
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 381,
+            "meanPredictedProbability": 0.5512895134357448,
+            "observedFrequency": 0.5826771653543307
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 380,
+            "meanPredictedProbability": 0.6525979991705374,
+            "observedFrequency": 0.6263157894736842
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 288,
+            "meanPredictedProbability": 0.7466060654251021,
+            "observedFrequency": 0.6180555555555556
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 114,
+            "meanPredictedProbability": 0.8395030867615362,
+            "observedFrequency": 0.6578947368421053
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 28,
+            "meanPredictedProbability": 0.9363956246534373,
+            "observedFrequency": 0.7142857142857143
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 9,
+            "meanPredictedProbability": 0.05208889091553041,
+            "observedFrequency": 0.5555555555555556
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 20,
+            "meanPredictedProbability": 0.15228261521639636,
+            "observedFrequency": 0.7
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 64,
+            "meanPredictedProbability": 0.26022691360351197,
+            "observedFrequency": 0.484375
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 129,
+            "meanPredictedProbability": 0.3537610172754233,
+            "observedFrequency": 0.5658914728682171
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 304,
+            "meanPredictedProbability": 0.4532181853409333,
+            "observedFrequency": 0.5855263157894737
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 422,
+            "meanPredictedProbability": 0.5506315507453244,
+            "observedFrequency": 0.5924170616113744
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 400,
+            "meanPredictedProbability": 0.6510164851861482,
+            "observedFrequency": 0.615
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 241,
+            "meanPredictedProbability": 0.7445805963161183,
+            "observedFrequency": 0.6431535269709544
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 77,
+            "meanPredictedProbability": 0.8411731744825499,
+            "observedFrequency": 0.6233766233766234
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 25,
+            "meanPredictedProbability": 0.9348933153848092,
+            "observedFrequency": 0.72
+          }
+        ]
+      },
+      {
+        "line": 10.5,
+        "evaluatedMatches": 1691,
+        "observedOverFrequency": 0.48196333530455354,
+        "poissonBrier": 0.271493973875405,
+        "negativeBinomialBrier": 0.26966226791373377,
+        "leaguePoissonBrier": 0.25056252859002304,
+        "empiricalBrier": 0.2520605504935431,
+        "poissonMeanPredicted": 0.4708183235271614,
+        "negativeBinomialMeanPredicted": 0.46488637649198394,
+        "poissonECE": 0.12335996219784098,
+        "negativeBinomialECE": 0.11065458235607734,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 21,
+            "meanPredictedProbability": 0.050819510790474934,
+            "observedFrequency": 0.5238095238095238
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 80,
+            "meanPredictedProbability": 0.16155855220435691,
+            "observedFrequency": 0.4
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 167,
+            "meanPredictedProbability": 0.2570009645629338,
+            "observedFrequency": 0.41916167664670656
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 308,
+            "meanPredictedProbability": 0.3513171770071756,
+            "observedFrequency": 0.487012987012987
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 379,
+            "meanPredictedProbability": 0.44633060422367243,
+            "observedFrequency": 0.48812664907651715
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 351,
+            "meanPredictedProbability": 0.5498671199632291,
+            "observedFrequency": 0.4985754985754986
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 233,
+            "meanPredictedProbability": 0.6467944301745513,
+            "observedFrequency": 0.4978540772532189
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 103,
+            "meanPredictedProbability": 0.7385786287911393,
+            "observedFrequency": 0.47572815533980584
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 39,
+            "meanPredictedProbability": 0.8401801086933156,
+            "observedFrequency": 0.5641025641025641
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 10,
+            "meanPredictedProbability": 0.9330656238198973,
+            "observedFrequency": 0.5
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 21,
+            "meanPredictedProbability": 0.05147140160438781,
+            "observedFrequency": 0.5238095238095238
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 73,
+            "meanPredictedProbability": 0.16293732670104114,
+            "observedFrequency": 0.3835616438356164
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 155,
+            "meanPredictedProbability": 0.2563104133008992,
+            "observedFrequency": 0.4258064516129032
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 329,
+            "meanPredictedProbability": 0.35231548410556557,
+            "observedFrequency": 0.47416413373860183
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 410,
+            "meanPredictedProbability": 0.4472871934796828,
+            "observedFrequency": 0.4853658536585366
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 368,
+            "meanPredictedProbability": 0.5488469916619879,
+            "observedFrequency": 0.5
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 220,
+            "meanPredictedProbability": 0.6455660716680119,
+            "observedFrequency": 0.5227272727272727
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 74,
+            "meanPredictedProbability": 0.7411257171709362,
+            "observedFrequency": 0.5
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 33,
+            "meanPredictedProbability": 0.8411479432571607,
+            "observedFrequency": 0.42424242424242425
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 8,
+            "meanPredictedProbability": 0.9398083511656949,
+            "observedFrequency": 0.625
+          }
+        ]
+      },
+      {
+        "line": 11.5,
+        "evaluatedMatches": 1691,
+        "observedOverFrequency": 0.3642814902424601,
+        "poissonBrier": 0.24861946564095289,
+        "negativeBinomialBrier": 0.24700230840478754,
+        "leaguePoissonBrier": 0.23187721654905713,
+        "empiricalBrier": 0.23285475367365643,
+        "poissonMeanPredicted": 0.3644937063382182,
+        "negativeBinomialMeanPredicted": 0.3662265022376418,
+        "poissonECE": 0.10171896592176183,
+        "negativeBinomialECE": 0.09299208378754154,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 62,
+            "meanPredictedProbability": 0.06199099655656972,
+            "observedFrequency": 0.3225806451612903
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 202,
+            "meanPredictedProbability": 0.15624797929747605,
+            "observedFrequency": 0.3118811881188119
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 361,
+            "meanPredictedProbability": 0.25144185434215266,
+            "observedFrequency": 0.3573407202216066
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 398,
+            "meanPredictedProbability": 0.3452216565012491,
+            "observedFrequency": 0.32914572864321606
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 324,
+            "meanPredictedProbability": 0.44717801403767554,
+            "observedFrequency": 0.41358024691358025
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 206,
+            "meanPredictedProbability": 0.5445082102781669,
+            "observedFrequency": 0.41262135922330095
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 86,
+            "meanPredictedProbability": 0.6400394439781886,
+            "observedFrequency": 0.32558139534883723
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 33,
+            "meanPredictedProbability": 0.7384519006255341,
+            "observedFrequency": 0.6363636363636364
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 15,
+            "meanPredictedProbability": 0.838901445334575,
+            "observedFrequency": 0.26666666666666666
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 4,
+            "meanPredictedProbability": 0.9336001650054967,
+            "observedFrequency": 0.25
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 59,
+            "meanPredictedProbability": 0.06307142706426071,
+            "observedFrequency": 0.3220338983050847
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 173,
+            "meanPredictedProbability": 0.15666165752493116,
+            "observedFrequency": 0.3236994219653179
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 357,
+            "meanPredictedProbability": 0.25264991554889493,
+            "observedFrequency": 0.3445378151260504
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 429,
+            "meanPredictedProbability": 0.346236682513721,
+            "observedFrequency": 0.3356643356643357
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 350,
+            "meanPredictedProbability": 0.4468553947823217,
+            "observedFrequency": 0.41714285714285715
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 207,
+            "meanPredictedProbability": 0.543702270469704,
+            "observedFrequency": 0.40096618357487923
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 72,
+            "meanPredictedProbability": 0.6422193887157679,
+            "observedFrequency": 0.375
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 27,
+            "meanPredictedProbability": 0.7400941236701128,
+            "observedFrequency": 0.5185185185185185
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 13,
+            "meanPredictedProbability": 0.8331754399614535,
+            "observedFrequency": 0.23076923076923078
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 4,
+            "meanPredictedProbability": 0.9336003696844596,
+            "observedFrequency": 0.25
+          }
+        ]
+      },
+      {
+        "line": 12.5,
+        "evaluatedMatches": 1691,
+        "observedOverFrequency": 0.2684801892371378,
+        "poissonBrier": 0.21345919236711863,
+        "negativeBinomialBrier": 0.21247656618688274,
+        "leaguePoissonBrier": 0.19742750645984267,
+        "empiricalBrier": 0.1980189858176948,
+        "poissonMeanPredicted": 0.2707650597595735,
+        "negativeBinomialMeanPredicted": 0.27902326038261316,
+        "poissonECE": 0.09118312536236986,
+        "negativeBinomialECE": 0.08741183524315418,
+        "poissonCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 175,
+            "meanPredictedProbability": 0.06253850595685165,
+            "observedFrequency": 0.24
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 427,
+            "meanPredictedProbability": 0.1539319827132364,
+            "observedFrequency": 0.2529274004683841
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 442,
+            "meanPredictedProbability": 0.24471341713084852,
+            "observedFrequency": 0.248868778280543
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 342,
+            "meanPredictedProbability": 0.3449368587784322,
+            "observedFrequency": 0.30116959064327486
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 182,
+            "meanPredictedProbability": 0.4437836033160548,
+            "observedFrequency": 0.3241758241758242
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 73,
+            "meanPredictedProbability": 0.5390411604349066,
+            "observedFrequency": 0.273972602739726
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 29,
+            "meanPredictedProbability": 0.6385768238308435,
+            "observedFrequency": 0.3103448275862069
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 16,
+            "meanPredictedProbability": 0.7508841499846197,
+            "observedFrequency": 0.125
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 3,
+            "meanPredictedProbability": 0.8495270908030261,
+            "observedFrequency": 0
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 2,
+            "meanPredictedProbability": 0.9293543699260114,
+            "observedFrequency": 0.5
+          }
+        ],
+        "negativeBinomialCalibrationBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 150,
+            "meanPredictedProbability": 0.06234540534972784,
+            "observedFrequency": 0.24
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 381,
+            "meanPredictedProbability": 0.15608940234997112,
+            "observedFrequency": 0.2545931758530184
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 478,
+            "meanPredictedProbability": 0.24725018171048999,
+            "observedFrequency": 0.2489539748953975
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 370,
+            "meanPredictedProbability": 0.3466551224395071,
+            "observedFrequency": 0.2945945945945946
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 199,
+            "meanPredictedProbability": 0.4437554226505363,
+            "observedFrequency": 0.3165829145728643
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 68,
+            "meanPredictedProbability": 0.5410680404432793,
+            "observedFrequency": 0.29411764705882354
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 26,
+            "meanPredictedProbability": 0.6395266344184017,
+            "observedFrequency": 0.3076923076923077
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 14,
+            "meanPredictedProbability": 0.7445382152129819,
+            "observedFrequency": 0.07142857142857142
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 3,
+            "meanPredictedProbability": 0.8495287548965923,
+            "observedFrequency": 0
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 2,
+            "meanPredictedProbability": 0.9293542094093952,
+            "observedFrequency": 0.5
+          }
+        ]
+      }
+    ],
+    "historyDepth": [
+      {
+        "label": "2–3",
+        "matches": 200,
+        "poissonRPS": 0.07835860338677618,
+        "negativeBinomialRPS": 0.07835864370696202,
+        "pairedAdvantage": -4.032018590510375e-8
+      },
+      {
+        "label": "4–6",
+        "matches": 323,
+        "poissonRPS": 0.07048522694373668,
+        "negativeBinomialRPS": 0.0702872378663318,
+        "pairedAdvantage": 0.00019798907740491338
+      },
+      {
+        "label": "7–10",
+        "matches": 401,
+        "poissonRPS": 0.06543774265482104,
+        "negativeBinomialRPS": 0.06541794894014223,
+        "pairedAdvantage": 0.00001979371467874633
+      },
+      {
+        "label": "11–15",
+        "matches": 516,
+        "poissonRPS": 0.06184597379316239,
+        "negativeBinomialRPS": 0.06198894910166845,
+        "pairedAdvantage": -0.0001429753085060842
+      },
+      {
+        "label": "16+",
+        "matches": 251,
+        "poissonRPS": 0.06264700759570402,
+        "negativeBinomialRPS": 0.06265919121687981,
+        "pairedAdvantage": -0.000012183621175849741
+      }
+    ],
+    "dispersion": {
+      "sourceMatches": 1900,
+      "meanTotal": 10.49736842105263,
+      "varianceTotal": 11.707887811634587,
+      "varianceToMean": 1.1153164623768221,
+      "varianceConvention": "population variance; divisor N; all source matches"
+    },
+    "fitDiagnostics": {
+      "successfulPoissonFits": 458,
+      "successfulNegativeBinomialFits": 458,
+      "failures": 0,
+      "alphaMinimum": 1.820199548483882e-11,
+      "alphaMedian": 0.03644844610594145,
+      "alphaMaximum": 0.09886551076270123,
+      "maximumPoissonMeanGradientNorm": 0.0000023718354224462405,
+      "maximumNegativeBinomialMeanGradientNorm": 0.000010275005885066108,
+      "poissonConvergence": {
+        "gradient": 444,
+        "objective": 14,
+        "step": 0
+      },
+      "negativeBinomialConvergence": {
+        "gradient": 365,
+        "objective": 93,
+        "step": 0
+      }
+    }
+  },
+  "preferredModel": "NONE / INCONCLUSIVE"
+}

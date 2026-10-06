@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "sourceName": "Football-Data.co.uk / English Premier League",
+  "sourcePage": "https://www.football-data.co.uk/englandm.php",
+  "acquisitionMethod": "Manually downloaded and supplied locally by the user; no automated acquisition",
+  "rawSourcePolicy": "Original CSVs and normalized match rows are intentionally not redistributed; data/private/ is gitignored",
+  "requiredColumns": [
+    "Date",
+    "HomeTeam",
+    "AwayTeam",
+    "HC",
+    "AC"
+  ],
+  "files": [
+    {
+      "season": "2014-15",
+      "localFile": "1415-E0.csv",
+      "sha256": "76b7858051ff6b17f46f49f26fdc70c1f29537270492606f5cc63d67fad5d149"
+    },
+    {
+      "season": "2015-16",
+      "localFile": "1516-E0.csv",
+      "sha256": "bd3502a18c38a1597fd9af62e2366b4015006d3528dd4d18b311bd6237bbc085"
+    },
+    {
+      "season": "2016-17",
+      "localFile": "1617-E0.csv",
+      "sha256": "9625a7652b5f98fbd3e2e4d378c851fc246693f3343e34a72428d5b6e864d3e0"
+    },
+    {
+      "season": "2017-18",
+      "localFile": "1718-E0.csv",
+      "sha256": "4f3389365ef3f7ac966764ed8ba67cf3b79f5aebed18dd224099c4b2c98bc67b"
+    },
+    {
+      "season": "2018-19",
+      "localFile": "1819-E0.csv",
+      "sha256": "7c096b3c2ecd54c6993d22eeea73450c2bde11e3457238b226b8f43c62dfc35e"
+    },
+    {
+      "season": "2021-22",
+      "localFile": "2122-E0.csv",
+      "sha256": "335afcbabeb2939fa10ab39ba3e8215072d0b577cb8d0705c1e44c56e934e703"
+    },
+    {
+      "season": "2022-23",
+      "localFile": "2223-E0.csv",
+      "sha256": "8442792d3b614c94ea3cf381bd2736805889cc1713169035368fff19c3d02380"
+    },
+    {
+      "season": "2023-24",
+      "localFile": "2324-E0.csv",
+      "sha256": "b2e057b0ed959f198b0f63d2391c01239f3608e6de5db68edab3f88e04d07ff3"
+    },
+    {
+      "season": "2024-25",
+      "localFile": "2425-E0.csv",
+      "sha256": "d0c8ce4a96d886cf60cf101f570f4a3893844226f91c7bd769eb568c49edbfa4"
+    },
+    {
+      "season": "2025-26",
+      "localFile": "2526-E0.csv",
+      "sha256": "3e3a8352f9ada6789c508d6ca184424421fed56a30400904a4a327c583407e62"
+    }
+  ]
+}

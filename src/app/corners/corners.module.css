@@ -1,0 +1,13 @@
+.table { min-width: 1100px; }
+.seasonTable { min-width: 1300px; }
+.table tbody th { padding-left: 24px; font: 12px "SFMono-Regular", Consolas, monospace; }
+.title { font-size: 16px; font-weight: 600; }
+.diagnostics { border: 1px solid #dce3e7; border-radius: 8px; padding: 24px; margin-top: 24px; background: white; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 24px 0; }
+.stats dt { font-size: 11px; color: #62717d; }
+.stats dd { margin: 8px 0 0; font: 14px "SFMono-Regular", Consolas, monospace; }
+.diagnostics p { font-size: 12px; color: #62717d; line-height: 1.8; }
+.preference { padding: 20px 24px; border: 1px solid #dce3e7; border-left: 3px solid #146b59; border-radius: 8px; background: #f5f9f7; margin-bottom: 28px; }
+.preference strong { display: block; font: 16px "SFMono-Regular", Consolas, monospace; margin: 10px 0; overflow-wrap: anywhere; }
+.preference p { color: #62717d; font-size: 12px; line-height: 1.8; }
+@media (max-width: 760px) { .stats { grid-template-columns: 1fr 1fr; } }
