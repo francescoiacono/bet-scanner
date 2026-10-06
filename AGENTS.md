@@ -37,3 +37,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Comparisons between models or benchmarks must use paired outcomes from the same evaluated matches.
 - Uncertainty intervals are diagnostics, not proof of statistical or betting significance.
 - Diagnostic slices must be defined independently of their observed performance; do not invent post-hoc buckets to make results look stronger.
+- Named model versions are immutable once used for recorded evaluation results.
+- New models must be evaluated on the same eligible matches as their baseline when making paired comparisons.
+- External-validation data must not be used to tune or alter the model within the milestone that first evaluates it.
+- Numerical optimisation must be deterministic from deterministic inputs.
+- Optimisation failures must fail explicitly; never silently fall back to another model or stale parameters.
+- Model fitting must obey the same causal boundary as prediction: target-date results may never enter target-date fitting.
+- General-purpose numerical optimisation algorithms should use a small, established library rather than being reimplemented without a strong reason.

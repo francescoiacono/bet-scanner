@@ -136,7 +136,7 @@ export default function DiagnosticsPage() {
         <ComponentTable id="weakest-components-title" title={`${weakest.seasonId} outcome error components`} rows={weakest.outcomes} />
         <HistoryTable id="weakest-history-title" title={`${weakest.seasonId} history-depth performance`} rows={weakest.historyDepth} />
       </section> : <p className={evaluation.emptyNotice}>No evaluated season is available for the weakest-season diagnostic.</p>}
-      <footer className={shared.footer}><span>BET SCANNER<span className={shared.footerSeparator}> / </span>MODEL RESEARCH</span><span>Same historical data. Frozen poisson-v1. V0.5.</span></footer>
+      <footer className={shared.footer}><span>BET SCANNER<span className={shared.footerSeparator}> / </span>MODEL RESEARCH</span><span>Same historical data. Frozen poisson-v1. V0.6.</span></footer>
     </main>
   </div>;
 }

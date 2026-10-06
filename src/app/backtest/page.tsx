@@ -166,7 +166,7 @@ export default function BacktestPage() {
             <div><span className={shared.methodNumber}>03 / PROVENANCE</span><h3>Local, reproducible results</h3><p>Five complete seasons from <a href={sourceUrl}>OpenFootball / england</a>, snapshot {eplProvenance.commit.slice(0, 8)}, CC0. Every season passes 380-match, 20-team, and 19-home / 19-away checks. No runtime data acquisition.</p></div>
           </div>
         </section>
-        <footer className={shared.footer}><span>BET SCANNER<span className={shared.footerSeparator}> / </span>MODEL RESEARCH</span><span>Real results. No historical prices. V0.5.</span></footer>
+        <footer className={shared.footer}><span>BET SCANNER<span className={shared.footerSeparator}> / </span>MODEL RESEARCH</span><span>Real results. No historical prices. V0.6.</span></footer>
       </main>
     </div>
   );

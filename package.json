@@ -1,6 +1,6 @@
 {
   "name": "bet-scanner",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -11,10 +11,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "next typegen && tsc --noEmit",
-    "data:build": "node scripts/build-data.mjs"
+    "data:build": "node scripts/build-data.mjs",
+    "model:build": "node --import ./scripts/register-typescript.mjs scripts/build-models.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
+    "numeric": "1.2.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

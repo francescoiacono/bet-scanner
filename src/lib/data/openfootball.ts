@@ -1,13 +1,15 @@
 import type { HistoricalSeason, PlayedMatch } from "../backtest/types";
 
 export const EPL_SEASON_IDS = ["2021-22", "2022-23", "2023-24", "2024-25", "2025-26"] as const;
+export const EXTERNAL_EPL_SEASON_IDS = ["2014-15", "2015-16", "2016-17", "2017-18", "2018-19"] as const;
+export type HistoricalDataset = "DEVELOPMENT" | "EXTERNAL_VALIDATION";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DATE_HEADER = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) ([A-Za-z]{3}) (\d{1,2})(?: (\d{4}))?$/;
 
 function seasonStartYear(id: string): number {
-  if (!(EPL_SEASON_IDS as readonly string[]).includes(id)) {
-    throw new RangeError(`Unsupported completed EPL season: ${id}. Expected 2021-22 through 2025-26.`);
+  if (!([...EPL_SEASON_IDS, ...EXTERNAL_EPL_SEASON_IDS] as readonly string[]).includes(id)) {
+    throw new RangeError(`Unsupported completed EPL season: ${id}. Expected an explicitly selected development or external-validation season.`);
   }
   return Number(id.slice(0, 4));
 }
@@ -41,7 +43,7 @@ function slug(team: string): string {
   return team.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-/** Parse the two result layouts used by the five vendored Football.TXT files. */
+/** Parse explicit result layouts from the selected vendored Football.TXT files. */
 export function parseOpenFootballSeason(source: string, seasonId: string): PlayedMatch[] {
   seasonStartYear(seasonId);
   const matches: PlayedMatch[] = [];
@@ -165,7 +167,9 @@ export interface SeasonSource {
 }
 
 /** Stable key/record ordering and one trailing newline; no timestamps of generation. */
-export function generateHistoricalDataset(sources: readonly SeasonSource[]): string {
+export function generateHistoricalDataset(sources: readonly SeasonSource[], dataset: HistoricalDataset = "DEVELOPMENT"): string {
+  if (dataset !== "DEVELOPMENT" && dataset !== "EXTERNAL_VALIDATION") throw new RangeError("Unknown historical dataset.");
+  const selected = dataset === "DEVELOPMENT" ? EPL_SEASON_IDS : EXTERNAL_EPL_SEASON_IDS;
   const ids = new Set<string>();
   const seasons = [...sources].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0).map((source): HistoricalSeason => {
     if (ids.has(source.id)) throw new RangeError(`Duplicate season ID: ${source.id}.`);
@@ -174,8 +178,8 @@ export function generateHistoricalDataset(sources: readonly SeasonSource[]): str
     validateHistoricalSeason(season);
     return season;
   });
-  if (seasons.length !== EPL_SEASON_IDS.length || EPL_SEASON_IDS.some((id) => !ids.has(id))) {
-    throw new RangeError("Generation requires exactly the five selected completed EPL seasons.");
+  if (seasons.length !== selected.length || selected.some((id) => !ids.has(id))) {
+    throw new RangeError(`Generation requires exactly the five selected completed EPL seasons for ${dataset}.`);
   }
   return JSON.stringify(seasons, null, 2) + "\n";
 }

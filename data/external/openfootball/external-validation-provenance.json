@@ -1,0 +1,46 @@
+{
+  "repository": "https://github.com/openfootball/england",
+  "commit": "b17e8f01707d83d2ce1790c14d4a5eeb35987825",
+  "commitDate": "2026-09-21T10:35:47Z",
+  "league": "EPL",
+  "dataset": "EXTERNAL_VALIDATION",
+  "seasons": [
+    "2014-15",
+    "2015-16",
+    "2016-17",
+    "2017-18",
+    "2018-19"
+  ],
+  "files": [
+    {
+      "upstreamPath": "2014-15/1-premierleague.txt",
+      "localFile": "2014-15-premierleague.txt",
+      "sha256": "94114132eb20e9affe1645906e19dc6ddb58681945abc0f80fe3e8aa32ba5824"
+    },
+    {
+      "upstreamPath": "2015-16/1-premierleague.txt",
+      "localFile": "2015-16-premierleague.txt",
+      "sha256": "5f150bc89de4bf39527716999396994d02f0ac1d8fa8978b3d513e7e3262a27a"
+    },
+    {
+      "upstreamPath": "2016-17/1-premierleague.txt",
+      "localFile": "2016-17-premierleague.txt",
+      "sha256": "6d66020cb09c03c15abdc005e8832c83ca89697ae0dfa3b44859369fdf2883af"
+    },
+    {
+      "upstreamPath": "2017-18/1-premierleague.txt",
+      "localFile": "2017-18-premierleague.txt",
+      "sha256": "c20171e80a6dd35d1177c11166a7be402daa58bfa3fd5689f76e2705ecfb74b7"
+    },
+    {
+      "upstreamPath": "2018-19/1-premierleague.txt",
+      "localFile": "2018-19-premierleague.txt",
+      "sha256": "58db3b0250ae01086f0f1df7a38e1315fc933423da53de94fdd36c7b977ca877"
+    },
+    {
+      "upstreamPath": "LICENSE.md",
+      "localFile": "LICENSE.md",
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    }
+  ]
+}

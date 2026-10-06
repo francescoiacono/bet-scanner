@@ -184,7 +184,7 @@ export default function ScannerDashboard({
           </div>
         </section>
 
-        <footer className={styles.footer}><span>BET SCANNER<span className={styles.footerSeparator}> / </span>LOCAL RESEARCH</span><span>Fictional inputs. Deterministic analysis. V0.5.</span></footer>
+        <footer className={styles.footer}><span>BET SCANNER<span className={styles.footerSeparator}> / </span>LOCAL RESEARCH</span><span>Fictional inputs. Deterministic analysis. V0.6.</span></footer>
       </main>
     </div>
   );
