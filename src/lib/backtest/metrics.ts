@@ -94,6 +94,7 @@ export function summarizeBacktest(
   const count = records.length;
   const meanBrierScore = count ? records.reduce((sum, record) => sum + record.brierScore, 0) / count : null;
   const uniformBenchmarkBrier = count ? records.reduce((sum, record) => sum + record.uniformBrierScore, 0) / count : null;
+  const leagueBaseRateBrier = count ? records.reduce((sum, record) => sum + record.leagueBaseRateBrierScore, 0) / count : null;
   const topPickCorrectCount = records.filter((record) => record.topSelectionCorrect).length;
   const calibration = calculateCalibration(records);
   return {
@@ -103,6 +104,10 @@ export function summarizeBacktest(
     meanBrierScore,
     uniformBenchmarkBrier,
     brierSkillScore: meanBrierScore === null || uniformBenchmarkBrier === null ? null : calculateBrierSkill(meanBrierScore, uniformBenchmarkBrier),
+    leagueBaseRateBrier,
+    // A perfect (zero-Brier) benchmark makes this ratio undefined.
+    brierSkillVsLeagueBaseRate: meanBrierScore === null || leagueBaseRateBrier === null || leagueBaseRateBrier === 0
+      ? null : calculateBrierSkill(meanBrierScore, leagueBaseRateBrier),
     topPickCorrectCount,
     topPickAccuracy: count ? topPickCorrectCount / count : null,
     topPickCalibrationECE: calibration.expectedCalibrationError,

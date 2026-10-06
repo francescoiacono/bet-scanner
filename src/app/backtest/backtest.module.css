@@ -3,9 +3,13 @@
 .supplementary > div { display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border: 1px solid #dce3e7; border-radius: 8px; background: white; }
 .supplementary strong { font: 26px "SFMono-Regular", Consolas, monospace; font-weight: 500; }
 .supplementary div > span:last-child { color: #62717d; font-size: 11px; line-height: 1.6; }
-.predictionTable { min-width: 1110px; }
+.predictionTable { min-width: 1370px; }
 .cellDetail { display: block; margin-top: 7px; color: #62717d; font: 10px Arial, sans-serif; }
-.predictionTable .brierCell { font-weight: 600; background: #f1f5f7; }
+.brierCell { font-weight: 600; background: #f1f5f7; }
+.seasonTable { min-width: 1330px; }
+.seasonTable tbody th { padding-left: 24px; font: 12px "SFMono-Regular", Consolas, monospace; }
+.benchmarkNote { margin: 0 0 24px; padding: 20px 24px; border-left: 3px solid #146b59; background: #eef4f1; color: #445650; font-size: 12px; line-height: 1.8; }
+.benchmarkNote p + p { margin-top: 10px; }
 .calibrationTable { min-width: 650px; }
 .calibrationTable tbody th { padding-left: 24px; font: 12px "SFMono-Regular", Consolas, monospace; }
 .tableNote { padding: 16px 24px; border-top: 1px solid #e9edf0; color: #62717d; font-size: 11px; line-height: 1.7; }

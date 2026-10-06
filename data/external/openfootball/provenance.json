@@ -1,0 +1,45 @@
+{
+  "repository": "https://github.com/openfootball/england",
+  "commit": "b17e8f01707d83d2ce1790c14d4a5eeb35987825",
+  "commitDate": "2026-09-21T10:35:47Z",
+  "league": "EPL",
+  "seasons": [
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25",
+    "2025-26"
+  ],
+  "files": [
+    {
+      "upstreamPath": "2021-22/1-premierleague.txt",
+      "localFile": "2021-22-premierleague.txt",
+      "sha256": "592df232fbc7c2f36ec3e643eef608f77fcbf7d8da0706c94c99248d60b932b3"
+    },
+    {
+      "upstreamPath": "2022-23/1-premierleague.txt",
+      "localFile": "2022-23-premierleague.txt",
+      "sha256": "c85a2f8ac64975435b8359eb923eaa09e48f33d47672c8b32d2c6e99a8cec5f0"
+    },
+    {
+      "upstreamPath": "2023-24/1-premierleague.txt",
+      "localFile": "2023-24-premierleague.txt",
+      "sha256": "0bfb4a7fffe0b1bf7318955686eafeb28fc9676346ae433259e7409d69551450"
+    },
+    {
+      "upstreamPath": "2024-25/1-premierleague.txt",
+      "localFile": "2024-25-premierleague.txt",
+      "sha256": "e39716b01af0c8654a9fae7b5555e6b02f506ea05239e0d0eef41936ba80e1e3"
+    },
+    {
+      "upstreamPath": "2025-26/1-premierleague.txt",
+      "localFile": "2025-26-premierleague.txt",
+      "sha256": "38c1de56c9e9b6662c7efc1420b7e1fe00dddbb502fe72d8f759e773ba3c093b"
+    },
+    {
+      "upstreamPath": "LICENSE.md",
+      "localFile": "LICENSE.md",
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    }
+  ]
+}

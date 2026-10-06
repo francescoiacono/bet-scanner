@@ -17,8 +17,8 @@ export default function ResearchHeader({ activePage }: { activePage: "scanner" |
         <Link href="/backtest" aria-current={activePage === "backtest" ? "page" : undefined}>Backtest</Link>
       </nav>
       <div className={styles.headerMeta}>
-        <span className={styles.simulationBadge}>SIMULATION / FICTIONAL DATA</span>
-        <span className={styles.version}>V0.3</span>
+        <span className={styles.simulationBadge}>{activePage === "backtest" ? "REAL HISTORICAL RESULTS" : "SIMULATION / FICTIONAL MARKET SCANNER"}</span>
+        <span className={styles.version}>V0.4</span>
       </div>
     </header>
   );

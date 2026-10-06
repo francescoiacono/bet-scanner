@@ -27,3 +27,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Changing a future result must never change an earlier backtest prediction.
 - Do not modify a model while implementing the framework used to evaluate that model unless explicitly requested.
 - Add focused tests for new behaviour and important invariants; do not increase test count merely for its own sake.
+- Real-data evaluations must record dataset provenance and the exact seasons evaluated.
+- Evaluation seasons must not share model history unless a milestone explicitly introduces cross-season carryover.
+- Real-data ingestion must be reproducible from committed source data or a documented deterministic acquisition step.
+- Generated/normalized datasets must never silently drop malformed source matches.
+- Benchmark predictions must obey the same causal information boundary as the model being evaluated.

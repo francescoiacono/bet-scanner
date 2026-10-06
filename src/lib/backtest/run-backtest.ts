@@ -1,11 +1,12 @@
 import { MODEL_VERSION, predictMatch } from "../football/predict-match";
-import type { LeagueAverages } from "../football/types";
+import type { LeagueAverages, OutcomeProbabilities } from "../football/types";
 import {
   calculateHistoricalLeagueAverages, DEFAULT_MINIMUM_VENUE_MATCHES,
   deriveTeamProfiles, hasEnoughHistory, kickoffTimestamp,
   validateMinimumVenueMatches, validatePlayedMatches,
 } from "./history";
 import { actualOutcome, calculateBrierScore, summarizeBacktest, topPick, UNIFORM_PROBABILITIES } from "./metrics";
+import { calculateLeagueBaseRate } from "./league-base-rate";
 import type { BacktestConfig, BacktestPrediction, BacktestResult, PlayedMatch, SkippedMatch } from "./types";
 
 /** Predict the entire kickoff batch before admitting any of its results. */
@@ -29,6 +30,7 @@ export function runBacktest(
     const batch = ordered.slice(start, end);
     const profiles = new Map(deriveTeamProfiles(history).map((profile) => [profile.team, profile]));
     let leagueAverages: LeagueAverages | undefined;
+    let leagueBaseRate: OutcomeProbabilities | undefined;
 
     for (const { match } of batch) {
       const home = profiles.get(match.homeTeam);
@@ -38,6 +40,7 @@ export function runBacktest(
         continue;
       }
       leagueAverages ??= calculateHistoricalLeagueAverages(history);
+      leagueBaseRate ??= calculateLeagueBaseRate(history);
       // The model receives fixture identity, never this fixture's final score.
       const fixture = { id: match.id, homeTeam: match.homeTeam, awayTeam: match.awayTeam };
       const prediction = predictMatch(fixture, home, away, leagueAverages);
@@ -52,6 +55,8 @@ export function runBacktest(
         actualOutcome: outcome,
         brierScore: calculateBrierScore(prediction, outcome),
         uniformBrierScore: calculateBrierScore(UNIFORM_PROBABILITIES, outcome),
+        leagueBaseRateProbabilities: { ...leagueBaseRate },
+        leagueBaseRateBrierScore: calculateBrierScore(leagueBaseRate, outcome),
         topSelection: pick.selection,
         topConfidence: pick.confidence,
         topSelectionCorrect: pick.selection === outcome,

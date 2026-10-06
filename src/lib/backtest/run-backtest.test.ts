@@ -139,6 +139,8 @@ describe("time-causal walk-forward evaluation", () => {
       expect(result.summary.evaluatedMatches).toBe(0);
       expect(result.summary.meanBrierScore).toBeNull();
       expect(result.summary.uniformBenchmarkBrier).toBeNull();
+      expect(result.summary.leagueBaseRateBrier).toBeNull();
+      expect(result.summary.brierSkillVsLeagueBaseRate).toBeNull();
       expect(result.summary.brierSkillScore).toBeNull();
       expect(result.summary.topPickAccuracy).toBeNull();
       expect(result.summary.topPickCalibrationECE).toBeNull();
