@@ -1,6 +1,8 @@
-# Bet Scanner V0.7
+# Bet Scanner V0.8
 
-A local football research dashboard with five research views:
+A local football research dashboard with six research views:
+
+- **Historical market value (`/value`)**: evaluate the already recorded `dixon-coles-v1` probabilities at historical Bet365 non-closing 1X2 source prices using a predeclared flat-unit paper rule.
 
 - **Model comparison (`/models`)**: compare frozen `poisson-v1` with independently fitted `dixon-coles-v1`, reporting development and external historical validation separately.
 - **Corner research (`/corners`)**: compare jointly fitted `corner-poisson-v1` and `corner-negative-binomial-v1` on manually supplied private historical corner counts, with public aggregate reports only.
@@ -8,7 +10,7 @@ A local football research dashboard with five research views:
 - **Model diagnostics (`/diagnostics`)**: investigate paired uncertainty, fixed history-depth slices, outcome calibration, and season robustness without changing the model.
 - **Fictional market scanner (`/`)**: retain the existing fictional match history, upcoming fixtures, and independent mock prices for implied probability, edge, and expected ROI analysis.
 
-V0.7 adds separate corner-count research models. Both result models and their V0.6 data/artifact remain frozen; the fictional scanner still uses `poisson-v1`. Neither corner model is promoted to the scanner. Neither model evaluation establishes betting profitability because no market prices are evaluated. The scanner remains a simulation, not a source of real betting recommendations. No bookmakers, live prices, sports APIs, AI services, authentication, databases, deployment, or bet execution are added. The application makes no runtime network requests for data; assets and fonts are local.
+V0.8 adds historical price evaluation without changing any existing model, dataset, threshold, backtest or V0.6/V0.7 artifact. The fictional scanner still uses `poisson-v1`; neither corner model is promoted. The fixed paper rule loses money in both price cohorts; the predeclared research status is **INCONCLUSIVE**, because the recent ROI interval crosses zero. This is historical paper research, with no current recommendations or real-money execution. The application makes no runtime network requests for data; assets and fonts are local. No live odds, bookmaker APIs, sports APIs, AI services, authentication, databases or deployment are added.
 
 ## Run locally
 
@@ -17,7 +19,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, or http://localhost:3000/corners. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
+Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, http://localhost:3000/corners, or http://localhost:3000/value. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
 
 Offline generation uses Node's native TypeScript stripping (Node 22.18+; verified with Node 24.21). The existing data generator needs no added dependency; model generation uses the pinned Numeric.js optimiser documented below. Neither script needs a new TypeScript loader:
 
@@ -592,9 +594,135 @@ Exact manually supplied input hashes:
 
 ### Corner limitations
 
-Premier League only, raw corner counts, within-season history, no prior-season priors, shrinkage, regularisation or time decay; sparse early fits; possible local optimization/near-zero-dispersion instability; conditional home/away independence; empirical dispersion includes between-match variation; ten-bin ECE depends on binning; fixed ordered category support coarsens all 31+ counts but retains their probability. No player/lineup/injury data, live data, prices, value analysis, profitability or recommendations are introduced. No V0.8 work is implemented.
+Premier League only, raw corner counts, within-season history, no prior-season priors, shrinkage, regularisation or time decay; sparse early fits; possible local optimization/near-zero-dispersion instability; conditional home/away independence; empirical dispersion includes between-match variation; ten-bin ECE depends on binning; fixed ordered category support coarsens all 31+ counts but retains their probability. Corner research includes no prices, profitability or recommendations and remains frozen in V0.8.
 
-## Value analysis and ranking
+## V0.8 historical 1X2 market value
+
+The question is whether **already recorded `dixon-coles-v1` probabilities** identify positive realised value in the ten pinned historical Bet365 price files. V0.8 never fits or regenerates predictions from Football-Data rows. [The typed adapter](src/lib/value/frozen-predictions.ts) projects fixture identity, season, source date, HOME/DRAW/AWAY probabilities, recorded Brier and authoritative actual outcome from `model-comparison-v06.json`. Its SHA-256 remains `deb9fac92ebd104fcc15cf713b5e2600cfba5e56a8f58b30d219f469dccf8262`.
+
+```text
+Gitignored CSVs + immutable V0.7 hashes
+    → six-field projection → complete-season checks → explicit identity alignment
+    → private normalized prices
+Recorded V0.6 Dixon–Coles forecasts + aligned historical prices
+    → market maths → outcome-free paper selection → V0.6 outcome settlement
+    → separate cohort diagnostics / bootstrap
+    → private row audit + compact public aggregate → /value
+```
+
+### Source definition, timing and privacy
+
+Only **Date, HomeTeam, AwayTeam, B365H, B365D, B365A** are extracted. `B365H/D/A` are home/draw/away decimal prices. No result, goal, corner, card, shot or referee columns enter V0.8. Settlement uses the V0.6 actual outcome. All C-suffixed `B365CH/CD/CA`, other bookmaker, market-average/maximum, exchange, handicap and totals prices are ignored; there is no best-bookmaker substitution or closing-line-value calculation.
+
+These are **historical Bet365 non-closing 1X2 source prices**, not a uniformly timed pre-kickoff quote. Football-Data’s collection convention differs across eras, so there is no perfectly uniform number of minutes before kickoff. Excluding later-season C-suffixed closing fields keeps the same named field family throughout the ten-season experiment; it does not remove historical collection-timing differences.
+
+The same ten user-supplied `data/private/football-data/*-E0.csv` files remain unchanged. The [V0.7 manifest](data/provenance/football-data-corners-v07.json) hashes above are verified on every build, never replaced. No downloads or Football-Data network requests occur. Every season passes **380 complete priced matches / 20 teams / 19 home and 19 away matches per team**. Missing/malformed required prices abort generation with exact season, CSV record and affected column; rows are never dropped and another bookmaker is never substituted.
+
+[Explicit aliases](src/lib/value/aliases.ts), including `Man United → Manchester United [FC]`, resolve only against that season’s canonical team identities. They retain OpenFootball’s era-specific labels through listed alternatives, without fuzzy matching or suffix inference. Alignment uses only **season + normalized source date + home team + away team**, is order invariant, and rejects unknown/ambiguous aliases, duplicate or unmatched fixtures. Dates use the existing noon-UTC source-date key, not an invented kickoff time. All ten seasons align **380/380**; every **1,688 recent** and **1,691 older** eligible V0.6 record has exactly one valid price triplet. No additional forecasts or changed warm-up eligibility are introduced.
+
+Normalized prices are written to `data/private/generated/value-v08-prices.json`; detailed joins, probability triplets, odds, selections, actual outcomes and settlements go to `data/private/generated/value-v08-audit.json`. Both are gitignored with the raw CSVs. [The public artifact](src/data/generated/value-v08-summary.json) contains only configuration, input hashes, aggregate coverage, metrics, bootstrap intervals and diagnostic groups: **35,212 bytes**, below 150 KB. There are no per-match picks, individual prices or team-level price records. Rendering reads this public artifact only and runs no optimiser or bootstrap.
+
+```sh
+pnpm value:data:build   # verify hashes, parse six fields, validate/align all seasons
+pnpm value:model:build  # verify private prices, consume frozen V0.6, evaluate both cohorts
+pnpm value:build        # both stages, entirely offline
+```
+
+With identical source bytes, V0.6 artifact, Node/dependency versions and configuration, both aggregate and private audit regenerate byte-for-byte. No timestamps, absolute machine paths or random IDs appear. Tested under Node **24.21.0**. The price-evaluation implementation and protocol were SHA-256 locked before the first valid ten-season profitability result: `f05feb53bcf54b2c9c887404db2d9d8e1a0784e646640db6a10e200437949c31`.
+
+### Fixed maths and paper rule
+
+```text
+raw implied_i = 1 / offered decimal odds_i
+overround = sum(raw implied_H,D,A) − 1
+fair market probability_i = raw implied_i / sum(raw implied_H,D,A)
+expected ROI_i = frozen model probability_i × offered decimal odds_i − 1
+fair-market edge_i = frozen model probability_i − fair market probability_i
+```
+
+Odds must be finite numeric values strictly greater than one. Probabilities are fractions in [0,1]; triplets sum to one. Proportional normalization is the sole margin-removal method. Overround is descriptive, not a filter. Expected ROI and settlement use the **raw offered prices**. Fair-market edge is a disagreement diagnostic, not the selection threshold.
+
+The sole rule, declared and tested before profitability was viewed, is **expected ROI ≥0.02 (2%)**, with **at most one selection per match**: highest expected ROI, then larger fair-market edge, then HOME/DRAW/AWAY. If none qualifies, NO BET. No threshold grid, odds-range/outcome/team/season exclusions or strategy variants are calculated. Selection receives only model probabilities and prices; it rejects settlement fields. Selection is completed before the actual outcome settles it.
+
+Each selected paper bet stakes exactly **one unit**. Win: return offered odds, profit odds−1. Loss: return zero, profit −1. No bet: zero stake, return and profit. Total ROI = net profit / total stakes; zero stakes produce null ROI. No bankroll, Kelly, variable sizing or annualisation is introduced. Maximum drawdown starts at zero cumulative profit and measures the largest prior-peak-to-later-trough decline in units, in deterministic season/source-date/fixture-ID order; recovery does not erase a prior maximum.
+
+Brier uses the existing **three-class sum** of squared probability errors, range 0–2, without division by three, on exactly the same eligible matches for both forecasts. Advantage = **fair-market Brier − Dixon–Coles Brier**, so positive favours the model. Brier asks “Are the probability forecasts better?” ROI asks “Would the fixed price-selection rule have made money at these historical prices?” Better Brier can lose money; worse overall Brier can identify a profitable subset. Neither metric forces the other to agree.
+
+Both uncertainty calculations separately use **5,000 season-stratified, source-date-clustered paired resamples, seed 202608, 95% percentile intervals**. Match-weighted Brier differences retain the model/market pairing. ROI resamples the **original evaluated clusters**, retaining all selected bets and no-bets, and computes replicate profit / replicate stakes without reselecting or tuning. Same-date matches stay together and each season retains its original number of clusters. Linear percentile interpolation uses `(n−1)*p`. Any zero-stake replicate makes the entire ROI interval unavailable with its count reported; it is never silently omitted. Neither real cohort has any zero-stake replicate.
+
+Predeclared status: both ROI lower bounds **strictly >0** → `HISTORICAL_PAPER_EDGE_SUPPORTED`; both upper bounds **strictly <0** → `HISTORICAL_PAPER_EDGE_NEGATIVE`; otherwise → **INCONCLUSIVE**. Exactly zero or unavailable bounds are inconclusive. The status never authorises real-money betting.
+
+### Historical results with the unchanged protocol
+
+| Metric | RECENT PRICE EVALUATION 2021–26 | OLDER PRICE EVALUATION 2014–19 |
+| --- | ---: | ---: |
+| Evaluated / priced coverage | 1,688 / 100% | 1,691 / 100% |
+| Dixon–Coles Brier | 0.60962148 | 0.59313328 |
+| Fair-market Brier | 0.57602936 | 0.55899142 |
+| Model Brier advantage | −0.03359212 | −0.03414186 |
+| Advantage 95% interval | [−0.04323060, −0.02409045] | [−0.04431604, −0.02458121] |
+| Paper bets / no-bet matches | 1,480 / 208 | 1,543 / 148 |
+| Bet frequency | 87.68% | 91.25% |
+| Wins / losses / strike rate | 533 / 947 / 36.01% | 545 / 998 / 35.32% |
+| Stakes / returned units | 1,480 / 1,409.89 | 1,543 / 1,428.22 |
+| Net profit units | −70.11 | −114.78 |
+| Realised ROI | −4.74% | −7.44% |
+| ROI 95% interval | [−12.24%, +2.85%] | [−14.51%, −0.19%] |
+| Maximum drawdown units | 97.60 | 119.71 |
+| Average selected odds | 3.445 | 3.759 |
+| Average selected model / fair probability | 46.54% / 35.88% | 45.34% / 35.54% |
+| Average selected fair-market edge | +10.66 pp | +9.80 pp |
+| Average estimated expected ROI | +27.44% | +30.35% |
+| Overround mean / median | 5.45% / 5.39% | 2.88% / 2.62% |
+| Overround minimum / maximum | 3.27% / 16.67% | 1.69% / 7.21% |
+| Mean fair HOME / DRAW / AWAY | 44.05% / 23.69% / 32.26% | 44.78% / 24.58% / 30.64% |
+| Estimated EV maximum / p95 / p99 | 208.28% / 75.18% / 131.06% | 543.83% / 90.52% / 140.28% |
+| Selected bets with estimated EV ≥20% | 727 | 767 |
+
+**INCONCLUSIVE** follows the exact predeclared rule: recent ROI bounds cross zero, older bounds are below zero; the rule’s “both negative” branch does not apply. Both observed paper returns are negative and both Brier intervals favour fair-market probabilities. This experiment does not support a historical paper edge under the fixed rule. The unusually large estimated EVs and frequent selections, despite realised losses, suggest substantial model/price disagreement and potentially poor calibration; extremes were retained, not removed after inspection.
+
+| Season | Priced | Bets | Frequency | Wins / losses | Avg odds | Avg estimated EV | Profit units | ROI |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2014-15 | 340 | 314 | 92.35% | 106 / 208 | 3.744 | 30.31% | −31.18 | −9.93% |
+| 2015-16 | 340 | 319 | 93.82% | 111 / 208 | 3.726 | 38.13% | +15.42 | +4.83% |
+| 2016-17 | 337 | 312 | 92.58% | 109 / 203 | 3.998 | 26.62% | −42.90 | −13.75% |
+| 2017-18 | 337 | 306 | 90.80% | 111 / 195 | 3.556 | 30.70% | −21.89 | −7.15% |
+| 2018-19 | 337 | 292 | 86.65% | 108 / 184 | 3.768 | 25.48% | −34.23 | −11.72% |
+| 2021-22 | 340 | 297 | 87.35% | 115 / 182 | 3.209 | 30.25% | −20.98 | −7.06% |
+| 2022-23 | 340 | 299 | 87.94% | 123 / 176 | 3.172 | 27.86% | +8.08 | +2.70% |
+| 2023-24 | 328 | 275 | 83.84% | 87 / 188 | 3.754 | 25.17% | −52.70 | −19.16% |
+| 2024-25 | 340 | 300 | 88.24% | 104 / 196 | 3.734 | 29.00% | +12.07 | +4.02% |
+| 2025-26 | 340 | 309 | 90.88% | 104 / 205 | 3.379 | 24.86% | −16.58 | −5.37% |
+
+| Cohort | Selected outcome | Bets | Wins | Avg odds | Avg estimated EV | Profit units | ROI |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Recent | HOME | 569 | 255 | 2.728 | 25.61% | −24.79 | −4.36% |
+| Recent | DRAW | 322 | 82 | 4.428 | 24.27% | +26.99 | +8.38% |
+| Recent | AWAY | 589 | 196 | 3.600 | 30.95% | −72.31 | −12.28% |
+| Older | HOME | 533 | 260 | 2.753 | 24.29% | +7.96 | +1.49% |
+| Older | DRAW | 323 | 70 | 4.382 | 22.69% | −43.53 | −13.48% |
+| Older | AWAY | 687 | 215 | 4.246 | 38.64% | −79.21 | −11.53% |
+
+**Post-hoc diagnostic buckets; not used for selection.** All four were fixed before results; no group is excluded from the primary strategy.
+
+| Cohort | Estimated EV bucket | Bets | Avg odds | Avg estimated EV | Profit units | Realised ROI |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Recent | 2–<5% | 149 | 2.913 | 3.49% | −20.56 | −13.80% |
+| Recent | 5–<10% | 230 | 2.640 | 7.41% | +18.03 | +7.84% |
+| Recent | 10–<20% | 374 | 3.168 | 14.81% | −0.81 | −0.22% |
+| Recent | 20%+ | 727 | 3.951 | 45.19% | −66.77 | −9.18% |
+| Older | 2–<5% | 121 | 2.851 | 3.37% | +15.95 | +13.18% |
+| Older | 5–<10% | 251 | 2.927 | 7.38% | +1.56 | +0.62% |
+| Older | 10–<20% | 404 | 3.106 | 14.59% | −22.15 | −5.48% |
+| Older | 20%+ | 767 | 4.519 | 50.41% | −110.14 | −14.36% |
+
+### Interpretation and deviations
+
+Neither price cohort is a pristine future holdout: their outcomes were already inspected in V0.6. Prices did not enter model fitting, and the model and paper rule were frozen before V0.8 profitability was viewed. Those safeguards reduce price-based tuning but do not create a live forward test or establish future profitability. Date-cluster resampling is conditional on these ten historical seasons, and does not capture every serial dependency, execution restriction or quote-timing difference.
+
+No source or research-protocol deviations occurred. A TypeScript parameter-property syntax issue was corrected for Node’s strip-only mode before the first valid full evaluation; it did not change data or calculations. After the first valid ten-season result, all price columns, aliases, formulas, cohorts, 2% threshold, tie-breaking, unit stakes, bootstrap settings/method and diagnostic buckets remained unchanged. No threshold search, outcome filtering, corners betting, CLV or future milestone is implemented.
+
+## Fictional scanner value analysis and ranking
 
 Only `MATCH_WINNER` is supported. A quote's selection chooses its probability from the independent prediction:
 
@@ -652,7 +780,7 @@ It also assumes independent, constant-rate Poisson scoring. Real scorelines can 
 
 V0.5 evaluates the frozen model without fitting, tuning, or adjusting its predictions. It uses raw goals rather than xG, with no opponent-strength adjustment, recency weighting, prior-season carryover, promoted-team priors, shrinkage, or player/injury information. Season resets discard potentially useful established-club history, and warm-up excludes early fixtures; metrics apply to the eligible subset only.
 
-Five seasons from one league provide limited evidence, and match outcomes are not independent experimental samples. The paired intervals cross zero, despite positive pooled and leave-one-season-out skill. ECE depends on binning; top-pick and the three one-vs-rest ECEs answer different questions. Passing causal tests does not establish model quality. The fictional scanner prices remain artificial; there are no historical odds or profitability metrics.
+Five seasons from one league provide limited evidence, and match outcomes are not independent experimental samples. The paired intervals cross zero, despite positive pooled and leave-one-season-out skill. ECE depends on binning; top-pick and the three one-vs-rest ECEs answer different questions. Passing causal tests does not establish model quality. The fictional scanner prices remain artificial; the retained V0.5 backtest has no historical odds or profitability metrics. V0.8 adds a separate, unchanged-model price evaluation.
 
 V0.5 supplied the development evidence motivating the separately versioned V0.6 comparison: uncertain pooled gains, positive season-exclusion estimates, improving history-depth performance, and weaker DRAW forecasts. V0.6 preserves those recorded results and uses the already requested older seasons for an external check. Future result-model changes require separate scope and fresh prespecified evaluation; V0.6 remains frozen and V0.7 corner research is evaluated independently.
 
@@ -662,12 +790,15 @@ V0.5 supplied the development evidence motivating the separately versioned V0.6 
 pnpm data:build
 pnpm model:build
 pnpm corners:build
+pnpm value:build
 pnpm test
 pnpm typecheck
 pnpm lint
 pnpm build
 ```
 
-`pnpm test:watch` runs Vitest in watch mode. Unit tests use a Node environment and cover mathematical properties, invalid inputs, independent data boundaries, the complete scanner pipeline, retained V0.1 value/ranking behaviour, causal walk-forward invariants, warm-up, history aggregation, Brier conventions, benchmark skill, calibration boundaries/ECE, and empty evaluation. V0.5 adds 26 focused tests for paired/clustered/stratified bootstrap invariants, invalid configuration and empty data, the league-Poisson benchmark, fixed history boundaries and causal counts, outcome components/calibration, pooled season exclusions, dynamic weakest-season selection, and exact V0.4 metric regressions. Existing causal tests also check the new benchmark on every evaluated real match, including previous-season, same-date, and future-result isolation. V0.6 adds 23 focused tests for tau/zero-rho invariants, parameter signs and identification, analytic gradient checks, deterministic fitting and failure, causal paired eligibility, external data/provenance, dataset separation, model-specification locking, and full-artifact regeneration. V0.7 adds 36 focused corner tests across six files, including private integrity/audit and byte-for-byte aggregate regeneration checks. All **256 tests pass**, retaining all 220 V0.1–V0.6 tests. V0.7 reuses the pinned numerical optimiser and adds no dependencies.
+`pnpm test:watch` runs Vitest in watch mode. The existing **256 V0.1–V0.7 tests** remain intact, covering scanner maths, causal walk-forward history, frozen probability models, fitting/analytic gradients, diagnostics and deterministic generation. V0.8 adds **118 tests across five files** for market maths, invalid input, fixed selection/ties, outcome-free selection, unit settlement, ROI/drawdown, six-field synthetic CSV privacy, explicit aliases and alignment, frozen model/content isolation, paired Brier, original-cluster/season-stratified ROI bootstrap including no-bets/zero stakes, strict-zero status boundaries, aggregate privacy/coverage and byte-for-byte regeneration. Total: **374 tests**. Real private-source checks run when the local files are present; synthetic tests and committed aggregate checks do not require them. No dependencies were added.
 
 If an execution sandbox blocks Turbopack's local CSS-worker port, `pnpm build --webpack` is the supported alternative for verifying the production build; the project's default bundler remains unchanged.
+
+V0.8 verification: `data:build`, `model:build`, `corners:build`, `value:build`, all **374 tests in 33 files**, `typecheck` and `lint` passed. Prior generated artifacts remained byte-for-byte unchanged. `pnpm build` encountered the known Turbopack CSS-worker port-binding sandbox restriction; `pnpm build --webpack` passed and prerendered all six routes. Production HTTP checks returned 200 for `/`, `/backtest`, `/diagnostics`, `/models`, `/corners`, `/value` and all 14 referenced local assets, with six navigation links and the correct active page. Value results, all ten seasons and diagnostic groups rendered without private row data. The in-app browser was unavailable, so visual screenshot verification was not performed; rendered HTML and production dependency traces were checked instead.

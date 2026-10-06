@@ -1,7 +1,7 @@
 import Link from "next/link";
 import styles from "./scanner-dashboard.module.css";
 
-export default function ResearchHeader({ activePage }: { activePage: "scanner" | "backtest" | "diagnostics" | "models" | "corners" }) {
+export default function ResearchHeader({ activePage }: { activePage: "scanner" | "backtest" | "diagnostics" | "models" | "corners" | "value" }) {
   return (
     <header className={styles.topbar}>
       <div className={styles.brand}>
@@ -18,10 +18,11 @@ export default function ResearchHeader({ activePage }: { activePage: "scanner" |
         <Link href="/diagnostics" aria-current={activePage === "diagnostics" ? "page" : undefined}>Diagnostics</Link>
         <Link href="/models" aria-current={activePage === "models" ? "page" : undefined}>Models</Link>
         <Link href="/corners" aria-current={activePage === "corners" ? "page" : undefined}>Corners</Link>
+        <Link href="/value" aria-current={activePage === "value" ? "page" : undefined}>Value</Link>
       </nav>
       <div className={styles.headerMeta}>
-        <span className={styles.simulationBadge}>{activePage !== "scanner" ? "REAL HISTORICAL RESULTS" : "SIMULATION / FICTIONAL MARKET SCANNER"}</span>
-        <span className={styles.version}>V0.7</span>
+        <span className={styles.simulationBadge}>{activePage === "value" ? "PAPER RESEARCH ONLY" : activePage !== "scanner" ? "REAL HISTORICAL RESULTS" : "SIMULATION / FICTIONAL MARKET SCANNER"}</span>
+        <span className={styles.version}>V0.8</span>
       </div>
     </header>
   );

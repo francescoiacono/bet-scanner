@@ -1,6 +1,6 @@
 {
   "name": "bet-scanner",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -15,7 +15,10 @@
     "model:build": "node --import ./scripts/register-typescript.mjs scripts/build-models.mjs",
     "corners:data:build": "node --import ./scripts/register-typescript.mjs scripts/build-corners-data.mjs",
     "corners:model:build": "node --import ./scripts/register-typescript.mjs scripts/build-corners-models.mjs",
-    "corners:build": "pnpm corners:data:build && pnpm corners:model:build"
+    "corners:build": "pnpm corners:data:build && pnpm corners:model:build",
+    "value:data:build": "node --import ./scripts/register-typescript.mjs scripts/build-value-data.mjs",
+    "value:model:build": "node --import ./scripts/register-typescript.mjs scripts/build-value-models.mjs",
+    "value:build": "pnpm value:data:build && pnpm value:model:build"
   },
   "dependencies": {
     "next": "16.3.8",

@@ -1,0 +1,1128 @@
+{
+  "schemaVersion": 1,
+  "status": "INCONCLUSIVE",
+  "protocolSha256": "f05feb53bcf54b2c9c887404db2d9d8e1a0784e646640db6a10e200437949c31",
+  "runtime": {
+    "node": "24.21.0",
+    "next": "16.3.8",
+    "numeric": "1.2.6"
+  },
+  "configuration": {
+    "model": "dixon-coles-v1 / recorded V0.6 predictions only",
+    "priceFields": [
+      "B365H",
+      "B365D",
+      "B365A"
+    ],
+    "priceDefinition": "historical Bet365 non-closing 1X2 source prices; C-suffixed fields excluded",
+    "marginRemoval": "proportional normalization",
+    "minimumExpectedROI": 0.02,
+    "stake": 1,
+    "selection": "at most one: expectedROI descending, fairMarketEdge descending, HOME/DRAW/AWAY",
+    "cohorts": {
+      "recent": [
+        "2021-22",
+        "2022-23",
+        "2023-24",
+        "2024-25",
+        "2025-26"
+      ],
+      "older": [
+        "2014-15",
+        "2015-16",
+        "2016-17",
+        "2017-18",
+        "2018-19"
+      ]
+    },
+    "bootstrap": {
+      "samples": 5000,
+      "seed": 202608,
+      "confidenceLevel": 0.95
+    },
+    "roiBootstrapZeroStakes": "any zero-stake replicate makes the interval unavailable; report its count; never drop replicates",
+    "profitabilityStatus": "both ROI lower bounds > 0: HISTORICAL_PAPER_EDGE_SUPPORTED; both upper bounds < 0: HISTORICAL_PAPER_EDGE_NEGATIVE; otherwise INCONCLUSIVE",
+    "evBuckets": [
+      "2–<5%",
+      "5–<10%",
+      "10–<20%",
+      "20%+"
+    ],
+    "extractedColumns": [
+      "Date",
+      "HomeTeam",
+      "AwayTeam",
+      "B365H",
+      "B365D",
+      "B365A"
+    ]
+  },
+  "provenance": {
+    "sourceName": "Football-Data / manually supplied local CSVs",
+    "sourceHashes": [
+      {
+        "season": "2014-15",
+        "localFile": "1415-E0.csv",
+        "sha256": "76b7858051ff6b17f46f49f26fdc70c1f29537270492606f5cc63d67fad5d149"
+      },
+      {
+        "season": "2015-16",
+        "localFile": "1516-E0.csv",
+        "sha256": "bd3502a18c38a1597fd9af62e2366b4015006d3528dd4d18b311bd6237bbc085"
+      },
+      {
+        "season": "2016-17",
+        "localFile": "1617-E0.csv",
+        "sha256": "9625a7652b5f98fbd3e2e4d378c851fc246693f3343e34a72428d5b6e864d3e0"
+      },
+      {
+        "season": "2017-18",
+        "localFile": "1718-E0.csv",
+        "sha256": "4f3389365ef3f7ac966764ed8ba67cf3b79f5aebed18dd224099c4b2c98bc67b"
+      },
+      {
+        "season": "2018-19",
+        "localFile": "1819-E0.csv",
+        "sha256": "7c096b3c2ecd54c6993d22eeea73450c2bde11e3457238b226b8f43c62dfc35e"
+      },
+      {
+        "season": "2021-22",
+        "localFile": "2122-E0.csv",
+        "sha256": "335afcbabeb2939fa10ab39ba3e8215072d0b577cb8d0705c1e44c56e934e703"
+      },
+      {
+        "season": "2022-23",
+        "localFile": "2223-E0.csv",
+        "sha256": "8442792d3b614c94ea3cf381bd2736805889cc1713169035368fff19c3d02380"
+      },
+      {
+        "season": "2023-24",
+        "localFile": "2324-E0.csv",
+        "sha256": "b2e057b0ed959f198b0f63d2391c01239f3608e6de5db68edab3f88e04d07ff3"
+      },
+      {
+        "season": "2024-25",
+        "localFile": "2425-E0.csv",
+        "sha256": "d0c8ce4a96d886cf60cf101f570f4a3893844226f91c7bd769eb568c49edbfa4"
+      },
+      {
+        "season": "2025-26",
+        "localFile": "2526-E0.csv",
+        "sha256": "3e3a8352f9ada6789c508d6ca184424421fed56a30400904a4a327c583407e62"
+      }
+    ],
+    "sourceManifest": "data/provenance/football-data-corners-v07.json",
+    "frozenV06ArtifactSha256": "deb9fac92ebd104fcc15cf713b5e2600cfba5e56a8f58b30d219f469dccf8262",
+    "frozenV06ModelSpecificationSha256": "5ff655611272156930f4e24d153c018c2a2fe312cd9d714a4e6133b922a1b12a"
+  },
+  "coverage": [
+    {
+      "seasonId": "2014-15",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 340,
+      "pricedEvaluatedRecords": 340,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2015-16",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 340,
+      "pricedEvaluatedRecords": 340,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2016-17",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 337,
+      "pricedEvaluatedRecords": 337,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2017-18",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 337,
+      "pricedEvaluatedRecords": 337,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2018-19",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 337,
+      "pricedEvaluatedRecords": 337,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2021-22",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 340,
+      "pricedEvaluatedRecords": 340,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2022-23",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 340,
+      "pricedEvaluatedRecords": 340,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2023-24",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 328,
+      "pricedEvaluatedRecords": 328,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2024-25",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 340,
+      "pricedEvaluatedRecords": 340,
+      "pricedCoverage": 1
+    },
+    {
+      "seasonId": "2025-26",
+      "sourceRows": 380,
+      "completePriceTriplets": 380,
+      "canonicalFixtures": 380,
+      "alignedFixtures": 380,
+      "teams": 20,
+      "homeFixturesPerTeam": 19,
+      "awayFixturesPerTeam": 19,
+      "evaluatedRecords": 340,
+      "pricedEvaluatedRecords": 340,
+      "pricedCoverage": 1
+    }
+  ],
+  "recent": {
+    "cohort": "RECENT",
+    "seasonIds": [
+      "2021-22",
+      "2022-23",
+      "2023-24",
+      "2024-25",
+      "2025-26"
+    ],
+    "historicalMatches": 1900,
+    "evaluatedMatches": 1688,
+    "warmUpSkips": 212,
+    "probability": {
+      "evaluatedMatches": 1688,
+      "dixonColesBrier": 0.6096214837100087,
+      "marketFairBrier": 0.5760293595563422,
+      "modelBrierAdvantage": -0.03359212415366652
+    },
+    "brierBootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202608,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1688,
+      "dateClusters": 522,
+      "strata": [
+        {
+          "seasonId": "2021-22",
+          "dateClusters": 112,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2022-23",
+          "dateClusters": 106,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2023-24",
+          "dateClusters": 103,
+          "evaluatedMatches": 328
+        },
+        {
+          "seasonId": "2024-25",
+          "dateClusters": 99,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2025-26",
+          "dateClusters": 102,
+          "evaluatedMatches": 340
+        }
+      ],
+      "interval": {
+        "observedMean": -0.03359212415366649,
+        "lowerBound": -0.04323059730867961,
+        "upperBound": -0.024090448046136338
+      }
+    },
+    "strategy": {
+      "evaluatedMatches": 1688,
+      "bets": 1480,
+      "noBets": 208,
+      "betFrequency": 0.8767772511848341,
+      "wins": 533,
+      "losses": 947,
+      "strikeRate": 0.3601351351351351,
+      "totalStaked": 1480,
+      "totalReturned": 1409.8900000000003,
+      "netProfit": -70.10999999999999,
+      "roi": -0.04737162162162161,
+      "averageOdds": 3.444783783783783,
+      "averageModelProbability": 0.4654333078220237,
+      "averageFairMarketProbability": 0.3588141399992018,
+      "averageFairMarketEdge": 0.10661916782282273,
+      "averageExpectedROI": 0.2744334907201118,
+      "maximumDrawdown": 97.59999999999997
+    },
+    "roiBootstrap": {
+      "method": "season-stratified original source-date-cluster percentile bootstrap",
+      "samples": 5000,
+      "seed": 202608,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1688,
+      "dateClusters": 522,
+      "strata": [
+        {
+          "seasonId": "2021-22",
+          "dateClusters": 112,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2022-23",
+          "dateClusters": 106,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2023-24",
+          "dateClusters": 103,
+          "evaluatedMatches": 328
+        },
+        {
+          "seasonId": "2024-25",
+          "dateClusters": 99,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2025-26",
+          "dateClusters": 102,
+          "evaluatedMatches": 340
+        }
+      ],
+      "interval": {
+        "observedMean": -0.04737162162162161,
+        "lowerBound": -0.12242481557121021,
+        "upperBound": 0.028498341828207967,
+        "zeroStakeReplicates": 0,
+        "availability": "AVAILABLE"
+      }
+    },
+    "market": {
+      "overround": {
+        "mean": 0.05448975493564522,
+        "median": 0.05394605394605412,
+        "minimum": 0.03274853801169586,
+        "maximum": 0.16666666666666652
+      },
+      "meanFairProbabilities": {
+        "homeProbability": 0.44050155892293635,
+        "drawProbability": 0.236937384331366,
+        "awayProbability": 0.32256105674569824
+      }
+    },
+    "seasons": [
+      {
+        "seasonId": "2021-22",
+        "strategy": {
+          "evaluatedMatches": 340,
+          "bets": 297,
+          "noBets": 43,
+          "betFrequency": 0.8735294117647059,
+          "wins": 115,
+          "losses": 182,
+          "strikeRate": 0.3872053872053872,
+          "totalStaked": 297,
+          "totalReturned": 276.02000000000015,
+          "netProfit": -20.980000000000015,
+          "roi": -0.07063973063973068,
+          "averageOdds": 3.2088888888888882,
+          "averageModelProbability": 0.5116321062245,
+          "averageFairMarketProbability": 0.3891682969740301,
+          "averageFairMarketEdge": 0.12246380925046962,
+          "averageExpectedROI": 0.30251682334234137,
+          "maximumDrawdown": 52.25
+        },
+        "probability": {
+          "evaluatedMatches": 340,
+          "dixonColesBrier": 0.6077343460118885,
+          "marketFairBrier": 0.562218796775968,
+          "modelBrierAdvantage": -0.045515549235921125
+        }
+      },
+      {
+        "seasonId": "2022-23",
+        "strategy": {
+          "evaluatedMatches": 340,
+          "bets": 299,
+          "noBets": 41,
+          "betFrequency": 0.8794117647058823,
+          "wins": 123,
+          "losses": 176,
+          "strikeRate": 0.411371237458194,
+          "totalStaked": 299,
+          "totalReturned": 307.08000000000004,
+          "netProfit": 8.079999999999998,
+          "roi": 0.02702341137123745,
+          "averageOdds": 3.1720735785953194,
+          "averageModelProbability": 0.49728581504237174,
+          "averageFairMarketProbability": 0.3840139173083906,
+          "averageFairMarketEdge": 0.11327189773398141,
+          "averageExpectedROI": 0.2785592087324963,
+          "maximumDrawdown": 16.73
+        },
+        "probability": {
+          "evaluatedMatches": 340,
+          "dixonColesBrier": 0.6029046985584428,
+          "marketFairBrier": 0.57207845483284,
+          "modelBrierAdvantage": -0.030826243725603133
+        }
+      },
+      {
+        "seasonId": "2023-24",
+        "strategy": {
+          "evaluatedMatches": 328,
+          "bets": 275,
+          "noBets": 53,
+          "betFrequency": 0.8384146341463414,
+          "wins": 87,
+          "losses": 188,
+          "strikeRate": 0.31636363636363635,
+          "totalStaked": 275,
+          "totalReturned": 222.29999999999993,
+          "netProfit": -52.69999999999999,
+          "roi": -0.1916363636363636,
+          "averageOdds": 3.7540727272727286,
+          "averageModelProbability": 0.4552097049866484,
+          "averageFairMarketProbability": 0.35706385353106235,
+          "averageFairMarketEdge": 0.09814585145558592,
+          "averageExpectedROI": 0.25172684425198466,
+          "maximumDrawdown": 58.889999999999986
+        },
+        "probability": {
+          "evaluatedMatches": 328,
+          "dixonColesBrier": 0.5809059976058308,
+          "marketFairBrier": 0.5431563124852454,
+          "modelBrierAdvantage": -0.03774968512058516
+        }
+      },
+      {
+        "seasonId": "2024-25",
+        "strategy": {
+          "evaluatedMatches": 340,
+          "bets": 300,
+          "noBets": 40,
+          "betFrequency": 0.8823529411764706,
+          "wins": 104,
+          "losses": 196,
+          "strikeRate": 0.3466666666666667,
+          "totalStaked": 300,
+          "totalReturned": 312.07,
+          "netProfit": 12.070000000000004,
+          "roi": 0.04023333333333334,
+          "averageOdds": 3.733900000000001,
+          "averageModelProbability": 0.42349854849963114,
+          "averageFairMarketProbability": 0.32371305227167807,
+          "averageFairMarketEdge": 0.09978549622795287,
+          "averageExpectedROI": 0.28996506460788557,
+          "maximumDrawdown": 16.259999999999998
+        },
+        "probability": {
+          "evaluatedMatches": 340,
+          "dixonColesBrier": 0.6088426871681263,
+          "marketFairBrier": 0.5847688601321821,
+          "modelBrierAdvantage": -0.02407382703594438
+        }
+      },
+      {
+        "seasonId": "2025-26",
+        "strategy": {
+          "evaluatedMatches": 340,
+          "bets": 309,
+          "noBets": 31,
+          "betFrequency": 0.9088235294117647,
+          "wins": 104,
+          "losses": 205,
+          "strikeRate": 0.3365695792880259,
+          "totalStaked": 309,
+          "totalReturned": 292.41999999999996,
+          "netProfit": -16.58,
+          "roi": -0.05365695792880258,
+          "averageOdds": 3.379449838187704,
+          "averageModelProbability": 0.4400189899968684,
+          "averageFairMarketProbability": 0.3408909589636777,
+          "averageFairMarketEdge": 0.0991280310331905,
+          "averageExpectedROI": 0.24857755589130495,
+          "maximumDrawdown": 36.14
+        },
+        "probability": {
+          "evaluatedMatches": 340,
+          "dixonColesBrier": 0.6467062014609,
+          "marketFairBrier": 0.6167641483647301,
+          "modelBrierAdvantage": -0.02994205309617019
+        }
+      }
+    ],
+    "outcomes": [
+      {
+        "outcome": "HOME",
+        "strategy": {
+          "evaluatedMatches": 569,
+          "bets": 569,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 255,
+          "losses": 314,
+          "strikeRate": 0.44815465729349735,
+          "totalStaked": 569,
+          "totalReturned": 544.2100000000005,
+          "netProfit": -24.789999999999996,
+          "roi": -0.04356766256590509,
+          "averageOdds": 2.7275746924428854,
+          "averageModelProbability": 0.5677190509934861,
+          "averageFairMarketProbability": 0.44541528725221397,
+          "averageFairMarketEdge": 0.12230376374127173,
+          "averageExpectedROI": 0.25605429418374936,
+          "maximumDrawdown": 40.67
+        }
+      },
+      {
+        "outcome": "DRAW",
+        "strategy": {
+          "evaluatedMatches": 322,
+          "bets": 322,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 82,
+          "losses": 240,
+          "strikeRate": 0.2546583850931677,
+          "totalStaked": 322,
+          "totalReturned": 348.99,
+          "netProfit": 26.99,
+          "roi": 0.0838198757763975,
+          "averageOdds": 4.427577639751552,
+          "averageModelProbability": 0.2994978289353746,
+          "averageFairMarketProbability": 0.23059918588100045,
+          "averageFairMarketEdge": 0.06889864305437421,
+          "averageExpectedROI": 0.24271361023492302,
+          "maximumDrawdown": 28.25
+        }
+      },
+      {
+        "outcome": "AWAY",
+        "strategy": {
+          "evaluatedMatches": 589,
+          "bets": 589,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 196,
+          "losses": 393,
+          "strikeRate": 0.33276740237691,
+          "totalStaked": 589,
+          "totalReturned": 516.6899999999999,
+          "netProfit": -72.31000000000004,
+          "roi": -0.1227674023769101,
+          "averageOdds": 3.600356536502551,
+          "averageModelProbability": 0.457335916203925,
+          "averageFairMarketProbability": 0.3452473529688044,
+          "averageFairMarketEdge": 0.11208856323511984,
+          "averageExpectedROI": 0.3095295252624241,
+          "maximumDrawdown": 83.69000000000003
+        }
+      }
+    ],
+    "evBuckets": [
+      {
+        "label": "2–<5%",
+        "strategy": {
+          "evaluatedMatches": 149,
+          "bets": 149,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 58,
+          "losses": 91,
+          "strikeRate": 0.38926174496644295,
+          "totalStaked": 149,
+          "totalReturned": 128.44,
+          "netProfit": -20.560000000000002,
+          "roi": -0.13798657718120808,
+          "averageOdds": 2.9130201342281885,
+          "averageModelProbability": 0.4563687716248611,
+          "averageFairMarketProbability": 0.4182275011580111,
+          "averageFairMarketEdge": 0.03814127046684984,
+          "averageExpectedROI": 0.034863507050825734,
+          "maximumDrawdown": 36.800000000000004
+        }
+      },
+      {
+        "label": "5–<10%",
+        "strategy": {
+          "evaluatedMatches": 230,
+          "bets": 230,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 120,
+          "losses": 110,
+          "strikeRate": 0.5217391304347826,
+          "totalStaked": 230,
+          "totalReturned": 248.03,
+          "netProfit": 18.02999999999999,
+          "roi": 0.07839130434782604,
+          "averageOdds": 2.6401739130434794,
+          "averageModelProbability": 0.5192965590987619,
+          "averageFairMarketProbability": 0.4586766197760218,
+          "averageFairMarketEdge": 0.060619939322740186,
+          "averageExpectedROI": 0.07407210142983668,
+          "maximumDrawdown": 15.590000000000003
+        }
+      },
+      {
+        "label": "10–<20%",
+        "strategy": {
+          "evaluatedMatches": 374,
+          "bets": 374,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 145,
+          "losses": 229,
+          "strikeRate": 0.3877005347593583,
+          "totalStaked": 374,
+          "totalReturned": 373.1900000000002,
+          "netProfit": -0.8100000000000014,
+          "roi": -0.0021657754010695226,
+          "averageOdds": 3.1681818181818184,
+          "averageModelProbability": 0.4568085166188138,
+          "averageFairMarketProbability": 0.3779314281394986,
+          "averageFairMarketEdge": 0.07887708847931509,
+          "averageExpectedROI": 0.1480819565444542,
+          "maximumDrawdown": 22.630000000000003
+        }
+      },
+      {
+        "label": "20%+",
+        "strategy": {
+          "evaluatedMatches": 727,
+          "bets": 727,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 210,
+          "losses": 517,
+          "strikeRate": 0.28885832187070154,
+          "totalStaked": 727,
+          "totalReturned": 660.2300000000004,
+          "netProfit": -66.77,
+          "roi": -0.09184319119669876,
+          "averageOdds": 3.950618982118294,
+          "averageModelProbability": 0.4546874206277029,
+          "averageFairMarketProbability": 0.305209151105387,
+          "averageFairMarketEdge": 0.14947826952231497,
+          "averageExpectedROI": 0.4519225153214647,
+          "maximumDrawdown": 91.79
+        }
+      }
+    ],
+    "extremes": {
+      "maximumExpectedROI": 2.082811099202416,
+      "p95ExpectedROI": 0.7518168685344977,
+      "p99ExpectedROI": 1.3105959876423792,
+      "selectionsAtLeast20Percent": 727
+    }
+  },
+  "older": {
+    "cohort": "OLDER",
+    "seasonIds": [
+      "2014-15",
+      "2015-16",
+      "2016-17",
+      "2017-18",
+      "2018-19"
+    ],
+    "historicalMatches": 1900,
+    "evaluatedMatches": 1691,
+    "warmUpSkips": 209,
+    "probability": {
+      "evaluatedMatches": 1691,
+      "dixonColesBrier": 0.5931332816914757,
+      "marketFairBrier": 0.5589914216582492,
+      "modelBrierAdvantage": -0.03414186003322955
+    },
+    "brierBootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202608,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1691,
+      "dateClusters": 458,
+      "strata": [
+        {
+          "seasonId": "2014-15",
+          "dateClusters": 85,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2015-16",
+          "dateClusters": 87,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2016-17",
+          "dateClusters": 95,
+          "evaluatedMatches": 337
+        },
+        {
+          "seasonId": "2017-18",
+          "dateClusters": 94,
+          "evaluatedMatches": 337
+        },
+        {
+          "seasonId": "2018-19",
+          "dateClusters": 97,
+          "evaluatedMatches": 337
+        }
+      ],
+      "interval": {
+        "observedMean": -0.03414186003322958,
+        "lowerBound": -0.04431604418976199,
+        "upperBound": -0.024581207084214268
+      }
+    },
+    "strategy": {
+      "evaluatedMatches": 1691,
+      "bets": 1543,
+      "noBets": 148,
+      "betFrequency": 0.9124778237729154,
+      "wins": 545,
+      "losses": 998,
+      "strikeRate": 0.35320803629293585,
+      "totalStaked": 1543,
+      "totalReturned": 1428.2200000000005,
+      "netProfit": -114.78000000000006,
+      "roi": -0.07438755670771229,
+      "averageOdds": 3.759040829552816,
+      "averageModelProbability": 0.4534207872321959,
+      "averageFairMarketProbability": 0.35539032435313367,
+      "averageFairMarketEdge": 0.09803046287906172,
+      "averageExpectedROI": 0.30345306165693237,
+      "maximumDrawdown": 119.71000000000006
+    },
+    "roiBootstrap": {
+      "method": "season-stratified original source-date-cluster percentile bootstrap",
+      "samples": 5000,
+      "seed": 202608,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1691,
+      "dateClusters": 458,
+      "strata": [
+        {
+          "seasonId": "2014-15",
+          "dateClusters": 85,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2015-16",
+          "dateClusters": 87,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2016-17",
+          "dateClusters": 95,
+          "evaluatedMatches": 337
+        },
+        {
+          "seasonId": "2017-18",
+          "dateClusters": 94,
+          "evaluatedMatches": 337
+        },
+        {
+          "seasonId": "2018-19",
+          "dateClusters": 97,
+          "evaluatedMatches": 337
+        }
+      ],
+      "interval": {
+        "observedMean": -0.07438755670771229,
+        "lowerBound": -0.14506345566090856,
+        "upperBound": -0.0019169673950970422,
+        "zeroStakeReplicates": 0,
+        "availability": "AVAILABLE"
+      }
+    },
+    "market": {
+      "overround": {
+        "mean": 0.02877497267650592,
+        "median": 0.026190476190476097,
+        "minimum": 0.01694139194139188,
+        "maximum": 0.07212311077898659
+      },
+      "meanFairProbabilities": {
+        "homeProbability": 0.4478020254023192,
+        "drawProbability": 0.2457629975316014,
+        "awayProbability": 0.306434977066079
+      }
+    },
+    "seasons": [
+      {
+        "seasonId": "2014-15",
+        "strategy": {
+          "evaluatedMatches": 340,
+          "bets": 314,
+          "noBets": 26,
+          "betFrequency": 0.9235294117647059,
+          "wins": 106,
+          "losses": 208,
+          "strikeRate": 0.3375796178343949,
+          "totalStaked": 314,
+          "totalReturned": 282.8200000000001,
+          "netProfit": -31.18000000000002,
+          "roi": -0.09929936305732491,
+          "averageOdds": 3.7443630573248403,
+          "averageModelProbability": 0.45431256892138555,
+          "averageFairMarketProbability": 0.35554572867043666,
+          "averageFairMarketEdge": 0.09876684025094909,
+          "averageExpectedROI": 0.3031216888358643,
+          "maximumDrawdown": 44.890000000000015
+        },
+        "probability": {
+          "evaluatedMatches": 340,
+          "dixonColesBrier": 0.6181409667389164,
+          "marketFairBrier": 0.5686725787970864,
+          "modelBrierAdvantage": -0.04946838794183033
+        }
+      },
+      {
+        "seasonId": "2015-16",
+        "strategy": {
+          "evaluatedMatches": 340,
+          "bets": 319,
+          "noBets": 21,
+          "betFrequency": 0.9382352941176471,
+          "wins": 111,
+          "losses": 208,
+          "strikeRate": 0.34796238244514105,
+          "totalStaked": 319,
+          "totalReturned": 334.41999999999996,
+          "netProfit": 15.42,
+          "roi": 0.04833855799373041,
+          "averageOdds": 3.726332288401258,
+          "averageModelProbability": 0.4471735548052561,
+          "averageFairMarketProbability": 0.33169640452808,
+          "averageFairMarketEdge": 0.11547715027717599,
+          "averageExpectedROI": 0.3812859656714723,
+          "maximumDrawdown": 17.169999999999998
+        },
+        "probability": {
+          "evaluatedMatches": 340,
+          "dixonColesBrier": 0.6488515736092411,
+          "marketFairBrier": 0.613244271901875,
+          "modelBrierAdvantage": -0.03560730170736595
+        }
+      },
+      {
+        "seasonId": "2016-17",
+        "strategy": {
+          "evaluatedMatches": 337,
+          "bets": 312,
+          "noBets": 25,
+          "betFrequency": 0.9258160237388724,
+          "wins": 109,
+          "losses": 203,
+          "strikeRate": 0.34935897435897434,
+          "totalStaked": 312,
+          "totalReturned": 269.09999999999997,
+          "netProfit": -42.900000000000006,
+          "roi": -0.1375,
+          "averageOdds": 3.9979166666666672,
+          "averageModelProbability": 0.4367286082088013,
+          "averageFairMarketProbability": 0.35196208529144,
+          "averageFairMarketEdge": 0.08476652291736106,
+          "averageExpectedROI": 0.2662445357037652,
+          "maximumDrawdown": 46.12000000000001
+        },
+        "probability": {
+          "evaluatedMatches": 337,
+          "dixonColesBrier": 0.5601689909989547,
+          "marketFairBrier": 0.5309485367591915,
+          "modelBrierAdvantage": -0.029220454239761995
+        }
+      },
+      {
+        "seasonId": "2017-18",
+        "strategy": {
+          "evaluatedMatches": 337,
+          "bets": 306,
+          "noBets": 31,
+          "betFrequency": 0.9080118694362018,
+          "wins": 111,
+          "losses": 195,
+          "strikeRate": 0.3627450980392157,
+          "totalStaked": 306,
+          "totalReturned": 284.10999999999984,
+          "netProfit": -21.889999999999997,
+          "roi": -0.0715359477124183,
+          "averageOdds": 3.556078431372551,
+          "averageModelProbability": 0.469437136768817,
+          "averageFairMarketProbability": 0.36936982792477785,
+          "averageFairMarketEdge": 0.10006730884403953,
+          "averageExpectedROI": 0.307009382940751,
+          "maximumDrawdown": 30.299999999999997
+        },
+        "probability": {
+          "evaluatedMatches": 337,
+          "dixonColesBrier": 0.589197772498697,
+          "marketFairBrier": 0.5572308129659996,
+          "modelBrierAdvantage": -0.03196695953269608
+        }
+      },
+      {
+        "seasonId": "2018-19",
+        "strategy": {
+          "evaluatedMatches": 337,
+          "bets": 292,
+          "noBets": 45,
+          "betFrequency": 0.8664688427299704,
+          "wins": 108,
+          "losses": 184,
+          "strikeRate": 0.3698630136986301,
+          "totalStaked": 292,
+          "totalReturned": 257.77,
+          "netProfit": -34.23000000000001,
+          "roi": -0.11722602739726032,
+          "averageOdds": 3.768013698630137,
+          "averageModelProbability": 0.460337926242062,
+          "averageFairMarketProbability": 0.37012130367808027,
+          "averageFairMarketEdge": 0.09021662256398183,
+          "averageExpectedROI": 0.25480984408747076,
+          "maximumDrawdown": 39.05000000000001
+        },
+        "probability": {
+          "evaluatedMatches": 337,
+          "dixonColesBrier": 0.5485884757365153,
+          "marketFairBrier": 0.5242917624007704,
+          "modelBrierAdvantage": -0.024296713335744877
+        }
+      }
+    ],
+    "outcomes": [
+      {
+        "outcome": "HOME",
+        "strategy": {
+          "evaluatedMatches": 533,
+          "bets": 533,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 260,
+          "losses": 273,
+          "strikeRate": 0.4878048780487805,
+          "totalStaked": 533,
+          "totalReturned": 540.9599999999999,
+          "netProfit": 7.960000000000003,
+          "roi": 0.014934333958724207,
+          "averageOdds": 2.7532457786116353,
+          "averageModelProbability": 0.561128134429749,
+          "averageFairMarketProbability": 0.4570310422235365,
+          "averageFairMarketEdge": 0.10409709220621237,
+          "averageExpectedROI": 0.24294255794662004,
+          "maximumDrawdown": 24.64
+        }
+      },
+      {
+        "outcome": "DRAW",
+        "strategy": {
+          "evaluatedMatches": 323,
+          "bets": 323,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 70,
+          "losses": 253,
+          "strikeRate": 0.21671826625386997,
+          "totalStaked": 323,
+          "totalReturned": 279.4699999999999,
+          "netProfit": -43.53000000000001,
+          "roi": -0.13476780185758516,
+          "averageOdds": 4.382105263157897,
+          "averageModelProbability": 0.30491683049375357,
+          "averageFairMarketProbability": 0.2432975318462178,
+          "averageFairMarketEdge": 0.06161929864753625,
+          "averageExpectedROI": 0.22691637520796204,
+          "maximumDrawdown": 52.580000000000005
+        }
+      },
+      {
+        "outcome": "AWAY",
+        "strategy": {
+          "evaluatedMatches": 687,
+          "bets": 687,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 215,
+          "losses": 472,
+          "strikeRate": 0.3129548762736536,
+          "totalStaked": 687,
+          "totalReturned": 607.7900000000002,
+          "netProfit": -79.21000000000002,
+          "roi": -0.11529839883551678,
+          "averageOdds": 4.246433770014549,
+          "averageModelProbability": 0.4396780826764763,
+          "averageFairMarketProbability": 0.3292352579118078,
+          "averageFairMarketEdge": 0.11044282476466824,
+          "averageExpectedROI": 0.3863838450639404,
+          "maximumDrawdown": 96.64000000000003
+        }
+      }
+    ],
+    "evBuckets": [
+      {
+        "label": "2–<5%",
+        "strategy": {
+          "evaluatedMatches": 121,
+          "bets": 121,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 69,
+          "losses": 52,
+          "strikeRate": 0.5702479338842975,
+          "totalStaked": 121,
+          "totalReturned": 136.95000000000002,
+          "netProfit": 15.94999999999999,
+          "roi": 0.13181818181818175,
+          "averageOdds": 2.8514876033057845,
+          "averageModelProbability": 0.5037103100869765,
+          "averageFairMarketProbability": 0.47271114237754597,
+          "averageFairMarketEdge": 0.03099916770943059,
+          "averageExpectedROI": 0.03367802545387351,
+          "maximumDrawdown": 10.620000000000003
+        }
+      },
+      {
+        "label": "5–<10%",
+        "strategy": {
+          "evaluatedMatches": 251,
+          "bets": 251,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 109,
+          "losses": 142,
+          "strikeRate": 0.4342629482071713,
+          "totalStaked": 251,
+          "totalReturned": 252.56000000000003,
+          "netProfit": 1.5600000000000005,
+          "roi": 0.006215139442231078,
+          "averageOdds": 2.9266932270916333,
+          "averageModelProbability": 0.47758955919592766,
+          "averageFairMarketProbability": 0.43225305390690255,
+          "averageFairMarketEdge": 0.04533650528902489,
+          "averageExpectedROI": 0.07375279562622468,
+          "maximumDrawdown": 19.71
+        }
+      },
+      {
+        "label": "10–<20%",
+        "strategy": {
+          "evaluatedMatches": 404,
+          "bets": 404,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 167,
+          "losses": 237,
+          "strikeRate": 0.41336633663366334,
+          "totalStaked": 404,
+          "totalReturned": 381.8500000000001,
+          "netProfit": -22.149999999999995,
+          "roi": -0.05482673267326731,
+          "averageOdds": 3.1060396039603964,
+          "averageModelProbability": 0.4685321866193807,
+          "averageFairMarketProbability": 0.39844324908655643,
+          "averageFairMarketEdge": 0.07008893753282412,
+          "averageExpectedROI": 0.14594093892191617,
+          "maximumDrawdown": 32.9
+        }
+      },
+      {
+        "label": "20%+",
+        "strategy": {
+          "evaluatedMatches": 767,
+          "bets": 767,
+          "noBets": 0,
+          "betFrequency": 1,
+          "wins": 200,
+          "losses": 567,
+          "strikeRate": 0.2607561929595828,
+          "totalStaked": 767,
+          "totalReturned": 656.8600000000006,
+          "netProfit": -110.14,
+          "roi": -0.14359843546284223,
+          "averageOdds": 4.518552803129063,
+          "averageModelProbability": 0.42961844123382825,
+          "averageFairMarketProbability": 0.28905167286518985,
+          "averageFairMarketEdge": 0.14056676836863785,
+          "averageExpectedROI": 0.5041472516689595,
+          "maximumDrawdown": 112.34
+        }
+      }
+    ],
+    "extremes": {
+      "maximumExpectedROI": 5.438288951137308,
+      "p95ExpectedROI": 0.9052299161921471,
+      "p99ExpectedROI": 1.4028109581316919,
+      "selectionsAtLeast20Percent": 767
+    }
+  }
+}

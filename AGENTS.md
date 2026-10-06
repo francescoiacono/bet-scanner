@@ -49,3 +49,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Count-model distribution truncation must retain tail probability explicitly.
 - Model-selection criteria must be specified before external-validation results are viewed.
 - Different proper scoring-rule definitions must not be compared as though their numeric scales were interchangeable.
+- Market prices used for evaluation must never enter statistical model fitting unless explicitly scoped as a market-informed model.
+- Historical price backtests must separate selection from settlement so realised outcomes cannot influence selection.
+- Paper-strategy thresholds must be specified before profitability results are viewed.
+- Better proper scores do not establish betting profitability; historical profitability does not establish future profitability.
+- Primary market-price evaluations must use a consistent documented price definition; never silently mix opening, interim, and closing prices.
+- Missing bookmaker prices must not be silently replaced by another bookmaker in a frozen protocol.
+- Research profitability tests default to flat unit stakes unless staking is separately scoped.
