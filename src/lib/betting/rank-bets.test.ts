@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { mockFixtures } from "../../data/mock-fixtures";
 import { mockMarketQuotes } from "../../data/mock-markets";
-import { mockTeamProfiles } from "../../data/mock-team-profiles";
+import { mockPlayedMatches } from "../../data/mock-played-matches";
+import { deriveTeamProfiles } from "../backtest/history";
 import { scanMarkets } from "../scan-markets";
 import { analyseBet } from "./analyse-bet";
 import { DEFAULT_MINIMUM_EDGE, rankBets } from "./rank-bets";
 import type { AnalysedBet } from "./types";
+
+const mockTeamProfiles = deriveTeamProfiles(mockPlayedMatches);
 
 function bet(
   id: string,

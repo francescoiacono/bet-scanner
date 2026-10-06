@@ -1,17 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { mockFixtures } from "../data/mock-fixtures";
 import { mockMarketQuotes } from "../data/mock-markets";
-import { mockTeamProfiles } from "../data/mock-team-profiles";
+import { mockPlayedMatches } from "../data/mock-played-matches";
+import { deriveTeamProfiles, calculateHistoricalLeagueAverages } from "./backtest/history";
 import { rankBets } from "./betting/rank-bets";
 import { scanMarkets } from "./scan-markets";
+
+const mockTeamProfiles = deriveTeamProfiles(mockPlayedMatches);
 
 describe("local model-to-market pipeline", () => {
   it("produces six predictions and eighteen independently joined quote analyses", () => {
     const scan = scanMarkets(mockTeamProfiles, mockFixtures, mockMarketQuotes);
     expect(scan.predictions).toHaveLength(6);
     expect(scan.analysedBets).toHaveLength(18);
-    expect(scan.leagueAverages.homeGoalsPerMatch).toBeCloseTo(1.5);
-    expect(scan.leagueAverages.awayGoalsPerMatch).toBeCloseTo(1.2);
+    expect(scan.leagueAverages).toEqual(calculateHistoricalLeagueAverages(mockPlayedMatches));
     for (const bet of scan.analysedBets) {
       expect(bet.fixtureId).toBe(bet.prediction.fixtureId);
       expect(bet.prediction.modelVersion).toBe("poisson-v1");

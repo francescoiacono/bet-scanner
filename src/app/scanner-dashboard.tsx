@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { DEFAULT_MINIMUM_EDGE, rankBets } from "@/lib/betting/rank-bets";
 import type { AnalysedBet } from "@/lib/betting/types";
 import styles from "./scanner-dashboard.module.css";
+import ResearchHeader from "./research-header";
 
 function percentage(value: number): string {
   return `${(value * 100).toFixed(2)}%`;
@@ -21,14 +22,6 @@ function selectionLabel(bet: AnalysedBet): string {
   if (bet.selection === "HOME") return `${bet.homeTeam} to win`;
   if (bet.selection === "AWAY") return `${bet.awayTeam} to win`;
   return "Draw";
-}
-
-function ScannerMark() {
-  return (
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path d="M6 23V13M13 23V8M20 23V17M27 23V5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 function BestCandidate({ bet }: { bet: AnalysedBet }) {
@@ -115,10 +108,7 @@ export default function ScannerDashboard({
   return (
     <div className={styles.shell}>
       <a href="#scan-results" className={styles.skipLink}>Skip to results</a>
-      <header className={styles.topbar}>
-        <div className={styles.brand}><span className={styles.brandMark}><ScannerMark /></span><span>BET SCANNER<span className={styles.brandSubline}>RESEARCH WORKSPACE</span></span></div>
-        <div className={styles.headerMeta}><span className={styles.simulationBadge}>SIMULATION / FICTIONAL DATA</span><span className={styles.version}>V0.2</span></div>
-      </header>
+      <ResearchHeader activePage="scanner" />
 
       <main className={styles.main}>
         <div className={styles.pageHeading}>
@@ -132,7 +122,7 @@ export default function ScannerDashboard({
 
         <div className={styles.simulationNotice}>
           <span className={styles.noticeIcon} aria-hidden="true">i</span>
-          <p>Research only. Teams, historical aggregates, fixtures, and prices are fictional. Model estimates use a simple Poisson baseline. These results are not real betting recommendations.</p>
+          <p>Research only. Teams, match history, fixtures, and prices are fictional. Model estimates use a simple Poisson baseline. These results are not real betting recommendations.</p>
         </div>
 
         <section className={styles.summary} aria-label="Scan summary" aria-live="polite" aria-atomic="true">
@@ -194,7 +184,7 @@ export default function ScannerDashboard({
           </div>
         </section>
 
-        <footer className={styles.footer}><span>BET SCANNER<span className={styles.footerSeparator}> / </span>LOCAL RESEARCH</span><span>Fictional inputs. Deterministic analysis. V0.2.</span></footer>
+        <footer className={styles.footer}><span>BET SCANNER<span className={styles.footerSeparator}> / </span>LOCAL RESEARCH</span><span>Fictional inputs. Deterministic analysis. V0.3.</span></footer>
       </main>
     </div>
   );

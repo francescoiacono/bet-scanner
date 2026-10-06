@@ -1,13 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { mockFixtures } from "../../data/mock-fixtures";
-import { mockTeamProfiles } from "../../data/mock-team-profiles";
-import { calculateLeagueAverages } from "./league-averages";
+import type { TeamProfile } from "./types";
 import { MODEL_VERSION, predictMatch } from "./predict-match";
 
 const fixture = mockFixtures[0];
-const home = mockTeamProfiles[0];
-const away = mockTeamProfiles[1];
-const averages = calculateLeagueAverages(mockTeamProfiles);
+// Fixed test inputs retain V0.2's known mathematical example independently
+// of the application dataset; they are not production model inputs.
+const home: TeamProfile = {
+  team: fixture.homeTeam, homeMatches: 20, homeGoalsFor: 36, homeGoalsAgainst: 18,
+  awayMatches: 20, awayGoalsFor: 26, awayGoalsAgainst: 24,
+};
+const away: TeamProfile = {
+  team: fixture.awayTeam, homeMatches: 20, homeGoalsFor: 24, homeGoalsAgainst: 30,
+  awayMatches: 20, awayGoalsFor: 18, awayGoalsAgainst: 36,
+};
+const averages = { homeGoalsPerMatch: 1.5, awayGoalsPerMatch: 1.2 };
 
 describe("match prediction API", () => {
   it("returns expected goals, all outcomes, fixture identity, and model version", () => {

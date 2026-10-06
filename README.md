@@ -1,8 +1,10 @@
-# Bet Scanner V0.2
+# Bet Scanner V0.3
 
-A local football betting-market research dashboard. Fictional historical goal aggregates feed a deterministic football model; its HOME / DRAW / AWAY probabilities are joined to separate fictional market prices, analysed, filtered, and ranked by expected ROI.
+A local football research dashboard with two views. The **scanner** derives current team profiles from fictional completed matches, predicts upcoming fixtures, and joins those predictions to separate fictional prices for value analysis. The **backtest** walks through the same history chronologically and evaluates predictions against eventual outcomes using Brier scores and top-pick calibration.
 
-**SIMULATION / FICTIONAL DATA:** all teams, historical totals, fixtures, and prices are fictional. These are not current matches or real betting recommendations. This is intentionally a simple baseline model, not a production betting model. The application uses no bookmakers, external HTTP calls, sports APIs, AI services, database, authentication, or real-money systems. Assets and fonts are local.
+**SIMULATION / FICTIONAL DATA:** all teams, dates, results, fixtures, and prices are fictional. These are not current matches or real betting recommendations. This is intentionally a simple baseline model, not a production betting model. The application uses no bookmakers, external HTTP calls, sports APIs, AI services, database, authentication, or real-money systems. Assets and fonts are local.
+
+This evaluates whether `poisson-v1` produces sensible probabilities on fictional historical data. It does not evaluate betting profitability because V0.3 contains no historical market prices.
 
 ## Run locally
 
@@ -11,23 +13,29 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000. The dataset contains 12 teams, six fictional upcoming fixtures, and 18 market selections (HOME, DRAW, and AWAY for every fixture).
+Open http://localhost:3000 for the scanner or http://localhost:3000/backtest for model evaluation. Shared navigation links the views. The scanner retains six fictional upcoming fixtures and 18 market selections (HOME, DRAW, and AWAY for every fixture).
 
 Apply a minimum probability edge in percentage points; the default is 2 pp (`0.02` internally). Reset restores it. A threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
 
 ## Architecture
 
 ```text
-Team profiles → calculated league averages → expected goals → Poisson predictions
-Fixtures ────────────────────────────────────────────────────┘
+Completed fictional matches → derived team profiles → league averages
+                                                     ↓
+Upcoming fixtures → expected goals → frozen poisson-v1 predictions
 
 Independent market quotes + fixture predictions
         → selection-specific probability
         → implied probability / edge / expected ROI
         → minimum-edge filter → ROI ranking → dashboard
+
+Completed fictional matches → chronological kickoff batches
+        → strictly earlier history → eligible poisson-v1 predictions
+        → actual outcomes → Brier / uniform benchmark / calibration
+        → backtest dashboard
 ```
 
-- `src/data/mock-team-profiles.ts`: fictional historical goal totals and match counts for home and away appearances
+- `src/data/mock-played-matches.ts`: 48 fictional completed matches; the shared source of historical data
 - `src/data/mock-fixtures.ts`: fixture IDs and team identities
 - `src/data/mock-markets.ts`: fictional decimal prices only; no model probabilities
 - `src/lib/football/types.ts`: fixtures, profiles, baselines, and predictions
@@ -40,14 +48,85 @@ Independent market quotes + fixture predictions
 - `src/lib/betting/analyse-bet.ts`: joins a quote, fixture, and prediction after checking their fixture IDs
 - `src/lib/betting/rank-bets.ts`: filters and sorts already analysed selections
 - `src/lib/scan-markets.ts`: pure orchestration and identity joins
+- `src/lib/backtest/types.ts`: played matches, audit records, skipped matches, configuration, and nullable summary metrics
+- `src/lib/backtest/history.ts`: history validation, derived venue totals, readiness checks, and historical league baselines
+- `src/lib/backtest/run-backtest.ts`: pure walk-forward orchestration with a barrier between kickoff batches
+- `src/lib/backtest/metrics.ts`: outcomes, Brier scoring, uniform benchmark, top picks, calibration, and summaries
 - `src/app/page.tsx`: runs the local scan and passes analysed results to the dashboard
 - `src/app/scanner-dashboard.tsx`: existing visual design, local threshold state, and ranked results
+- `src/app/research-header.tsx`: shared Scanner / Backtest navigation and simulation labels
+- `src/app/backtest/page.tsx`: server-rendered evaluation metrics, match audit table, calibration, and warm-up skips
 
 Model predictions do not read market prices. Changing a quote changes its value calculation, never its football prediction. Predictions are generated once on the server; the client filters and ranks in memory. There are no API routes or persistence. The leading candidate displays expected home goals, expected away goals, and model version alongside its existing value metrics.
 
+The obsolete hand-entered `mock-team-profiles.ts` has been removed. The scanner derives profiles from all 48 completed matches and treats the existing upcoming fixtures as occurring after that history. Backtests derive a fresh profile snapshot from the permitted prior matches for each kickoff batch. No model formulas, parameters, cutoff, or normalization have changed; the version remains `poisson-v1`.
+
+## Fictional history and walk-forward protocol
+
+The history contains the same 12 teams, with eight weekly rounds of six matches from 4 January to 22 February 2025. Each team plays once per round. All six matches in a round share one kickoff instant. After four rounds each team has exactly two home and two away appearances; after eight rounds each has four of each. Match records contain IDs, timezone-qualified ISO timestamps, team identities, and non-negative integer final scores, with no prices or model probabilities.
+
+`runBacktest(matches, { minimumVenueMatches: 2 })` validates the entire dataset, sorts a copy by parsed kickoff instant, and sorts exact-time ties by match ID in code-point order. Equivalent timezone representations of the same instant share a batch. Neither the input array nor its records are mutated.
+
+For each batch:
+
+1. Derive team totals and league baselines using only matches with `kickoffAt < target kickoffAt`.
+2. Require **both teams** to have at least `minimumVenueMatches` prior home appearances **and** prior away appearances. The default is 2; configuration must be a positive safe integer.
+3. Record ineligible fixtures as `INSUFFICIENT_HISTORY`. Do not guess, smooth, or borrow future samples.
+4. Predict every eligible fixture from that same prior-history snapshot. The model receives fixture identity, not its final score.
+5. Only after the complete batch has been predicted and scored, append its results to history. Skipped fixtures also become available to later batches.
+
+League baselines use `sum(prior home goals) / prior match count` and `sum(prior away goals) / prior match count`, counting each match once and including prior matches involving unready teams. Empty or zero-baseline histories cannot supply valid model baselines and fail explicitly if requested; warm-up fixtures are skipped before prediction. Zero individual scoring rates remain valid and are not smoothed.
+
+The default dataset skips the first **24 matches** during four warm-up rounds and evaluates the final **24 matches**. Each evaluated record retains match identity, kickoff, final score, prediction, training-match count, latest training kickoff, league baselines, actual outcome, Brier scores, and top-pick correctness. Skips retain the match, prior-history count, and reason. Neither record type contains odds or financial returns.
+
+The invariant is that changing a future result cannot change an earlier prediction. Matches at an identical instant cannot affect one another. Tests independently reconstruct strictly prior histories, alter simultaneous/future/earlier results, reverse input order, and freeze inputs to check these boundaries. This protocol uses kickoff order as the fictional data-availability rule; it does not model real-world result publication times.
+
+## Evaluation metrics
+
+The actual outcome is HOME when home goals exceed away goals, DRAW when they are equal, and AWAY otherwise.
+
+**Multiclass Brier score** is the primary metric:
+
+```text
+Brier = (pHOME - yHOME)^2 + (pDRAW - yDRAW)^2 + (pAWAY - yAWAY)^2
+```
+
+The actual outcome is encoded as a one-hot vector. There is **no division by 3**. Scores range from 0 to 2, and lower is better. The summary averages these scores over evaluated matches only.
+
+**Uniform benchmark:** predict `1/3` for every outcome, on the same evaluated matches. Its per-match and mean Brier score are `2/3` regardless of the result.
+
+```text
+Brier skill score = 1 - mean model Brier / mean uniform Brier
+```
+
+Positive skill means the model beat the uniform baseline, zero means equal performance, and negative skill means worse performance. This is a simple probability benchmark, not evidence of useful betting returns.
+
+**Top-pick accuracy** is the fraction of evaluated matches whose highest-probability outcome occurred. Exact probability ties prefer HOME, then DRAW, then AWAY. The correct count is reported too. Accuracy is supplementary to Brier because it ignores the rest of the probability distribution.
+
+**Top-pick confidence calibration** compares the highest predicted probability with whether that selected outcome was correct. Ten bins cover `[0.0, 0.1)`, `[0.1, 0.2)`, …, `[0.9, 1.0]`; probability 1 belongs in the last bin. Each non-empty bin reports its count, mean confidence, and observed accuracy. The UI hides empty bins; the result retains all ten with null means for empty bins.
+
+```text
+ECE = sum((bin count / evaluated count) × abs(mean confidence - observed accuracy))
+```
+
+ECE is a fraction in [0, 1] internally and is displayed in percentage points. This is **top-pick** calibration, not full multiclass calibration. When no matches are evaluated, all aggregate quality metrics are `null`, the correct count is zero, and all bins are empty. No NaN or invented zero-quality scores are returned.
+
+With the bundled history and default warm-up:
+
+| Metric | Fictional result |
+| --- | --- |
+| Historical / evaluated / skipped matches | 48 / 24 / 24 |
+| Mean model Brier | 0.5714 |
+| Mean uniform Brier | 0.6667 |
+| Brier skill | +0.1429 (+14.29%) |
+| Top-pick accuracy | 12/24 (50%) |
+| Top-pick calibration ECE | 0.2838 (28.38 pp) |
+
+These results describe this small fictional sample only. Beating uniform here does not establish real-world prediction quality or profitability.
+
 ## Exact modelling assumptions
 
-Each profile contains historical **integer totals**, not averages or probabilities. Home and away match counts must both be positive. Team names and fixture IDs are exact identifiers; no fuzzy matching is performed. All supplied profiles are treated as one league and one equally weighted historical window, with no adjustment for recency or opponent quality.
+Each profile contains historical **integer totals**, not averages or probabilities. Derived totals can have zero venue appearances while a team warms up; readiness is checked before calling the frozen model, whose home and away counts must both be positive. Team names and fixture IDs are exact identifiers; no fuzzy matching is performed. All supplied profiles are treated as one league and one equally weighted historical window, with no adjustment for recency or opponent quality.
 
 ### League baselines
 
@@ -125,6 +204,8 @@ Invalid model or market inputs throw `RangeError` rather than being silently ski
 - Invalid/duplicate quote IDs, unknown or mismatched fixture references, unsupported markets/selections, or non-finite decimal odds ≤ 1
 - Invalid thresholds outside [0, 1] or non-finite analysed values supplied to ranking
 
+History validation additionally rejects duplicate match IDs, self-matches, blank identities, invalid final scores, malformed timestamps, invalid calendar dates, and invalid venue minimums. Timestamps must include seconds and an explicit `Z` or numeric timezone offset; optional fractional seconds have at most millisecond precision. Metric helpers reject invalid outcome probabilities or calibration observations. Insufficient venue history is the explicit skip case, not an exception.
+
 Venue totals need not balance for arbitrary caller-supplied historical samples; the supplied fictional league does balance. The pipeline accepts an empty or partial quote list, while the bundled dataset supplies every outcome for every fixture. It never invents a missing price or prediction.
 
 ## Current limitations
@@ -141,9 +222,11 @@ The model ignores:
 - Market margin
 - Exchange commission
 
-It also assumes independent, constant-rate Poisson scoring. Real scorelines can show dependence, changing match states, low-score effects, and variance that this model does not capture. Small aggregate samples have no shrinkage, priors, or uncertainty estimates. The model has no calibration, backtesting, or evidence that its estimated ROI predicts actual returns. The artificial prices and goal totals can create apparent value by construction.
+It also assumes independent, constant-rate Poisson scoring. Real scorelines can show dependence, changing match states, low-score effects, and variance that this model does not capture. Small aggregate samples have no shrinkage, priors, or uncertainty estimates. The fixed 0–10 grid conditions away the discarded goal tails. Zero observed scoring rates can produce extreme probabilities.
 
-For a later milestone, these weaknesses should inform model evaluation, data quality, calibration, and sensitivity to the fixed goal cutoff before treating rankings as meaningful research results. V0.2 implements none of that future work.
+V0.3 measures the frozen model without fitting, tuning, or calibrating its predictions. Only 24 fictional matches are evaluated; their scores are deliberately artificial and are not representative real-world evidence. Calibration bins have small samples, ECE depends on binning, and top-pick calibration does not evaluate all three probabilities individually. Passing causal tests does not establish model quality. The artificial prices and results can create apparent value by construction, and no historical prices exist to evaluate profitability.
+
+These weaknesses should guide a separately scoped V0.4: representative data and evaluation design, larger samples and uncertainty, fuller calibration diagnostics, and sensitivity to unsmoothed rates and the fixed goal cutoff. None of that future work is implemented here.
 
 ## Verification
 
@@ -154,6 +237,6 @@ pnpm lint
 pnpm build
 ```
 
-`pnpm test:watch` runs Vitest in watch mode. Unit tests use a Node environment and cover mathematical properties, invalid inputs, independent data boundaries, the complete pipeline, and retained V0.1 value/ranking behaviour. No dependencies were added for V0.2.
+`pnpm test:watch` runs Vitest in watch mode. Unit tests use a Node environment and cover mathematical properties, invalid inputs, independent data boundaries, the complete scanner pipeline, retained V0.1 value/ranking behaviour, causal walk-forward invariants, warm-up, history aggregation, Brier conventions, benchmark skill, calibration boundaries/ECE, and empty evaluation. V0.3 adds 29 focused tests; all 151 tests pass. No dependencies were added for V0.3.
 
 If an execution sandbox blocks Turbopack's local CSS-worker port, `pnpm build --webpack` is the supported alternative for verifying the production build; the project's default bundler remains unchanged.

@@ -22,3 +22,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Avoid adding dependencies or infrastructure unless the current milestone requires them.
 - Prefer small, testable modules over large abstractions.
 - Do not add AI simply because a judgement could be made by AI; deterministic logic remains the default.
+- Backtests must be time-causal: a prediction may use only data with a kickoff time strictly earlier than the target match.
+- Matches sharing the same kickoff time must not influence one another.
+- Changing a future result must never change an earlier backtest prediction.
+- Do not modify a model while implementing the framework used to evaluate that model unless explicitly requested.
+- Add focused tests for new behaviour and important invariants; do not increase test count merely for its own sake.
