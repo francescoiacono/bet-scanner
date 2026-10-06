@@ -65,6 +65,10 @@
 .bestMetrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 30px; padding-top: 23px; border-top: 1px solid #e5ece9; }
 .bestMetrics dt { margin-bottom: 9px; color: var(--muted); font-size: 10px; }
 .bestMetrics dd { font: 18px var(--mono); letter-spacing: -0.7px; }
+.modelMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; padding: 18px; border-radius: 5px; background: #f5f8f7; }
+.modelMetrics dt { margin-bottom: 8px; color: var(--muted); font-size: 10px; }
+.modelMetrics dd { font: 14px var(--mono); color: #315768; }
+.modelMetrics div > span { display: block; margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .roiPanel { padding: 30px 26px; background: #eff6f3; border-left: 1px solid #dce9e2; }
 .roiPanel > .eyebrow { color: var(--teal); }
 .heroROI { margin: 14px 0 8px; color: var(--teal); font: 39px var(--mono); letter-spacing: -2px; line-height: 1.2; }
@@ -106,6 +110,7 @@
 .methodHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .methodHeading h2 { font-size: 14px; font-weight: 650; }
 .methodHeading p { font-size: 11px; color: var(--muted); }
+.modelNote { margin-top: 14px; max-width: 780px; color: var(--muted); font-size: 11px; line-height: 1.75; }
 .methodGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 24px; }
 .methodGrid > div + div { padding-left: 28px; border-left: 1px solid var(--border); }
 .methodNumber { font: 9px var(--mono); letter-spacing: 0.7px; color: #74838e; }
@@ -166,4 +171,6 @@
   .summaryCard { padding: 16px; }
   .summary .eyebrow { font-size: 9px; }
   .marketTag { font-size: 9px; padding: 5px; }
+  .modelMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .modelMetrics > div:last-child { grid-column: 1 / -1; }
 }

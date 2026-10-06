@@ -1,28 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { mockMarkets } from "../../data/mock-markets";
+import { mockFixtures } from "../../data/mock-fixtures";
+import { mockMarketQuotes } from "../../data/mock-markets";
+import { mockTeamProfiles } from "../../data/mock-team-profiles";
+import { scanMarkets } from "../scan-markets";
 import { analyseBet } from "./analyse-bet";
 import { DEFAULT_MINIMUM_EDGE, rankBets } from "./rank-bets";
-import type { BettingOpportunity } from "./types";
+import type { AnalysedBet } from "./types";
 
 function bet(
   id: string,
   decimalOdds: number,
   modelProbability: number,
-): BettingOpportunity {
-  return {
-    id,
-    eventName: "Example Home vs Example Away",
-    homeTeam: "Example Home",
-    awayTeam: "Example Away",
-    market: "MATCH_WINNER",
-    selection: "HOME",
-    decimalOdds,
-    modelProbability,
-  };
+): AnalysedBet {
+  const fixture = { id: "fixture", homeTeam: "Example Home", awayTeam: "Example Away" };
+  return analyseBet(
+    { id, fixtureId: fixture.id, market: "MATCH_WINNER", selection: "HOME", decimalOdds },
+    fixture,
+    {
+      fixtureId: fixture.id,
+      homeProbability: modelProbability,
+      drawProbability: (1 - modelProbability) / 2,
+      awayProbability: (1 - modelProbability) / 2,
+      expectedHomeGoals: 1.5,
+      expectedAwayGoals: 1,
+      modelVersion: "test-model",
+    },
+  );
 }
 
 describe("candidate filtering and ranking", () => {
-  it("uses the V0.1 default threshold of two percentage points", () => {
+  it("retains the default threshold of two percentage points", () => {
     expect(DEFAULT_MINIMUM_EDGE).toBe(0.02);
   });
 
@@ -81,7 +88,7 @@ describe("candidate filtering and ranking", () => {
     const input = Object.freeze([a, b]);
     expect(rankBets(input).map((candidate) => candidate.id)).toEqual(["b", "a"]);
     expect(input).toEqual([a, b]);
-    expect(a).not.toHaveProperty("edge");
+    expect(a.edge).toBeCloseTo(0.03);
   });
 
   it.each([-0.01, 1.01, NaN, Infinity, -Infinity])(
@@ -91,20 +98,26 @@ describe("candidate filtering and ranking", () => {
     },
   );
 
-  it("propagates invalid opportunities instead of silently skipping them", () => {
+  it("invalid analysis cannot enter ranking", () => {
     expect(() => rankBets([bet("invalid-odds", 1, 0.5)])).toThrow(RangeError);
     expect(() => rankBets([bet("invalid-probability", 2, 1.1)])).toThrow(RangeError);
   });
 
-  it("scans ten mock opportunities with positive, fair, and negative value", () => {
-    const analysed = mockMarkets.map(analyseBet);
-    expect(analysed).toHaveLength(10);
+  it("ranks the eighteen model-derived market selections using the same rules", () => {
+    const { analysedBets: analysed } = scanMarkets(mockTeamProfiles, mockFixtures, mockMarketQuotes);
+    expect(analysed).toHaveLength(18);
     expect(analysed.some((candidate) => candidate.edge > 0)).toBe(true);
-    expect(analysed.some((candidate) => candidate.edge === 0)).toBe(true);
     expect(analysed.some((candidate) => candidate.edge < 0)).toBe(true);
-    expect(rankBets(mockMarkets).map((candidate) => candidate.id)).toEqual([
-      "mock-002", "mock-001", "mock-004", "mock-003", "mock-005",
-    ]);
-    expect(rankBets(mockMarkets, 1)).toEqual([]);
+    const ranked = rankBets(analysed);
+    expect(ranked.length).toBeGreaterThan(0);
+    for (let i = 0; i < ranked.length; i++) {
+      expect(ranked[i].edge + Number.EPSILON).toBeGreaterThanOrEqual(DEFAULT_MINIMUM_EDGE);
+      if (i > 0) expect(ranked[i - 1].expectedROI).toBeGreaterThanOrEqual(ranked[i].expectedROI);
+    }
+    expect(rankBets(analysed, 1)).toEqual([]);
+  });
+
+  it.each(["edge", "expectedROI"] as const)("rejects non-finite analysed %s", (field) => {
+    expect(() => rankBets([{ ...bet("bad", 2, 0.55), [field]: NaN }])).toThrow(RangeError);
   });
 });

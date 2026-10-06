@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { DEFAULT_MINIMUM_EDGE, rankBets } from "@/lib/betting/rank-bets";
-import type { AnalysedBet, BettingOpportunity } from "@/lib/betting/types";
+import type { AnalysedBet } from "@/lib/betting/types";
 import styles from "./scanner-dashboard.module.css";
 
 function percentage(value: number): string {
@@ -17,7 +17,7 @@ function edgeLabel(value: number): string {
   return `${value > 0 ? "+" : ""}${(value * 100).toFixed(2)} pp`;
 }
 
-function selectionLabel(bet: BettingOpportunity): string {
+function selectionLabel(bet: AnalysedBet): string {
   if (bet.selection === "HOME") return `${bet.homeTeam} to win`;
   if (bet.selection === "AWAY") return `${bet.awayTeam} to win`;
   return "Draw";
@@ -48,13 +48,30 @@ function BestCandidate({ bet }: { bet: AnalysedBet }) {
           <div><dt>Model probability</dt><dd>{percentage(bet.modelProbability)}</dd></div>
           <div><dt>Probability edge</dt><dd className={styles.positive}>{edgeLabel(bet.edge)}</dd></div>
         </dl>
+        <dl className={styles.modelMetrics}>
+          <div>
+            <dt>Expected home goals</dt>
+            <dd>{bet.prediction.expectedHomeGoals.toFixed(2)}</dd>
+            <span>{bet.homeTeam}</span>
+          </div>
+          <div>
+            <dt>Expected away goals</dt>
+            <dd>{bet.prediction.expectedAwayGoals.toFixed(2)}</dd>
+            <span>{bet.awayTeam}</span>
+          </div>
+          <div>
+            <dt>Model version</dt>
+            <dd>{bet.prediction.modelVersion}</dd>
+            <span>Independent Poisson</span>
+          </div>
+        </dl>
       </div>
       <div className={styles.roiPanel}>
         <span className={styles.eyebrow}>Expected ROI</span>
         <p className={styles.heroROI}>{signedPercentage(bet.expectedROI)}</p>
         <p className={styles.roiFormula}>
-          {bet.modelProbability.toFixed(2)} × {bet.decimalOdds.toFixed(2)} − 1
-          <span>= {bet.expectedROI.toFixed(3)}</span>
+          {bet.modelProbability.toFixed(6)} × {bet.decimalOdds.toFixed(2)} − 1
+          <span>≈ {bet.expectedROI.toFixed(4)}</span>
         </p>
         <div className={styles.probabilityComparison}>
           <div className={styles.barLabel}><span>Market implied</span><span>{percentage(bet.impliedProbability)}</span></div>
@@ -68,14 +85,14 @@ function BestCandidate({ bet }: { bet: AnalysedBet }) {
 }
 
 export default function ScannerDashboard({
-  opportunities,
+  analysedBets,
 }: {
-  opportunities: readonly BettingOpportunity[];
+  analysedBets: readonly AnalysedBet[];
 }) {
   const [minimumEdge, setMinimumEdge] = useState(DEFAULT_MINIMUM_EDGE);
   const [thresholdInput, setThresholdInput] = useState("2");
   const [inputError, setInputError] = useState("");
-  const candidates = rankBets(opportunities, minimumEdge);
+  const candidates = rankBets(analysedBets, minimumEdge);
   const [bestCandidate, ...remainingCandidates] = candidates;
 
   function applyThreshold(event: FormEvent<HTMLFormElement>) {
@@ -100,7 +117,7 @@ export default function ScannerDashboard({
       <a href="#scan-results" className={styles.skipLink}>Skip to results</a>
       <header className={styles.topbar}>
         <div className={styles.brand}><span className={styles.brandMark}><ScannerMark /></span><span>BET SCANNER<span className={styles.brandSubline}>RESEARCH WORKSPACE</span></span></div>
-        <div className={styles.headerMeta}><span className={styles.simulationBadge}>SIMULATION / MOCK DATA</span><span className={styles.version}>V0.1</span></div>
+        <div className={styles.headerMeta}><span className={styles.simulationBadge}>SIMULATION / FICTIONAL DATA</span><span className={styles.version}>V0.2</span></div>
       </header>
 
       <main className={styles.main}>
@@ -110,17 +127,17 @@ export default function ScannerDashboard({
             <h1>Bet Scanner<span className={styles.titleDot} aria-hidden="true">.</span></h1>
             <p className={styles.intro}>Explore the gap between market price and model probability.</p>
           </div>
-          <span className={styles.datasetTag}><span aria-hidden="true" />Fictional dataset · {opportunities.length} opportunities</span>
+          <span className={styles.datasetTag}><span aria-hidden="true" />Fictional dataset · {analysedBets.length} selections</span>
         </div>
 
         <div className={styles.simulationNotice}>
           <span className={styles.noticeIcon} aria-hidden="true">i</span>
-          <p>Research only. All teams, fixtures, odds, and model estimates are fictional. These results are not real betting recommendations.</p>
+          <p>Research only. Teams, historical aggregates, fixtures, and prices are fictional. Model estimates use a simple Poisson baseline. These results are not real betting recommendations.</p>
         </div>
 
         <section className={styles.summary} aria-label="Scan summary" aria-live="polite" aria-atomic="true">
-          <div className={styles.summaryCard}><span className={styles.eyebrow}>Opportunities scanned</span><p className={styles.summaryValue}>{opportunities.length.toString().padStart(2, "0")}</p><span className={styles.summaryDetail}>Football · Match winner</span></div>
-          <div className={styles.summaryCard}><span className={styles.eyebrow}>Passed the filter</span><p className={styles.summaryValue}>{candidates.length.toString().padStart(2, "0")}<span className={styles.summaryDenominator}> / {opportunities.length}</span></p><span className={styles.summaryDetail}>Edge ≥ {(minimumEdge * 100).toFixed(1)} percentage points</span></div>
+          <div className={styles.summaryCard}><span className={styles.eyebrow}>Market selections scanned</span><p className={styles.summaryValue}>{analysedBets.length.toString().padStart(2, "0")}</p><span className={styles.summaryDetail}>Football · Match winner</span></div>
+          <div className={styles.summaryCard}><span className={styles.eyebrow}>Passed the filter</span><p className={styles.summaryValue}>{candidates.length.toString().padStart(2, "0")}<span className={styles.summaryDenominator}> / {analysedBets.length}</span></p><span className={styles.summaryDetail}>Edge ≥ {(minimumEdge * 100).toFixed(1)} percentage points</span></div>
           <div className={styles.summaryCard}><span className={styles.eyebrow}>Best expected ROI</span><p className={`${styles.summaryValue} ${bestCandidate ? styles.positive : ""}`}>{bestCandidate ? signedPercentage(bestCandidate.expectedROI) : "—"}</p><span className={styles.summaryDetail}>{bestCandidate ? selectionLabel(bestCandidate) : "No qualifying candidates"}</span></div>
         </section>
 
@@ -144,7 +161,7 @@ export default function ScannerDashboard({
           <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Scan results</p><h2 id="results-title">{bestCandidate ? "Leading candidate" : "No qualifying candidates"}</h2></div><span className={styles.sortLabel}>Ranked by expected ROI ↓</span></div>
 
           {bestCandidate ? <BestCandidate bet={bestCandidate} /> : (
-            <div className={styles.emptyState} role="status"><span className={styles.emptyIcon} aria-hidden="true">—</span><h3>NO BET — no opportunities meet the current threshold</h3><p>{opportunities.length} fictional opportunities scanned at a {(minimumEdge * 100).toFixed(1)} pp minimum edge. Adjust the threshold to explore the dataset.</p></div>
+            <div className={styles.emptyState} role="status"><span className={styles.emptyIcon} aria-hidden="true">—</span><h3>NO BET — no opportunities meet the current threshold</h3><p>{analysedBets.length} fictional market selections scanned at a {(minimumEdge * 100).toFixed(1)} pp minimum edge. Adjust the threshold to explore the dataset.</p></div>
           )}
 
           {remainingCandidates.length > 0 && (
@@ -168,7 +185,8 @@ export default function ScannerDashboard({
         </section>
 
         <section className={styles.methodology} aria-labelledby="method-title">
-          <div className={styles.methodHeading}><h2 id="method-title">How to read the scan</h2><p>Three calculations. One transparent ranking.</p></div>
+          <div className={styles.methodHeading}><h2 id="method-title">How to read the scan</h2><p>Poisson probabilities. Transparent value ranking.</p></div>
+          <p className={styles.modelNote}>Historical home/away scoring and conceding rates determine expected goals. Independent Poisson scores from 0–10 goals produce normalized HOME / DRAW / AWAY probabilities, separately from market prices.</p>
           <div className={styles.methodGrid}>
             <div><span className={styles.methodNumber}>01 / PRICE</span><h3>Market implied probability</h3><code>1 / decimal odds</code><p>The probability implied by the quoted price, without a margin adjustment.</p></div>
             <div><span className={styles.methodNumber}>02 / FILTER</span><h3>Probability edge</h3><code>model probability − market implied</code><p>The model’s probability advantage. Displayed in percentage points (pp).</p></div>
@@ -176,7 +194,7 @@ export default function ScannerDashboard({
           </div>
         </section>
 
-        <footer className={styles.footer}><span>BET SCANNER<span className={styles.footerSeparator}> / </span>LOCAL RESEARCH</span><span>Mock inputs. Deterministic analysis. V0.1.</span></footer>
+        <footer className={styles.footer}><span>BET SCANNER<span className={styles.footerSeparator}> / </span>LOCAL RESEARCH</span><span>Fictional inputs. Deterministic analysis. V0.2.</span></footer>
       </main>
     </div>
   );

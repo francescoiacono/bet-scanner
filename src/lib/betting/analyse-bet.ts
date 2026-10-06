@@ -1,4 +1,6 @@
-import type { AnalysedBet, BettingOpportunity } from "./types";
+import type { FootballFixture, MatchPrediction } from "../football/types";
+import { validateFixture, validateName, validatePrediction } from "../football/validation";
+import type { AnalysedBet, MarketQuote, MatchWinnerSelection } from "./types";
 
 function validateOdds(decimalOdds: number): void {
   if (!Number.isFinite(decimalOdds) || decimalOdds <= 1) {
@@ -38,15 +40,43 @@ export function calculateExpectedROI(
   return modelProbability * decimalOdds - 1;
 }
 
-/** Invalid inputs throw instead of producing a plausible-looking result. */
-export function analyseBet(opportunity: BettingOpportunity): AnalysedBet {
+export function probabilityForSelection(
+  prediction: MatchPrediction,
+  selection: MatchWinnerSelection,
+): number {
+  validatePrediction(prediction);
+  switch (selection) {
+    case "HOME": return prediction.homeProbability;
+    case "DRAW": return prediction.drawProbability;
+    case "AWAY": return prediction.awayProbability;
+    default: throw new RangeError("Unsupported match-winner selection.");
+  }
+}
+
+/** Join separate market and model inputs; invalid data fails explicitly. */
+export function analyseBet(
+  quote: MarketQuote,
+  fixture: FootballFixture,
+  prediction: MatchPrediction,
+): AnalysedBet {
+  validateName(quote.id, "Quote ID");
+  validateFixture(fixture);
+  if (quote.market !== "MATCH_WINNER") {
+    throw new RangeError("Only MATCH_WINNER markets are supported.");
+  }
+  if (quote.fixtureId !== fixture.id || prediction.fixtureId !== fixture.id) {
+    throw new RangeError("Quote, fixture, and prediction must reference the same fixture.");
+  }
+  const modelProbability = probabilityForSelection(prediction, quote.selection);
   return {
-    ...opportunity,
-    impliedProbability: calculateImpliedProbability(opportunity.decimalOdds),
-    edge: calculateEdge(opportunity.decimalOdds, opportunity.modelProbability),
-    expectedROI: calculateExpectedROI(
-      opportunity.decimalOdds,
-      opportunity.modelProbability,
-    ),
+    ...quote,
+    eventName: `${fixture.homeTeam} vs ${fixture.awayTeam}`,
+    homeTeam: fixture.homeTeam,
+    awayTeam: fixture.awayTeam,
+    prediction: { ...prediction },
+    modelProbability,
+    impliedProbability: calculateImpliedProbability(quote.decimalOdds),
+    edge: calculateEdge(quote.decimalOdds, modelProbability),
+    expectedROI: calculateExpectedROI(quote.decimalOdds, modelProbability),
   };
 }
