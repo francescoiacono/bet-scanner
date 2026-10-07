@@ -1,0 +1,1936 @@
+{
+  "schemaVersion": 1,
+  "calibrationSpecificationSha256": "f12d9ba47a45a9d69693d698d2453ba40a6c5ef242c3e9eab21a164ee4262e65",
+  "runtime": {
+    "node": "24.21.0",
+    "numeric": "1.2.6"
+  },
+  "configuration": {
+    "developmentSeasons": [
+      "2014-15",
+      "2015-16",
+      "2016-17",
+      "2017-18",
+      "2018-19"
+    ],
+    "validationSeasons": [
+      "2021-22",
+      "2022-23",
+      "2023-24",
+      "2024-25",
+      "2025-26"
+    ],
+    "families": [
+      "identity",
+      "temperature-v1",
+      "multinomial-logit-v1"
+    ],
+    "definitions": {
+      "identity": "q=p; no fit",
+      "temperature-v1": "T=exp(rawT); q=softmax(log(p)/T)",
+      "multinomial-logit-v1": "x=(1,log(pH)-log(pA),log(pD)-log(pA)); logits=(bH*x,bD*x,0); six parameters, AWAY reference"
+    },
+    "initialParameters": {
+      "identity": [],
+      "temperature-v1": [
+        0
+      ],
+      "multinomial-logit-v1": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "fitting": {
+      "optimiser": "numeric@1.2.6 / BFGS",
+      "maximumIterations": 2000,
+      "stepTolerance": 1e-10,
+      "gradientTolerance": 1e-8,
+      "relativeObjectiveTolerance": 1e-10,
+      "stableIterations": 5,
+      "convergence": "mean gradient norm, five stable objective changes, or library step tolerance; finite valid fit; iteration cap fails",
+      "objective": "mean multiclass natural-log loss; analytic gradients; no clipping, regularisation or market inputs"
+    },
+    "folds": [
+      {
+        "fold": 1,
+        "trainingSeasons": [
+          "2014-15"
+        ],
+        "validationSeason": "2015-16"
+      },
+      {
+        "fold": 2,
+        "trainingSeasons": [
+          "2014-15",
+          "2015-16"
+        ],
+        "validationSeason": "2016-17"
+      },
+      {
+        "fold": 3,
+        "trainingSeasons": [
+          "2014-15",
+          "2015-16",
+          "2016-17"
+        ],
+        "validationSeason": "2017-18"
+      },
+      {
+        "fold": 4,
+        "trainingSeasons": [
+          "2014-15",
+          "2015-16",
+          "2016-17",
+          "2017-18"
+        ],
+        "validationSeason": "2018-19"
+      }
+    ],
+    "bootstrap": {
+      "samples": 5000,
+      "seed": 202609,
+      "confidenceLevel": 0.95
+    },
+    "selection": "older rolling-origin only; lower Brier-advantage bound >0; largest observed advantage; within 1e-12 prefer temperature; otherwise identity",
+    "validationStatus": "identity: IDENTITY_RETAINED; otherwise lower bound >0: CALIBRATION_IMPROVEMENT_SUPPORTED; upper bound <0: CALIBRATION_HARM_SUPPORTED; otherwise INCONCLUSIVE",
+    "probabilityPolicy": "strictly inside (0,1), sum tolerance 1e-10; stable softmax; no clipping or epsilon; invalid trial/fit fails",
+    "confidenceBuckets": [
+      {
+        "label": "1/3–<0.40",
+        "minimum": 0.3333333333333333,
+        "maximum": 0.4
+      },
+      {
+        "label": "0.40–<0.50",
+        "minimum": 0.4,
+        "maximum": 0.5
+      },
+      {
+        "label": "0.50–<0.60",
+        "minimum": 0.5,
+        "maximum": 0.6
+      },
+      {
+        "label": "0.60–<0.70",
+        "minimum": 0.6,
+        "maximum": 0.7
+      },
+      {
+        "label": "0.70–<0.80",
+        "minimum": 0.7,
+        "maximum": 0.8
+      },
+      {
+        "label": "0.80–1.00",
+        "minimum": 0.8,
+        "maximum": 1
+      }
+    ],
+    "disagreementBuckets": [
+      {
+        "label": "<5 pp",
+        "minimum": 0,
+        "maximum": 0.05
+      },
+      {
+        "label": "5–<10 pp",
+        "minimum": 0.05,
+        "maximum": 0.1
+      },
+      {
+        "label": "10–<20 pp",
+        "minimum": 0.1,
+        "maximum": 0.2
+      },
+      {
+        "label": "20+ pp",
+        "minimum": 0.2,
+        "maximum": 1
+      }
+    ],
+    "calibrationBins": "ten [0,.1),...,[.9,1] bins",
+    "disagreementMetric": "per fixture maximum absolute class difference for both raw and calibrated; bucket means across fixtures",
+    "marketPolicy": "benchmark only after calibrated predictions; frozen V0.8 B365H/B365D/B365A and proportional normalization; no betting strategy"
+  },
+  "provenance": {
+    "frozenArtifactHashes": {
+      "model-comparison-v06.json": "deb9fac92ebd104fcc15cf713b5e2600cfba5e56a8f58b30d219f469dccf8262",
+      "corners-v07-summary.json": "bf4475b082608bf78a9f92b7986355745c62279d54b05509497a0699494fa4a7",
+      "value-v08-summary.json": "d1fbf53cfd513bd9329893f5cb9205d039f455ed725c2cebc55a4b7de1990bb9"
+    },
+    "sourceHashes": [
+      {
+        "season": "2014-15",
+        "localFile": "1415-E0.csv",
+        "sha256": "76b7858051ff6b17f46f49f26fdc70c1f29537270492606f5cc63d67fad5d149"
+      },
+      {
+        "season": "2015-16",
+        "localFile": "1516-E0.csv",
+        "sha256": "bd3502a18c38a1597fd9af62e2366b4015006d3528dd4d18b311bd6237bbc085"
+      },
+      {
+        "season": "2016-17",
+        "localFile": "1617-E0.csv",
+        "sha256": "9625a7652b5f98fbd3e2e4d378c851fc246693f3343e34a72428d5b6e864d3e0"
+      },
+      {
+        "season": "2017-18",
+        "localFile": "1718-E0.csv",
+        "sha256": "4f3389365ef3f7ac966764ed8ba67cf3b79f5aebed18dd224099c4b2c98bc67b"
+      },
+      {
+        "season": "2018-19",
+        "localFile": "1819-E0.csv",
+        "sha256": "7c096b3c2ecd54c6993d22eeea73450c2bde11e3457238b226b8f43c62dfc35e"
+      },
+      {
+        "season": "2021-22",
+        "localFile": "2122-E0.csv",
+        "sha256": "335afcbabeb2939fa10ab39ba3e8215072d0b577cb8d0705c1e44c56e934e703"
+      },
+      {
+        "season": "2022-23",
+        "localFile": "2223-E0.csv",
+        "sha256": "8442792d3b614c94ea3cf381bd2736805889cc1713169035368fff19c3d02380"
+      },
+      {
+        "season": "2023-24",
+        "localFile": "2324-E0.csv",
+        "sha256": "b2e057b0ed959f198b0f63d2391c01239f3608e6de5db68edab3f88e04d07ff3"
+      },
+      {
+        "season": "2024-25",
+        "localFile": "2425-E0.csv",
+        "sha256": "d0c8ce4a96d886cf60cf101f570f4a3893844226f91c7bd769eb568c49edbfa4"
+      },
+      {
+        "season": "2025-26",
+        "localFile": "2526-E0.csv",
+        "sha256": "3e3a8352f9ada6789c508d6ca184424421fed56a30400904a4a327c583407e62"
+      }
+    ],
+    "valueV08ProtocolSha256": "f05feb53bcf54b2c9c887404db2d9d8e1a0784e646640db6a10e200437949c31"
+  },
+  "coverage": {
+    "olderTrainingRecords": 1691,
+    "rollingValidationRecords": 1351,
+    "recentValidationRecords": 1688,
+    "pricedValidationRecords": 1688,
+    "sourceSeasons": [
+      {
+        "seasonId": "2014-15",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2015-16",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2016-17",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2017-18",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2018-19",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2021-22",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2022-23",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2023-24",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2024-25",
+        "alignedFixtures": 380
+      },
+      {
+        "seasonId": "2025-26",
+        "alignedFixtures": 380
+      }
+    ]
+  },
+  "development": {
+    "trainingRecords": 1691,
+    "rollingValidationRecords": 1351,
+    "folds": [
+      {
+        "fold": 1,
+        "trainingSeasons": [
+          "2014-15"
+        ],
+        "validationSeason": "2015-16",
+        "trainingRecords": 340,
+        "validationRecords": 340,
+        "temperature": {
+          "family": "temperature-v1",
+          "parameters": [
+            0.398184474777711
+          ],
+          "initialParameters": [
+            0
+          ],
+          "trainingRecords": 340,
+          "iterations": 7,
+          "evaluations": 8,
+          "objective": 1.0187260645462197,
+          "meanGradientNorm": 1.8409395250048654e-11,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "logistic": {
+          "family": "multinomial-logit-v1",
+          "parameters": [
+            0.1793869116202358,
+            0.6851158082698432,
+            -0.17941841613698656,
+            -0.3711015107081125,
+            0.39668164966413055,
+            -0.2711203127932355
+          ],
+          "initialParameters": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "trainingRecords": 340,
+          "iterations": 30,
+          "evaluations": 31,
+          "objective": 1.0059378701255839,
+          "meanGradientNorm": 8.30339690366225e-9,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "scores": [
+          {
+            "family": "identity",
+            "brier": 0.6488515736092411
+          },
+          {
+            "family": "temperature-v1",
+            "brier": 0.6372013467729618
+          },
+          {
+            "family": "multinomial-logit-v1",
+            "brier": 0.6235830292715964
+          }
+        ]
+      },
+      {
+        "fold": 2,
+        "trainingSeasons": [
+          "2014-15",
+          "2015-16"
+        ],
+        "validationSeason": "2016-17",
+        "trainingRecords": 680,
+        "validationRecords": 337,
+        "temperature": {
+          "family": "temperature-v1",
+          "parameters": [
+            0.665002531173915
+          ],
+          "initialParameters": [
+            0
+          ],
+          "trainingRecords": 680,
+          "iterations": 8,
+          "evaluations": 9,
+          "objective": 1.0539669290457399,
+          "meanGradientNorm": 3.093013427079474e-11,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "logistic": {
+          "family": "multinomial-logit-v1",
+          "parameters": [
+            0.030754943016435193,
+            0.9270552817880655,
+            -0.9759668154068365,
+            -0.49633682227090575,
+            0.6965874846377617,
+            -1.2297331736175097
+          ],
+          "initialParameters": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "trainingRecords": 680,
+          "iterations": 30,
+          "evaluations": 31,
+          "objective": 1.0238399966191174,
+          "meanGradientNorm": 5.352587561497444e-9,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "scores": [
+          {
+            "family": "identity",
+            "brier": 0.5601689909989547
+          },
+          {
+            "family": "temperature-v1",
+            "brier": 0.5803272133067587
+          },
+          {
+            "family": "multinomial-logit-v1",
+            "brier": 0.5793617039900071
+          }
+        ]
+      },
+      {
+        "fold": 3,
+        "trainingSeasons": [
+          "2014-15",
+          "2015-16",
+          "2016-17"
+        ],
+        "validationSeason": "2017-18",
+        "trainingRecords": 1017,
+        "validationRecords": 337,
+        "temperature": {
+          "family": "temperature-v1",
+          "parameters": [
+            0.4340051634114516
+          ],
+          "initialParameters": [
+            0
+          ],
+          "trainingRecords": 1017,
+          "iterations": 7,
+          "evaluations": 8,
+          "objective": 1.0252570222374693,
+          "meanGradientNorm": 7.579374558325951e-11,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "logistic": {
+          "family": "multinomial-logit-v1",
+          "parameters": [
+            0.2221535107777502,
+            0.7666706147873,
+            -0.39147685559617834,
+            -0.3487339864132891,
+            0.5494540134017539,
+            -0.6883709216334696
+          ],
+          "initialParameters": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "trainingRecords": 1017,
+          "iterations": 30,
+          "evaluations": 31,
+          "objective": 1.004010422131893,
+          "meanGradientNorm": 3.4518615653671556e-9,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "scores": [
+          {
+            "family": "identity",
+            "brier": 0.589197772498697
+          },
+          {
+            "family": "temperature-v1",
+            "brier": 0.5836607429699826
+          },
+          {
+            "family": "multinomial-logit-v1",
+            "brier": 0.5849594100196363
+          }
+        ]
+      },
+      {
+        "fold": 4,
+        "trainingSeasons": [
+          "2014-15",
+          "2015-16",
+          "2016-17",
+          "2017-18"
+        ],
+        "validationSeason": "2018-19",
+        "trainingRecords": 1354,
+        "validationRecords": 337,
+        "temperature": {
+          "family": "temperature-v1",
+          "parameters": [
+            0.49162804402249244
+          ],
+          "initialParameters": [
+            0
+          ],
+          "trainingRecords": 1354,
+          "iterations": 7,
+          "evaluations": 8,
+          "objective": 1.023655586340735,
+          "meanGradientNorm": 3.274801390591029e-10,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "logistic": {
+          "family": "multinomial-logit-v1",
+          "parameters": [
+            0.40212989537931787,
+            0.40758129710044405,
+            0.3155745321418215,
+            -0.1512462019213686,
+            0.2763731349294225,
+            -0.07782672192855698
+          ],
+          "initialParameters": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "trainingRecords": 1354,
+          "iterations": 30,
+          "evaluations": 31,
+          "objective": 1.0050470353881336,
+          "meanGradientNorm": 1.3224866761726638e-9,
+          "convergenceCriterion": "GRADIENT_NORM",
+          "termination": "Callback returned true"
+        },
+        "scores": [
+          {
+            "family": "identity",
+            "brier": 0.5485884757365153
+          },
+          {
+            "family": "temperature-v1",
+            "brier": 0.5535957944417349
+          },
+          {
+            "family": "multinomial-logit-v1",
+            "brier": 0.5449154326239044
+          }
+        ]
+      }
+    ],
+    "candidates": [
+      {
+        "family": "identity",
+        "matches": 1351,
+        "brier": 0.5868397118053702,
+        "logLoss": 1.0223751421234066,
+        "advantage": 0,
+        "bootstrap": {
+          "method": "season-stratified date-cluster paired percentile bootstrap",
+          "samples": 5000,
+          "seed": 202609,
+          "confidenceLevel": 0.95,
+          "evaluatedMatches": 1351,
+          "dateClusters": 373,
+          "strata": [
+            {
+              "seasonId": "2015-16",
+              "dateClusters": 87,
+              "evaluatedMatches": 340
+            },
+            {
+              "seasonId": "2016-17",
+              "dateClusters": 95,
+              "evaluatedMatches": 337
+            },
+            {
+              "seasonId": "2017-18",
+              "dateClusters": 94,
+              "evaluatedMatches": 337
+            },
+            {
+              "seasonId": "2018-19",
+              "dateClusters": 97,
+              "evaluatedMatches": 337
+            }
+          ],
+          "interval": {
+            "observedMean": 0,
+            "lowerBound": 0,
+            "upperBound": 0
+          }
+        },
+        "eligible": false
+      },
+      {
+        "family": "temperature-v1",
+        "matches": 1351,
+        "brier": 0.5888039836379959,
+        "logLoss": 1.0081974229273112,
+        "advantage": -0.001964271832625942,
+        "bootstrap": {
+          "method": "season-stratified date-cluster paired percentile bootstrap",
+          "samples": 5000,
+          "seed": 202609,
+          "confidenceLevel": 0.95,
+          "evaluatedMatches": 1351,
+          "dateClusters": 373,
+          "strata": [
+            {
+              "seasonId": "2015-16",
+              "dateClusters": 87,
+              "evaluatedMatches": 340
+            },
+            {
+              "seasonId": "2016-17",
+              "dateClusters": 95,
+              "evaluatedMatches": 337
+            },
+            {
+              "seasonId": "2017-18",
+              "dateClusters": 94,
+              "evaluatedMatches": 337
+            },
+            {
+              "seasonId": "2018-19",
+              "dateClusters": 97,
+              "evaluatedMatches": 337
+            }
+          ],
+          "interval": {
+            "observedMean": -0.001964271832625942,
+            "lowerBound": -0.00932456223533298,
+            "upperBound": 0.0056547214287735355
+          }
+        },
+        "eligible": false
+      },
+      {
+        "family": "multinomial-logit-v1",
+        "matches": 1351,
+        "brier": 0.5832945567489618,
+        "logLoss": 0.9983902519716505,
+        "advantage": 0.003545155056408083,
+        "bootstrap": {
+          "method": "season-stratified date-cluster paired percentile bootstrap",
+          "samples": 5000,
+          "seed": 202609,
+          "confidenceLevel": 0.95,
+          "evaluatedMatches": 1351,
+          "dateClusters": 373,
+          "strata": [
+            {
+              "seasonId": "2015-16",
+              "dateClusters": 87,
+              "evaluatedMatches": 340
+            },
+            {
+              "seasonId": "2016-17",
+              "dateClusters": 95,
+              "evaluatedMatches": 337
+            },
+            {
+              "seasonId": "2017-18",
+              "dateClusters": 94,
+              "evaluatedMatches": 337
+            },
+            {
+              "seasonId": "2018-19",
+              "dateClusters": 97,
+              "evaluatedMatches": 337
+            }
+          ],
+          "interval": {
+            "observedMean": 0.003545155056408083,
+            "lowerBound": -0.006088571616797555,
+            "upperBound": 0.012814475901954768
+          }
+        },
+        "eligible": false
+      }
+    ],
+    "selectedFamily": "identity",
+    "foldTemperatureRange": {
+      "minimum": 1.4891187094136826,
+      "maximum": 1.9444954431867454,
+      "mean": 1.6530042142720147
+    }
+  },
+  "finalFit": {
+    "family": "identity",
+    "parameters": [],
+    "initialParameters": [],
+    "trainingRecords": 1691,
+    "iterations": 0,
+    "evaluations": 0,
+    "objective": 1.0249149093563223,
+    "meanGradientNorm": null,
+    "convergenceCriterion": "NO_FIT",
+    "termination": "Identity has no fitted parameters."
+  },
+  "finalParameters": {
+    "temperature": null,
+    "coefficients": null
+  },
+  "validation": {
+    "matches": 1688,
+    "forecasts": {
+      "raw": {
+        "matches": 1688,
+        "brier": 0.6096214837100087,
+        "logLoss": 1.0226624086000538,
+        "topPickAccuracy": 0.5106635071090048,
+        "topConfidenceECE": 0.06369855089117224,
+        "topConfidenceBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 192,
+            "meanConfidence": 0.37917675988827043,
+            "observedAccuracy": 0.3958333333333333
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 472,
+            "meanConfidence": 0.4495342025495597,
+            "observedAccuracy": 0.3919491525423729
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 392,
+            "meanConfidence": 0.546269877172425,
+            "observedAccuracy": 0.5280612244897959
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 282,
+            "meanConfidence": 0.6503444458671296,
+            "observedAccuracy": 0.5886524822695035
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 191,
+            "meanConfidence": 0.7420801136301772,
+            "observedAccuracy": 0.5863874345549738
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 111,
+            "meanConfidence": 0.846773267052465,
+            "observedAccuracy": 0.6846846846846847
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 48,
+            "meanConfidence": 0.9350185055655379,
+            "observedAccuracy": 0.8333333333333334
+          }
+        ],
+        "meanMaximumProbability": 0.5705728848941912,
+        "meanEntropy": 0.9211528295464867,
+        "outcomes": [
+          {
+            "outcome": "HOME",
+            "ece": 0.06915258547004438,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 84,
+                "meanPredictedProbability": 0.0602966070661619,
+                "observedFrequency": 0.10714285714285714
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 205,
+                "meanPredictedProbability": 0.14904147022712003,
+                "observedFrequency": 0.2146341463414634
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 224,
+                "meanPredictedProbability": 0.252157706877684,
+                "observedFrequency": 0.32142857142857145
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 266,
+                "meanPredictedProbability": 0.34961758226288586,
+                "observedFrequency": 0.42857142857142855
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 256,
+                "meanPredictedProbability": 0.4485168963751169,
+                "observedFrequency": 0.421875
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 228,
+                "meanPredictedProbability": 0.5487713509534202,
+                "observedFrequency": 0.5789473684210527
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 173,
+                "meanPredictedProbability": 0.649988283214236,
+                "observedFrequency": 0.6069364161849711
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 125,
+                "meanPredictedProbability": 0.7411143510070322,
+                "observedFrequency": 0.56
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 85,
+                "meanPredictedProbability": 0.8444253441289601,
+                "observedFrequency": 0.6705882352941176
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 42,
+                "meanPredictedProbability": 0.9348977454411289,
+                "observedFrequency": 0.8333333333333334
+              }
+            ]
+          },
+          {
+            "outcome": "DRAW",
+            "ece": 0.0405757090232404,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 96,
+                "meanPredictedProbability": 0.0674749876685549,
+                "observedFrequency": 0.17708333333333334
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 407,
+                "meanPredictedProbability": 0.16457741723859795,
+                "observedFrequency": 0.21867321867321868
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 935,
+                "meanPredictedProbability": 0.24763538019558656,
+                "observedFrequency": 0.25668449197860965
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 222,
+                "meanPredictedProbability": 0.331040778690775,
+                "observedFrequency": 0.22522522522522523
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 22,
+                "meanPredictedProbability": 0.43815785005156277,
+                "observedFrequency": 0.3181818181818182
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 4,
+                "meanPredictedProbability": 0.5220152326097925,
+                "observedFrequency": 0.5
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 2,
+                "meanPredictedProbability": 0.6364492227341232,
+                "observedFrequency": 0
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              }
+            ]
+          },
+          {
+            "outcome": "AWAY",
+            "ece": 0.06212197671602617,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 229,
+                "meanPredictedProbability": 0.05540159695411375,
+                "observedFrequency": 0.11353711790393013
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 306,
+                "meanPredictedProbability": 0.1490046648922924,
+                "observedFrequency": 0.1830065359477124
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 323,
+                "meanPredictedProbability": 0.24909102846630984,
+                "observedFrequency": 0.30959752321981426
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 257,
+                "meanPredictedProbability": 0.34802506603213357,
+                "observedFrequency": 0.30739299610894943
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 208,
+                "meanPredictedProbability": 0.4501118062779286,
+                "observedFrequency": 0.36538461538461536
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 160,
+                "meanPredictedProbability": 0.5433116431485725,
+                "observedFrequency": 0.45625
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 107,
+                "meanPredictedProbability": 0.6511800214299017,
+                "observedFrequency": 0.5700934579439252
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 66,
+                "meanPredictedProbability": 0.7439092095073455,
+                "observedFrequency": 0.6363636363636364
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 26,
+                "meanPredictedProbability": 0.8544491689177687,
+                "observedFrequency": 0.7307692307692307
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 6,
+                "meanPredictedProbability": 0.9358638264364022,
+                "observedFrequency": 0.8333333333333334
+              }
+            ]
+          }
+        ]
+      },
+      "calibrated": {
+        "matches": 1688,
+        "brier": 0.6096214837100087,
+        "logLoss": 1.0226624086000538,
+        "topPickAccuracy": 0.5106635071090048,
+        "topConfidenceECE": 0.06369855089117224,
+        "topConfidenceBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 192,
+            "meanConfidence": 0.37917675988827043,
+            "observedAccuracy": 0.3958333333333333
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 472,
+            "meanConfidence": 0.4495342025495597,
+            "observedAccuracy": 0.3919491525423729
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 392,
+            "meanConfidence": 0.546269877172425,
+            "observedAccuracy": 0.5280612244897959
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 282,
+            "meanConfidence": 0.6503444458671296,
+            "observedAccuracy": 0.5886524822695035
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 191,
+            "meanConfidence": 0.7420801136301772,
+            "observedAccuracy": 0.5863874345549738
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 111,
+            "meanConfidence": 0.846773267052465,
+            "observedAccuracy": 0.6846846846846847
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 48,
+            "meanConfidence": 0.9350185055655379,
+            "observedAccuracy": 0.8333333333333334
+          }
+        ],
+        "meanMaximumProbability": 0.5705728848941912,
+        "meanEntropy": 0.9211528295464867,
+        "outcomes": [
+          {
+            "outcome": "HOME",
+            "ece": 0.06915258547004438,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 84,
+                "meanPredictedProbability": 0.0602966070661619,
+                "observedFrequency": 0.10714285714285714
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 205,
+                "meanPredictedProbability": 0.14904147022712003,
+                "observedFrequency": 0.2146341463414634
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 224,
+                "meanPredictedProbability": 0.252157706877684,
+                "observedFrequency": 0.32142857142857145
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 266,
+                "meanPredictedProbability": 0.34961758226288586,
+                "observedFrequency": 0.42857142857142855
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 256,
+                "meanPredictedProbability": 0.4485168963751169,
+                "observedFrequency": 0.421875
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 228,
+                "meanPredictedProbability": 0.5487713509534202,
+                "observedFrequency": 0.5789473684210527
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 173,
+                "meanPredictedProbability": 0.649988283214236,
+                "observedFrequency": 0.6069364161849711
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 125,
+                "meanPredictedProbability": 0.7411143510070322,
+                "observedFrequency": 0.56
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 85,
+                "meanPredictedProbability": 0.8444253441289601,
+                "observedFrequency": 0.6705882352941176
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 42,
+                "meanPredictedProbability": 0.9348977454411289,
+                "observedFrequency": 0.8333333333333334
+              }
+            ]
+          },
+          {
+            "outcome": "DRAW",
+            "ece": 0.0405757090232404,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 96,
+                "meanPredictedProbability": 0.0674749876685549,
+                "observedFrequency": 0.17708333333333334
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 407,
+                "meanPredictedProbability": 0.16457741723859795,
+                "observedFrequency": 0.21867321867321868
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 935,
+                "meanPredictedProbability": 0.24763538019558656,
+                "observedFrequency": 0.25668449197860965
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 222,
+                "meanPredictedProbability": 0.331040778690775,
+                "observedFrequency": 0.22522522522522523
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 22,
+                "meanPredictedProbability": 0.43815785005156277,
+                "observedFrequency": 0.3181818181818182
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 4,
+                "meanPredictedProbability": 0.5220152326097925,
+                "observedFrequency": 0.5
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 2,
+                "meanPredictedProbability": 0.6364492227341232,
+                "observedFrequency": 0
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              }
+            ]
+          },
+          {
+            "outcome": "AWAY",
+            "ece": 0.06212197671602617,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 229,
+                "meanPredictedProbability": 0.05540159695411375,
+                "observedFrequency": 0.11353711790393013
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 306,
+                "meanPredictedProbability": 0.1490046648922924,
+                "observedFrequency": 0.1830065359477124
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 323,
+                "meanPredictedProbability": 0.24909102846630984,
+                "observedFrequency": 0.30959752321981426
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 257,
+                "meanPredictedProbability": 0.34802506603213357,
+                "observedFrequency": 0.30739299610894943
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 208,
+                "meanPredictedProbability": 0.4501118062779286,
+                "observedFrequency": 0.36538461538461536
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 160,
+                "meanPredictedProbability": 0.5433116431485725,
+                "observedFrequency": 0.45625
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 107,
+                "meanPredictedProbability": 0.6511800214299017,
+                "observedFrequency": 0.5700934579439252
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 66,
+                "meanPredictedProbability": 0.7439092095073455,
+                "observedFrequency": 0.6363636363636364
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 26,
+                "meanPredictedProbability": 0.8544491689177687,
+                "observedFrequency": 0.7307692307692307
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 6,
+                "meanPredictedProbability": 0.9358638264364022,
+                "observedFrequency": 0.8333333333333334
+              }
+            ]
+          }
+        ]
+      },
+      "market": {
+        "matches": 1688,
+        "brier": 0.5760293595563422,
+        "logLoss": 0.968575127528073,
+        "topPickAccuracy": 0.5479857819905213,
+        "topConfidenceECE": 0.025973573300211467,
+        "topConfidenceBins": [
+          {
+            "lowerBound": 0,
+            "upperBound": 0.1,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.1,
+            "upperBound": 0.2,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.2,
+            "upperBound": 0.3,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          },
+          {
+            "lowerBound": 0.3,
+            "upperBound": 0.4,
+            "count": 259,
+            "meanConfidence": 0.37834028184792845,
+            "observedAccuracy": 0.444015444015444
+          },
+          {
+            "lowerBound": 0.4,
+            "upperBound": 0.5,
+            "count": 516,
+            "meanConfidence": 0.44997191153074173,
+            "observedAccuracy": 0.4573643410852713
+          },
+          {
+            "lowerBound": 0.5,
+            "upperBound": 0.6,
+            "count": 400,
+            "meanConfidence": 0.5507482223392117,
+            "observedAccuracy": 0.5325
+          },
+          {
+            "lowerBound": 0.6,
+            "upperBound": 0.7,
+            "count": 295,
+            "meanConfidence": 0.648775006016773,
+            "observedAccuracy": 0.6576271186440678
+          },
+          {
+            "lowerBound": 0.7,
+            "upperBound": 0.8,
+            "count": 152,
+            "meanConfidence": 0.7443212573822117,
+            "observedAccuracy": 0.6973684210526315
+          },
+          {
+            "lowerBound": 0.8,
+            "upperBound": 0.9,
+            "count": 66,
+            "meanConfidence": 0.8337645788424193,
+            "observedAccuracy": 0.9242424242424242
+          },
+          {
+            "lowerBound": 0.9,
+            "upperBound": 1,
+            "count": 0,
+            "meanConfidence": null,
+            "observedAccuracy": null
+          }
+        ],
+        "meanMaximumProbability": 0.5391166163417095,
+        "meanEntropy": 0.971556410235561,
+        "outcomes": [
+          {
+            "outcome": "HOME",
+            "ece": 0.02207226066127444,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 32,
+                "meanPredictedProbability": 0.08106427914185581,
+                "observedFrequency": 0.03125
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 160,
+                "meanPredictedProbability": 0.15607318467115786,
+                "observedFrequency": 0.11875
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 246,
+                "meanPredictedProbability": 0.2531410649828747,
+                "observedFrequency": 0.2601626016260163
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 319,
+                "meanPredictedProbability": 0.3532280479483974,
+                "observedFrequency": 0.3761755485893417
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 304,
+                "meanPredictedProbability": 0.45101148437229455,
+                "observedFrequency": 0.46710526315789475
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 257,
+                "meanPredictedProbability": 0.5517626033159891,
+                "observedFrequency": 0.556420233463035
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 201,
+                "meanPredictedProbability": 0.6504570983708376,
+                "observedFrequency": 0.6417910447761194
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 110,
+                "meanPredictedProbability": 0.7464060043328251,
+                "observedFrequency": 0.6727272727272727
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 59,
+                "meanPredictedProbability": 0.8354474262733872,
+                "observedFrequency": 0.9152542372881356
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              }
+            ]
+          },
+          {
+            "outcome": "DRAW",
+            "ece": 0.01410232726706649,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 19,
+                "meanPredictedProbability": 0.08777294565448542,
+                "observedFrequency": 0.05263157894736842
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 323,
+                "meanPredictedProbability": 0.16458123647590012,
+                "observedFrequency": 0.20743034055727555
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 1322,
+                "meanPredictedProbability": 0.25545372966841284,
+                "observedFrequency": 0.24886535552193645
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 24,
+                "meanPredictedProbability": 0.30887703252304344,
+                "observedFrequency": 0.3333333333333333
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              }
+            ]
+          },
+          {
+            "outcome": "AWAY",
+            "ece": 0.015630525595755302,
+            "bins": [
+              {
+                "lowerBound": 0,
+                "upperBound": 0.1,
+                "count": 125,
+                "meanPredictedProbability": 0.0718551629405991,
+                "observedFrequency": 0.056
+              },
+              {
+                "lowerBound": 0.1,
+                "upperBound": 0.2,
+                "count": 358,
+                "meanPredictedProbability": 0.1530787089158458,
+                "observedFrequency": 0.15363128491620112
+              },
+              {
+                "lowerBound": 0.2,
+                "upperBound": 0.3,
+                "count": 383,
+                "meanPredictedProbability": 0.2515175086091753,
+                "observedFrequency": 0.2584856396866841
+              },
+              {
+                "lowerBound": 0.3,
+                "upperBound": 0.4,
+                "count": 324,
+                "meanPredictedProbability": 0.34993050970509465,
+                "observedFrequency": 0.3333333333333333
+              },
+              {
+                "lowerBound": 0.4,
+                "upperBound": 0.5,
+                "count": 212,
+                "meanPredictedProbability": 0.44848120330511915,
+                "observedFrequency": 0.44339622641509435
+              },
+              {
+                "lowerBound": 0.5,
+                "upperBound": 0.6,
+                "count": 143,
+                "meanPredictedProbability": 0.5489251740103198,
+                "observedFrequency": 0.48951048951048953
+              },
+              {
+                "lowerBound": 0.6,
+                "upperBound": 0.7,
+                "count": 94,
+                "meanPredictedProbability": 0.6451781915149944,
+                "observedFrequency": 0.6914893617021277
+              },
+              {
+                "lowerBound": 0.7,
+                "upperBound": 0.8,
+                "count": 42,
+                "meanPredictedProbability": 0.7388612058448896,
+                "observedFrequency": 0.7619047619047619
+              },
+              {
+                "lowerBound": 0.8,
+                "upperBound": 0.9,
+                "count": 7,
+                "meanPredictedProbability": 0.8195805790671179,
+                "observedFrequency": 1
+              },
+              {
+                "lowerBound": 0.9,
+                "upperBound": 1,
+                "count": 0,
+                "meanPredictedProbability": null,
+                "observedFrequency": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "calibrationAdvantage": 0,
+    "calibrationBootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202609,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1688,
+      "dateClusters": 522,
+      "strata": [
+        {
+          "seasonId": "2021-22",
+          "dateClusters": 112,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2022-23",
+          "dateClusters": 106,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2023-24",
+          "dateClusters": 103,
+          "evaluatedMatches": 328
+        },
+        {
+          "seasonId": "2024-25",
+          "dateClusters": 99,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2025-26",
+          "dateClusters": 102,
+          "evaluatedMatches": 340
+        }
+      ],
+      "interval": {
+        "observedMean": 0,
+        "lowerBound": 0,
+        "upperBound": 0
+      }
+    },
+    "rawAdvantageVsMarket": -0.03359212415366649,
+    "rawMarketBootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202609,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1688,
+      "dateClusters": 522,
+      "strata": [
+        {
+          "seasonId": "2021-22",
+          "dateClusters": 112,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2022-23",
+          "dateClusters": 106,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2023-24",
+          "dateClusters": 103,
+          "evaluatedMatches": 328
+        },
+        {
+          "seasonId": "2024-25",
+          "dateClusters": 99,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2025-26",
+          "dateClusters": 102,
+          "evaluatedMatches": 340
+        }
+      ],
+      "interval": {
+        "observedMean": -0.03359212415366649,
+        "lowerBound": -0.043235169954625285,
+        "upperBound": -0.02410229118786005
+      }
+    },
+    "calibratedAdvantageVsMarket": -0.03359212415366649,
+    "calibratedMarketBootstrap": {
+      "method": "season-stratified date-cluster paired percentile bootstrap",
+      "samples": 5000,
+      "seed": 202609,
+      "confidenceLevel": 0.95,
+      "evaluatedMatches": 1688,
+      "dateClusters": 522,
+      "strata": [
+        {
+          "seasonId": "2021-22",
+          "dateClusters": 112,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2022-23",
+          "dateClusters": 106,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2023-24",
+          "dateClusters": 103,
+          "evaluatedMatches": 328
+        },
+        {
+          "seasonId": "2024-25",
+          "dateClusters": 99,
+          "evaluatedMatches": 340
+        },
+        {
+          "seasonId": "2025-26",
+          "dateClusters": 102,
+          "evaluatedMatches": 340
+        }
+      ],
+      "interval": {
+        "observedMean": -0.03359212415366649,
+        "lowerBound": -0.043235169954625285,
+        "upperBound": -0.02410229118786005
+      }
+    },
+    "gapClosedFraction": 0,
+    "status": "IDENTITY_RETAINED",
+    "researchModelVersion": null,
+    "seasons": [
+      {
+        "seasonId": "2021-22",
+        "matches": 340,
+        "rawBrier": 0.6077343460118885,
+        "calibratedBrier": 0.6077343460118885,
+        "calibrationAdvantage": 0,
+        "marketBrier": 0.562218796775968,
+        "rawLogLoss": 1.0240125292852167,
+        "calibratedLogLoss": 1.0240125292852167,
+        "marketLogLoss": 0.9487580870688446
+      },
+      {
+        "seasonId": "2022-23",
+        "matches": 340,
+        "rawBrier": 0.6029046985584428,
+        "calibratedBrier": 0.6029046985584428,
+        "calibrationAdvantage": 0,
+        "marketBrier": 0.57207845483284,
+        "rawLogLoss": 1.012971109076177,
+        "calibratedLogLoss": 1.012971109076177,
+        "marketLogLoss": 0.9649169279895435
+      },
+      {
+        "seasonId": "2023-24",
+        "matches": 328,
+        "rawBrier": 0.5809059976058308,
+        "calibratedBrier": 0.5809059976058308,
+        "calibrationAdvantage": 0,
+        "marketBrier": 0.5431563124852454,
+        "rawLogLoss": 0.9844272927151732,
+        "calibratedLogLoss": 0.9844272927151732,
+        "marketLogLoss": 0.9229255052211789
+      },
+      {
+        "seasonId": "2024-25",
+        "matches": 340,
+        "rawBrier": 0.6088426871681263,
+        "calibratedBrier": 0.6088426871681263,
+        "calibrationAdvantage": 0,
+        "marketBrier": 0.5847688601321821,
+        "rawLogLoss": 1.011180436978887,
+        "calibratedLogLoss": 1.011180436978887,
+        "marketLogLoss": 0.9791050835194242
+      },
+      {
+        "seasonId": "2025-26",
+        "matches": 340,
+        "rawBrier": 0.6467062014609,
+        "calibratedBrier": 0.6467062014609,
+        "calibrationAdvantage": 0,
+        "marketBrier": 0.6167641483647301,
+        "rawLogLoss": 1.0793712002665279,
+        "calibratedLogLoss": 1.0793712002665279,
+        "marketLogLoss": 1.0255588707011387
+      }
+    ],
+    "confidenceBuckets": [
+      {
+        "label": "1/3–<0.40",
+        "matches": 192,
+        "rawBrier": 0.658981071349759,
+        "calibratedBrier": 0.658981071349759,
+        "marketBrier": 0.6276814702653691,
+        "rawMeanTopConfidence": 0.37917675988827043,
+        "rawTopPickAccuracy": 0.3958333333333333,
+        "calibratedMeanTopConfidence": 0.37917675988827043
+      },
+      {
+        "label": "0.40–<0.50",
+        "matches": 472,
+        "rawBrier": 0.6745022938390247,
+        "calibratedBrier": 0.6745022938390247,
+        "marketBrier": 0.6435429397156889,
+        "rawMeanTopConfidence": 0.4495342025495597,
+        "rawTopPickAccuracy": 0.3919491525423729,
+        "calibratedMeanTopConfidence": 0.4495342025495597
+      },
+      {
+        "label": "0.50–<0.60",
+        "matches": 392,
+        "rawBrier": 0.6062154604507547,
+        "calibratedBrier": 0.6062154604507547,
+        "marketBrier": 0.5968533066676981,
+        "rawMeanTopConfidence": 0.546269877172425,
+        "rawTopPickAccuracy": 0.5280612244897959,
+        "calibratedMeanTopConfidence": 0.546269877172425
+      },
+      {
+        "label": "0.60–<0.70",
+        "matches": 282,
+        "rawBrier": 0.5680268741829145,
+        "calibratedBrier": 0.5680268741829145,
+        "marketBrier": 0.5173580430600795,
+        "rawMeanTopConfidence": 0.6503444458671296,
+        "rawTopPickAccuracy": 0.5886524822695035,
+        "calibratedMeanTopConfidence": 0.6503444458671296
+      },
+      {
+        "label": "0.70–<0.80",
+        "matches": 191,
+        "rawBrier": 0.5953838404931738,
+        "calibratedBrier": 0.5953838404931738,
+        "marketBrier": 0.5574929517182435,
+        "rawMeanTopConfidence": 0.7420801136301772,
+        "rawTopPickAccuracy": 0.5863874345549738,
+        "calibratedMeanTopConfidence": 0.7420801136301772
+      },
+      {
+        "label": "0.80–1.00",
+        "matches": 159,
+        "rawBrier": 0.4566871922065859,
+        "calibratedBrier": 0.4566871922065859,
+        "marketBrier": 0.3882253519464434,
+        "rawMeanTopConfidence": 0.8734133390564114,
+        "rawTopPickAccuracy": 0.7295597484276729,
+        "calibratedMeanTopConfidence": 0.8734133390564114
+      }
+    ],
+    "disagreementBuckets": [
+      {
+        "label": "<5 pp",
+        "matches": 432,
+        "rawBrier": 0.5840845618178622,
+        "calibratedBrier": 0.5840845618178622,
+        "marketBrier": 0.584635417122992,
+        "rawMeanDisagreement": 0.031027905297723344,
+        "calibratedMeanAbsoluteDisagreement": 0.031027905297723344
+      },
+      {
+        "label": "5–<10 pp",
+        "matches": 521,
+        "rawBrier": 0.5432507347681809,
+        "calibratedBrier": 0.5432507347681809,
+        "marketBrier": 0.5377488135177714,
+        "rawMeanDisagreement": 0.07450065323585459,
+        "calibratedMeanAbsoluteDisagreement": 0.07450065323585459
+      },
+      {
+        "label": "10–<20 pp",
+        "matches": 549,
+        "rawBrier": 0.6237523164845802,
+        "calibratedBrier": 0.6237523164845802,
+        "marketBrier": 0.581897065572468,
+        "rawMeanDisagreement": 0.14222944132849344,
+        "calibratedMeanAbsoluteDisagreement": 0.14222944132849344
+      },
+      {
+        "label": "20+ pp",
+        "matches": 186,
+        "rawBrier": 0.8131337593167817,
+        "calibratedBrier": 0.8131337593167817,
+        "marketBrier": 0.6459485908168242,
+        "rawMeanDisagreement": 0.2703220360360511,
+        "calibratedMeanAbsoluteDisagreement": 0.2703220360360511
+      }
+    ],
+    "residuals": [
+      {
+        "outcome": "HOME",
+        "rawMeanResidual": -0.001420196640064944,
+        "calibratedMeanResidual": -0.001420196640064944,
+        "rawMeanAbsoluteDifference": 0.09017646541682421,
+        "calibratedMeanAbsoluteDifference": 0.09017646541682421
+      },
+      {
+        "outcome": "DRAW",
+        "rawMeanResidual": -0.005011333939447599,
+        "calibratedMeanResidual": -0.005011333939447599,
+        "rawMeanAbsoluteDifference": 0.04476150022217959,
+        "calibratedMeanAbsoluteDifference": 0.04476150022217959
+      },
+      {
+        "outcome": "AWAY",
+        "rawMeanResidual": 0.006431530579512564,
+        "calibratedMeanResidual": 0.006431530579512564,
+        "rawMeanAbsoluteDifference": 0.0790226474137747,
+        "calibratedMeanAbsoluteDifference": 0.0790226474137747
+      }
+    ]
+  }
+}

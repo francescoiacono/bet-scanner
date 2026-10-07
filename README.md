@@ -1,6 +1,8 @@
-# Bet Scanner V0.8
+# Bet Scanner V0.9
 
-A local football research dashboard with six research views:
+A local football research dashboard with seven research views:
+
+- **Probability calibration (`/calibration`)**: select a calibration layer using older rolling-origin evidence, freeze it, then evaluate recent historical forecasts against raw Dixon–Coles and the fair market.
 
 - **Historical market value (`/value`)**: evaluate the already recorded `dixon-coles-v1` probabilities at historical Bet365 non-closing 1X2 source prices using a predeclared flat-unit paper rule.
 
@@ -10,7 +12,7 @@ A local football research dashboard with six research views:
 - **Model diagnostics (`/diagnostics`)**: investigate paired uncertainty, fixed history-depth slices, outcome calibration, and season robustness without changing the model.
 - **Fictional market scanner (`/`)**: retain the existing fictional match history, upcoming fixtures, and independent mock prices for implied probability, edge, and expected ROI analysis.
 
-V0.8 adds historical price evaluation without changing any existing model, dataset, threshold, backtest or V0.6/V0.7 artifact. The fictional scanner still uses `poisson-v1`; neither corner model is promoted. The fixed paper rule loses money in both price cohorts; the predeclared research status is **INCONCLUSIVE**, because the recent ROI interval crosses zero. This is historical paper research, with no current recommendations or real-money execution. The application makes no runtime network requests for data; assets and fonts are local. No live odds, bookmaker APIs, sports APIs, AI services, authentication, databases or deployment are added.
+V0.8’s fixed historical paper rule lost money in both cohorts; its recorded status remains **INCONCLUSIVE**. V0.9 investigates probability calibration without modifying any model or V0.6/V0.7/V0.8 artifact. The predeclared older rolling-origin rule selects **IDENTITY**: neither fitted candidate has a Brier-advantage interval entirely above zero. Recent selected probabilities therefore equal raw Dixon–Coles, **0%** of the market gap is closed, and no calibrated research model is promoted. The fictional scanner still uses `poisson-v1`; neither corner model is promoted. V0.9 adds no betting strategy or current recommendations. Assets/fonts/data are local, with no runtime data requests, live odds, bookmaker APIs, sports APIs, AI, authentication, databases, deployment or bet execution.
 
 ## Run locally
 
@@ -19,7 +21,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, http://localhost:3000/corners, or http://localhost:3000/value. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
+Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, http://localhost:3000/corners, http://localhost:3000/value, or http://localhost:3000/calibration. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
 
 Offline generation uses Node's native TypeScript stripping (Node 22.18+; verified with Node 24.21). The existing data generator needs no added dependency; model generation uses the pinned Numeric.js optimiser documented below. Neither script needs a new TypeScript loader:
 
@@ -722,6 +724,145 @@ Neither price cohort is a pristine future holdout: their outcomes were already i
 
 No source or research-protocol deviations occurred. A TypeScript parameter-property syntax issue was corrected for Node’s strip-only mode before the first valid full evaluation; it did not change data or calculations. After the first valid ten-season result, all price columns, aliases, formulas, cohorts, 2% threshold, tie-breaking, unit stakes, bootstrap settings/method and diagnostic buckets remained unchanged. No threshold search, outcome filtering, corners betting, CLV or future milestone is implemented.
 
+## V0.9 probability calibration and market residual research
+
+V0.8 showed that Dixon–Coles improves on `poisson-v1` but remains behind Bet365 fair-market probabilities. Its fixed paper strategy lost money, including many selections with very optimistic estimated EV. V0.9 asks whether **simple probability calibration**, chosen without markets or recent outcomes, closes that scoring gap. It does not calculate a calibrated betting strategy, threshold variant, profit, ROI, drawdown or staking rule.
+
+### Frozen input and separation of roles
+
+The sole forecast source is the already recorded [V0.6 artifact](src/data/generated/model-comparison-v06.json). [The adapter](src/lib/calibration/records.ts) projects only fixture ID, season, source date, frozen HOME/DRAW/AWAY probabilities and actual outcome. Goals, team names, attack/defence parameters, fitted Dixon–Coles parameters, prices and V0.8 paper outcomes never enter calibration. The fitting API accepts only probability triplet + outcome; metadata is used to order, partition and pair records, never as a feature. The existing statistical models and fictional scanner remain unchanged.
+
+Roles are fixed before evaluation: **2014-15 → 2018-19** supplies **1,691 calibration development records**; **2021-22 → 2025-26** supplies **1,688 HISTORICAL CALIBRATION VALIDATION records**. Recent outcomes never choose or fit a candidate. Both cohorts’ outcomes appeared in earlier research, so neither is pristine unseen football data or a future holdout. This older-to-later protocol protects against validation-based calibration tuning; it does not erase prior inspection or establish future performance.
+
+```text
+Frozen older V0.6 triplets + outcomes
+    → four rolling-origin folds → candidate Brier / paired intervals
+    → fixed family selection → selected family fit once on all older records
+    → immutable final calibration parameters
+Frozen recent V0.6 triplets
+    → one fixed calibration map → recent scoring against actual outcomes
+    → only then attach verified V0.8 fair-market benchmark
+    → scores / ECE / sharpness / fixed diagnostic slices / residuals
+    → private audit + compact public aggregate → /calibration
+```
+
+### Exactly three fixed candidates
+
+**Identity (`identity`)** returns `q=p` exactly, with no fitted parameters.
+
+**Temperature (`temperature-v1`)** uses one parameter, initialized at `rawTemperature=0`, so `T=exp(rawTemperature)=1`. It computes `q=softmax(log(p)/T)`. `T>1` softens confidence, `T<1` sharpens it; class ordering is preserved. A numerically unrepresentable ordering is an explicit failure.
+
+**Multinomial logistic (`multinomial-logit-v1`)** uses AWAY as reference and exactly six coefficients:
+
+```text
+x = (1, log(pHOME/pAWAY), log(pDRAW/pAWAY))
+logitHOME = bH0 + bH1*x1 + bH2*x2
+logitDRAW = bD0 + bD1*x1 + bD2*x2
+logitAWAY = 0
+q = softmax(logits)
+initial coefficients = (0,1,0; 0,0,1)       # identity map
+```
+
+Log ratios are evaluated as differences of logs to avoid ratio overflow. Softmax subtracts the maximum logit. Every input/output triplet must be finite, strictly inside `(0,1)` and sum to one within `1e-10`. All 3,379 frozen vectors pass; no clipping or epsilon is used. Invalid/non-finite objectives, gradients, parameters, underflow/boundary probabilities or failed convergence abort generation without skipping, retrying another initialization or falling back to identity.
+
+Both fitted candidates minimise **mean multiclass natural-log loss**, `−log(q_actual)`, with analytic gradients. Temperature gradient is `logit_actual − Σq_i*logit_i` with respect to raw temperature. Logistic gradients are `(q_c−y_c)*x` for HOME/DRAW. Reuse **numeric@1.2.6 / BFGS**: maximum **2,000 iterations**, step tolerance **1e-10**, mean gradient tolerance **1e-8**, relative objective tolerance **1e-10** for **five** stable iterations. Library step convergence is separately recorded if used; the iteration cap fails. All eight actual fold fits converged by gradient norm. Training examples are canonically sorted by probability values and outcome for input-order invariance. No market blending, regularisation, team/season features or additional calibrators are introduced.
+
+### Rolling-origin selection, before recent evaluation
+
+| Fold | Train | Train records | Validate | Validation records | Fitted T | Logit iterations / gradient norm |
+| --- | --- | ---: | --- | ---: | ---: | ---: |
+| 1 | 2014-15 | 340 | 2015-16 | 340 | 1.4891187094 | 30 / 8.3034e-9 |
+| 2 | 2014-15 + 2015-16 | 680 | 2016-17 | 337 | 1.9444954432 | 30 / 5.3526e-9 |
+| 3 | 2014-15 through 2016-17 | 1,017 | 2017-18 | 337 | 1.5434268374 | 30 / 3.4519e-9 |
+| 4 | 2014-15 through 2017-18 | 1,354 | 2018-19 | 337 | 1.6349758670 | 30 / 1.3225e-9 |
+
+All candidates score the same **1,351 out-of-sample validation fixtures** from 2015-16 through 2018-19; 2014-15 is training-only. Each fitted candidate starts fresh in every fold. Temperature uses 7/8/7/7 iterations, with gradient norms from `1.8409e-11` to `3.2748e-10`. Fold temperature range: **1.4891187094–1.9444954432**. Logit objective/parameters/iterations/gradients and all fold scores are public aggregate diagnostics.
+
+The primary score is the existing **three-class Brier sum**, range 0–2, without division by three. Advantage = identity Brier − candidate Brier; positive favours calibration. Paired season-stratified, source-date-clustered bootstrap uses **5,000 samples, seed 202609, 95% percentile bounds**, retaining fixture/outcome pairs and date clusters. Fits stay fixed during resampling. A candidate is eligible only when its advantage lower bound is **strictly positive**. Select the only eligible candidate, or the larger observed advantage if both qualify; ties within **1e-12** prefer temperature. If neither qualifies, retain identity. No recent or market score enters selection; log loss is secondary.
+
+| Candidate | Rolling Brier | Rolling log loss | Brier advantage | 95% interval | Eligible |
+| --- | ---: | ---: | ---: | --- | --- |
+| Identity | 0.58683971 | 1.02237514 | 0 | [0,0] | Baseline |
+| Temperature | 0.58880398 | 1.00819742 | −0.00196427 | [−0.00932456, +0.00565472] | No |
+| Multinomial logistic | 0.58329456 | 0.99839025 | +0.00354516 | [−0.00608857, +0.01281448] | No |
+
+**Selected family: IDENTITY.** Neither non-identity interval lower bound is above zero. The final older stage has **1,691 records, no fitted parameters, zero optimiser iterations, NO_FIT**, and identity mean log loss **1.0249149094**. No unselected candidate is fitted on all older records or evaluated on recent seasons. A selected non-identity map would instead be fitted once on all older records and kept fixed across all recent seasons.
+
+### Recent historical validation and market benchmark
+
+Only after calibrated probabilities exist are V0.8 sources revalidated and attached as a benchmark. The ten original hashes, six-field parser, explicit fixture aliases, 380/380 joins, **B365H/B365D/B365A non-closing source-price family** and proportional normalization are reused unchanged. No C-suffixed or other bookmaker prices are used; collection timing remains non-uniform across eras. All **1,688 recent forecasts** receive the same V0.8 benchmark. Markets, overround, V0.8 outcome profitability and paper selections never enter fitting or family selection.
+
+| Recent metric | Raw Dixon–Coles | Selected calibrated (identity) | Bet365 fair market |
+| --- | ---: | ---: | ---: |
+| Brier | 0.60962148 | 0.60962148 | 0.57602936 |
+| Natural-log loss | 1.02266241 | 1.02266241 | 0.96857513 |
+| Top-pick accuracy | 51.07% | 51.07% | 54.80% |
+| Top-confidence ECE | 6.37% | 6.37% | 2.60% |
+| HOME ECE | 6.92% | 6.92% | 2.21% |
+| DRAW ECE | 4.06% | 4.06% | 1.41% |
+| AWAY ECE | 6.21% | 6.21% | 1.56% |
+| Mean maximum probability | 57.06% | 57.06% | 53.91% |
+| Mean entropy (nats) | 0.92115283 | 0.92115283 | 0.97155641 |
+
+Recent raw-minus-calibrated advantage is **0**, interval **[0,0]**. Market-minus-raw and market-minus-calibrated advantage are both **−0.03359212**, interval **[−0.04323517, −0.02410229]** under seed 202609. These V0.9 intervals do not replace the differently seeded V0.8 artifact.
+
+Market-gap closure = `(rawBrier−calibratedBrier)/(rawBrier−marketBrier)` when the raw gap is positive; otherwise null. Here **0%** is closed and the full **0.03359212** Brier gap remains. Negative closure would mean widening; above 100% would mean beating the market. No cap or misleading fallback is applied.
+
+The predeclared validation status is **IDENTITY_RETAINED**. For a selected non-identity map, a recent advantage lower bound >0 would give `CALIBRATION_IMPROVEMENT_SUPPORTED`, upper bound <0 would give `CALIBRATION_HARM_SUPPORTED`, otherwise `INCONCLUSIVE`, including exactly-zero bounds. Only supported non-identity improvement permits the separate research label `dixon-coles-calibrated-v1`. **No new model is promoted here.** The underlying `dixon-coles-v1` remains immutable.
+
+| Recent season | Matches | Raw = selected Brier | Market Brier | Raw = selected log loss | Market log loss |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2021-22 | 340 | 0.60773435 | 0.56221880 | 1.02401253 | 0.94875809 |
+| 2022-23 | 340 | 0.60290470 | 0.57207845 | 1.01297111 | 0.96491693 |
+| 2023-24 | 328 | 0.58090600 | 0.54315631 | 0.98442729 | 0.92292551 |
+| 2024-25 | 340 | 0.60884269 | 0.58476886 | 1.01118044 | 0.97910508 |
+| 2025-26 | 340 | 0.64670620 | 0.61676415 | 1.07937120 | 1.02555887 |
+
+### Fixed calibration, confidence and residual diagnostics
+
+Classwise and top-confidence calibration use **ten bins** `[0,.1), [.1,.2), …, [.9,1]`, with 1.0 in the final bin for the generic helper. Classwise ECE = `Σ binCount/N * abs(mean probability−observed frequency)`. Top-confidence ECE substitutes the top-pick confidence and correctness. Empty bins report null means/frequencies; counts sum to N separately for every forecast/outcome. The page exposes all bin tables in a disclosure. Sharpness is described by mean max probability and positive entropy `−Σp log p`, without treating greater confidence as better accuracy.
+
+Raw-confidence buckets were fixed before results and use the raw top probability. Selected confidence/Brier equals raw because identity was retained.
+
+| Raw-confidence bucket | Matches | Raw = selected confidence | Raw accuracy | Raw = selected Brier | Market Brier |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1/3–<0.40 | 192 | 37.92% | 39.58% | 0.65898107 | 0.62768147 |
+| 0.40–<0.50 | 472 | 44.95% | 39.19% | 0.67450229 | 0.64354294 |
+| 0.50–<0.60 | 392 | 54.63% | 52.81% | 0.60621546 | 0.59685331 |
+| 0.60–<0.70 | 282 | 65.03% | 58.87% | 0.56802687 | 0.51735804 |
+| 0.70–<0.80 | 191 | 74.21% | 58.64% | 0.59538384 | 0.55749295 |
+| 0.80–1.00 | 159 | 87.34% | 72.96% | 0.45668719 | 0.38822535 |
+
+Market-disagreement buckets use the raw **maximum absolute class difference per fixture**. The calibrated comparison uses that same maximum-absolute metric, averaged across fixtures, so both columns share a norm. These are diagnostic slices, never fitting targets or strategy filters.
+
+| Raw disagreement | Matches | Raw = selected Brier | Market Brier | Raw = selected mean absolute disagreement |
+| --- | ---: | ---: | ---: | ---: |
+| <5 pp | 432 | 0.58408456 | 0.58463542 | 3.10 pp |
+| 5–<10 pp | 521 | 0.54325073 | 0.53774881 | 7.45 pp |
+| 10–<20 pp | 549 | 0.62375232 | 0.58189707 | 14.22 pp |
+| 20+ pp | 186 | 0.81313376 | 0.64594859 | 27.03 pp |
+
+| Outcome | Raw = selected mean signed residual | Raw = selected mean absolute difference |
+| --- | ---: | ---: |
+| HOME | −0.14 pp | 9.02 pp |
+| DRAW | −0.50 pp | 4.48 pp |
+| AWAY | +0.64 pp | 7.90 pp |
+
+### Artifacts, reproducibility and interpretation
+
+```sh
+pnpm calibration:model:build  # verify frozen artifacts, select/fit older, validate recent, attach benchmark
+pnpm calibration:build        # existing value:data:build, then calibration:model:build
+```
+
+[Public calibration summary](src/data/generated/calibration-v09-summary.json): **59,073 bytes**, including configuration, frozen hashes, fold parameters/diagnostics, candidate scores/intervals, final parameters, validation metrics/bins/slices and status. No fixture identities, outcomes, individual probability triplets, odds or team names are published. `data/private/generated/calibration-v09-audit.json` retains **1,351 rolling-fold + 1,688 recent records** and is gitignored. React imports only aggregate data; no optimiser, private source or audit enters the page dependency graph.
+
+The code/protocol fingerprint fixed before the historical calibration run is `f12d9ba47a45a9d69693d698d2453ba40a6c5ef242c3e9eab21a164ee4262e65`. Source versions, fixed initialization, deterministic example ordering, Node **24.21.0**, numeric **1.2.6**, fixed seed, JSON order/newline and absence of timestamps/absolute paths/random IDs make regeneration deterministic. Tests reproduce the public artifact and private audit byte-for-byte. V0.6/V0.7/V0.8 artifact hashes remain exact; no dependency was added.
+
+Raw Dixon–Coles shows meaningful calibration problems: high-confidence buckets overstate observed accuracy, and classwise/top-confidence ECE exceeds the market’s. All fitted fold temperatures soften forecasts and both candidates improve pooled secondary log loss. However temperature worsens pooled Brier, and multinomial Brier gains are not robustly separated from zero under the predeclared development interval. These results **do not establish that calibration is the primary cause of the market gap**, or that either simple map fixes it out of sample. Identity is retained, no gap is closed, and neither candidate is tried on recent seasons after its failure to qualify. Historical dependence, prior outcome inspection, four folds and fixed-bin ECE limit interpretation.
+
+No source, fitting or selection-protocol deviations occurred. The pre-evaluation interpretation choice for calibrated market disagreement is explicitly recorded as the same per-fixture maximum absolute class norm as raw disagreement. No V0.9 betting metrics or altered V0.8 strategy were calculated. No V1.0 work is implemented.
+
 ## Fictional scanner value analysis and ranking
 
 Only `MATCH_WINNER` is supported. A quote's selection chooses its probability from the independent prediction:
@@ -791,14 +932,17 @@ pnpm data:build
 pnpm model:build
 pnpm corners:build
 pnpm value:build
+pnpm calibration:build
 pnpm test
 pnpm typecheck
 pnpm lint
 pnpm build
 ```
 
-`pnpm test:watch` runs Vitest in watch mode. The existing **256 V0.1–V0.7 tests** remain intact, covering scanner maths, causal walk-forward history, frozen probability models, fitting/analytic gradients, diagnostics and deterministic generation. V0.8 adds **118 tests across five files** for market maths, invalid input, fixed selection/ties, outcome-free selection, unit settlement, ROI/drawdown, six-field synthetic CSV privacy, explicit aliases and alignment, frozen model/content isolation, paired Brier, original-cluster/season-stratified ROI bootstrap including no-bets/zero stakes, strict-zero status boundaries, aggregate privacy/coverage and byte-for-byte regeneration. Total: **374 tests**. Real private-source checks run when the local files are present; synthetic tests and committed aggregate checks do not require them. No dependencies were added.
+`pnpm test:watch` runs Vitest in watch mode. All **374 V0.1–V0.8 tests** remain intact. V0.9 adds **137 tests across five files** covering strict probabilities/softmax, both transforms and initializations, analytic/numerical gradients, deterministic fits and explicit failure, rolling causality/coverage, older-only selection/final fit, market isolation, proper scores, ECE bins, sharpness, confidence/disagreement boundaries, paired bootstrap, gap closure, conditional research naming, artifact privacy/frozen hashes and byte-for-byte regeneration. Total: **511 tests**. Real private-source checks run when local files are present; synthetic and committed aggregate checks do not require them. No dependencies were added.
 
 If an execution sandbox blocks Turbopack's local CSS-worker port, `pnpm build --webpack` is the supported alternative for verifying the production build; the project's default bundler remains unchanged.
 
 V0.8 verification: `data:build`, `model:build`, `corners:build`, `value:build`, all **374 tests in 33 files**, `typecheck` and `lint` passed. Prior generated artifacts remained byte-for-byte unchanged. `pnpm build` encountered the known Turbopack CSS-worker port-binding sandbox restriction; `pnpm build --webpack` passed and prerendered all six routes. Production HTTP checks returned 200 for `/`, `/backtest`, `/diagnostics`, `/models`, `/corners`, `/value` and all 14 referenced local assets, with six navigation links and the correct active page. Value results, all ten seasons and diagnostic groups rendered without private row data. The in-app browser was unavailable, so visual screenshot verification was not performed; rendered HTML and production dependency traces were checked instead.
+
+V0.9 verification: `data:build`, `model:build`, `corners:build`, `value:build`, `calibration:build`, all **511 tests in 38 files**, `typecheck` and `lint` passed. The existing model-build commands were run solely as required preservation checks; calibration itself consumes recorded V0.6 predictions without refitting Dixon–Coles. All **110 frozen prior files**, including V0.6/V0.7/V0.8 artifacts, and all **12 pre-evaluation calibration implementation files** remained unchanged. Repeated calibration generation reproduced identical public and private artifacts. `pnpm build` encountered the known Turbopack CSS-worker port-binding sandbox restriction; `pnpm build --webpack` passed and prerendered all seven routes. Production HTTP checks returned 200 for `/`, `/backtest`, `/diagnostics`, `/models`, `/corners`, `/value`, `/calibration` and all **18 referenced local assets**, with seven navigation links and the correct active page on every route. Calibration statuses, metrics, every recent season and diagnostic tables rendered without private row data; prior V0.8 results remained intact. The calibration production dependency trace contains no private data, optimizer or build-script dependencies. The in-app browser was unavailable, so visual screenshot verification was not performed. A new real-data isolation test required an explicit integration-test timeout under concurrent verification load; its assertions were unchanged. A concurrent build/type-check race was resolved by rerunning type checking after the build completed.

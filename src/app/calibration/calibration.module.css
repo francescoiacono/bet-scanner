@@ -1,0 +1,15 @@
+.neutralValue { display: block; margin: 20px 0 8px; color: #182a38; font: 32px "SFMono-Regular", Consolas, monospace; }
+.positive { color: #146b59; }
+.negative { color: #9d3540; }
+.status { margin: 28px 0; padding: 24px; border: 1px solid #dce3e7; border-left: 3px solid #8a651f; border-radius: 8px; background: #fffcf5; }
+.status h2 { margin: 10px 0; font: 20px "SFMono-Regular", Consolas, monospace; overflow-wrap: anywhere; }
+.status p { font-size: 13px; line-height: 1.8; color: #566774; }
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin: 22px 0; }
+.metrics dt { font-size: 11px; color: #62717d; }
+.metrics dd { margin: 8px 0 0; font: 13px "SFMono-Regular", Consolas, monospace; overflow-wrap: anywhere; }
+.wideTable { min-width: 1120px; }
+.bins { margin-top: 24px; }
+.bins summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.bins summary:focus-visible { outline: 2px solid #146b59; outline-offset: 4px; }
+.formula { width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

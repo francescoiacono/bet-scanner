@@ -56,3 +56,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Primary market-price evaluations must use a consistent documented price definition; never silently mix opening, interim, and closing prices.
 - Missing bookmaker prices must not be silently replaced by another bookmaker in a frozen protocol.
 - Research profitability tests default to flat unit stakes unless staking is separately scoped.
+- Calibration layers must be versioned separately from the underlying statistical model.
+- Market prices must never fit a probability calibrator unless a milestone explicitly defines a market-informed model.
+- Calibration-family selection and parameter fitting must remain separate from final validation data.
+- Calibration transforms must be evaluated on predictions not used to fit those transforms.
+- Calibration diagnostics must distinguish sharpness from accuracy and proper scoring performance.
+- Market disagreement is a benchmark diagnostic, not evidence of betting value.
+- Do not promote a calibrated model solely because it reduces disagreement with bookmaker prices.
