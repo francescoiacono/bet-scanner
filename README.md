@@ -1,6 +1,8 @@
-# Bet Scanner V0.9
+# Bet Scanner V1.0
 
-A local football research dashboard with seven research views:
+A local football research dashboard with eight views:
+
+- **Odds scanner (`/odds`)**: offline synthetic demo plus separately approved, on-demand OddsRelay football 1X2 bookmaker comparisons and theoretical arbitrage detection.
 
 - **Probability calibration (`/calibration`)**: select a calibration layer using older rolling-origin evidence, freeze it, then evaluate recent historical forecasts against raw Dixon–Coles and the fair market.
 
@@ -12,7 +14,7 @@ A local football research dashboard with seven research views:
 - **Model diagnostics (`/diagnostics`)**: investigate paired uncertainty, fixed history-depth slices, outcome calibration, and season robustness without changing the model.
 - **Fictional market scanner (`/`)**: retain the existing fictional match history, upcoming fixtures, and independent mock prices for implied probability, edge, and expected ROI analysis.
 
-V0.8’s fixed historical paper rule lost money in both cohorts; its recorded status remains **INCONCLUSIVE**. V0.9 investigates probability calibration without modifying any model or V0.6/V0.7/V0.8 artifact. The predeclared older rolling-origin rule selects **IDENTITY**: neither fitted candidate has a Brier-advantage interval entirely above zero. Recent selected probabilities therefore equal raw Dixon–Coles, **0%** of the market gap is closed, and no calibrated research model is promoted. The fictional scanner still uses `poisson-v1`; neither corner model is promoted. V0.9 adds no betting strategy or current recommendations. Assets/fonts/data are local, with no runtime data requests, live odds, bookmaker APIs, sports APIs, AI, authentication, databases, deployment or bet execution.
+V0.8’s fixed historical paper rule lost money in both cohorts; its recorded status remains **INCONCLUSIVE**. V0.9 investigates probability calibration without modifying any model or V0.6/V0.7/V0.8 artifact. The predeclared older rolling-origin rule selects **IDENTITY**: neither fitted candidate has a Brier-advantage interval entirely above zero. Recent selected probabilities therefore equal raw Dixon–Coles, **0%** of the market gap is closed, and no calibrated research model is promoted. The fictional scanner still uses `poisson-v1`; neither corner model is promoted. All V0.1–V0.9 research remains frozen and offline. V1.0 adds only a separate OddsRelay comparison feature: DEMO is the default and all provider actions are manual. There is no AI, authentication system, database, cloud deployment, automatic betting or new probability/value model.
 
 ## Run locally
 
@@ -21,7 +23,84 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, http://localhost:3000/corners, http://localhost:3000/value, or http://localhost:3000/calibration. The scanner still has six upcoming fictional fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
+Open http://localhost:3000, http://localhost:3000/backtest, http://localhost:3000/diagnostics, http://localhost:3000/models, http://localhost:3000/corners, http://localhost:3000/value, http://localhost:3000/calibration, or http://localhost:3000/odds. The fictional scanner still has six upcoming fixtures and 18 HOME / DRAW / AWAY selections. Its default minimum edge is 2 pp (`0.02`); a threshold of 100 pp demonstrates `NO BET — no opportunities meet the current threshold`.
+
+## V1.0 on-demand odds scanner
+
+The `/odds` page starts in **DEMO / ALL ODDS SYNTHETIC**, needs no key, works without provider network access and spends zero API tokens. It runs the same pure engine as live data and contains four fictional fixtures: theoretical arbitrage, ordinary non-arbitrage prices, a missing DRAW and evidence older than 120 seconds. It does not replace `/` or reuse a statistical model.
+
+### Provider contract and local configuration
+
+Provider: **OddsRelay**, not UK Odds API. Official [overview](https://oddsrelay.io/docs), [reference](https://oddsrelay.io/docs/reference), [OpenAPI contract](https://api.oddsrelay.io/v2/openapi.json), [freshness](https://oddsrelay.io/docs/guides/freshness) and [quote/token guide](https://oddsrelay.io/docs/guides/filters-and-tokens). Response mappings were checked against the live contract **2026-07-08**, verified **2026-10-08**; downloaded schema SHA-256 `9002ede7214318b6e3ae2c77638de3ae04585b8cc7990f4be4c15bccee8b92e6`. Only the public, unauthenticated contract/documentation was retrieved during implementation. No authenticated or chargeable provider request was made.
+
+Copy `.env.example` to `.env.local` if you do not already have a local environment file; otherwise add this variable to the existing file using your local editor:
+
+```dotenv
+ODDSRELAY_KEY=your_own_server_key_here
+```
+
+Restart `pnpm dev`, open `http://localhost:3000/odds`, then choose **LIVE SOURCE**. Never put the real key in chat, source code, a URL, a `NEXT_PUBLIC_` variable or Git. `.env.local` remains ignored; `.env.example` contains an empty safe placeholder. A `server-only` boundary protects the runtime; only a configuration boolean reaches the page. `pnpm dev` and `pnpm start` bind to **127.0.0.1** by default so token controls are not exposed to the LAN. Local actions also require the same browser origin on `localhost`, `127.0.0.1` or `[::1]`; LAN/cloud access is outside this local-first feature. There is no login or database.
+
+The user's stated free-account allowance is **2,500 tokens/month**, not a marketing allowance. This is documentation, not a hardcoded budget. `/v2/usage` supplies the actual remaining tokens, limit, plan and reset. Null stays unknown; `unlimited` remains explicit. An unknown balance blocks a scan. Access can differ by key, plan, product, region and scope; global listings do not prove this key can read a bookmaker.
+
+### Endpoints and explicit actions
+
+Every upstream request is server-side GET to `https://api.oddsrelay.io`, with `Authorization: Bearer <ODDSRELAY_KEY>`, `Accept-Encoding: gzip`, a 15-second timeout, no automatic retries and redirects refused. Node fetch decodes gzip. Local commands use same-origin POST `/api/odds` with no-store responses; there is no generic client-supplied upstream URL.
+
+| Upstream endpoint | Parameters sent | Trigger / cost |
+| --- | --- | --- |
+| `/v2/usage` | None | Explicit discovery, quote and confirmation checks; free |
+| `/v2/bookmakers` | None; notably no `region` | Explicit discovery; free |
+| `/v2/sports` | `region=uk`, optional `cursor` | Explicit discovery; free, bounded to 20 pages |
+| `/v2/events` | `region=uk&sport=soccer`, optional `cursor` | Explicit event-list action / next-page action; free |
+| `/v2/coverage` | `region=uk` | Explicit authenticated discovery; free |
+| `/v2/pricing` | None | Explicit pricing-table action; free |
+| `/v2/odds/standard` | `region=uk&sports=soccer&markets=h2h&bookmakers=<two-or-three-sorted-keys>&quote=true` | **Get quote**; free, no odds execution |
+| `/v2/odds/standard` | Same parameters, without `quote=true`; optional approved `If-None-Match` | **Confirm Scan** only; potentially chargeable |
+
+Envelope, ISO dates and decimal odds use documented defaults; normalization verifies the returned format. There are no raw-board, event-odds, other product or alternative-provider fallbacks. Discovery pagination is a bounded part of the clicked free action, not polling; event pages advance only by another click.
+
+### Quote, budget and approval
+
+1. Click **Refresh discovery · free**. Join exact bookmaker catalogue identities to authenticated standard-product soccer coverage, venue freshness and account scope. Finish the competition catalogue. Choose two or three eligible bookmakers; default selection is two, without assuming Bet365 or Betfair access. Discovery expires after 60 seconds.
+2. Click **Get quote · free**. The upstream request always carries literal `quote=true`; it cannot request paid odds. Read current `/v2/usage` after quoting. Show exact bookmakers, sport/market, quoted cost, remaining and projected remaining, reset and approval expiry.
+3. Block quotes above **MAX_TOKENS_PER_SCAN = 500**, above the remaining balance, with unknown balance or invalid scope. No subscription upgrade occurs. A blocked quote issues no approval; a new quote invalidates the browser's earlier approvals.
+4. An opaque server-generated approval stores the canonical request, quoted cost, creation time and browser-session owner. It expires at **60,000 ms**, is process-local, and is consumed synchronously before the first confirmation await. The client cannot self-declare a cost, change the request or supply an upstream URL.
+5. Read and tick the token/price warning, then click **Confirm Scan** separately. Recheck account usage/scope and expiry, then issue exactly one odds request. Duplicate confirmations, browser retries, missing approvals and changed bookmaker filters cannot spend again. Failures consume the approval too; obtain a new free quote. Concurrent scans are serialized.
+
+The owner cookie is HttpOnly/SameSite=Strict, bound to the local action path; same-origin checks protect token actions. Restarting the process or changing the key discards approvals and caches. No request headers/secrets are persisted. Approval memory is bounded to 128 entries. Page loads, rendering, navigation, startup, builds, tests, timers and DEMO never request paid odds. The UI locks duplicate actions, and the server enforces the same rule independently.
+
+Actual scan/error receipts capture optional `X-Tokens-Cost`, `X-Tokens-Used`, `X-Tokens-Remaining`, `X-Tokens-Limit`, `X-Tokens-Reset` headers. Missing headers remain unknown rather than using the quoted cost as an actual charge. 401, 402, 403, 429, 500, 502 and 503 errors are surfaced without secret-bearing provider messages or fictional fallback. Retry-After is displayed as guidance; nothing polls or retries automatically. An ambiguous timeout can leave actual token use unknown.
+
+### Mapping, freshness and theoretical arbitrage
+
+Provider adapters map `data[].event_id`, `sport_key`, `sport_title`, `home_team`, `away_team`, `commence_time`, `markets[].key`, `outcomes[].name`, and **only** `outcomes[].back[].bookmaker/price/link`. `lay` is never imported, even if it contains a better price. Exact active football competition identities come from `/v2/sports`; titles must agree. Exact HOME-team, `Draw`, AWAY-team names identify the three outcomes, without fuzzy aliases. Only the standard football `h2h` three-way classification is accepted as regulation-time 1X2; first-half, handicap, two-way, draw-no-bet, extra-time and other keys are rejected. Missing DRAW cannot establish a complete three-way market. Unknown settlement/availability metadata is excluded conservatively instead of interpreted. Individual bookmaker execution/void rules still require independent verification; results are always theoretical.
+
+Each quote retains provider/event/market/outcome references, source JSON pointer, bookmaker identity and optional original link. No fixture merging occurs. Duplicate event IDs invalidate all copies; duplicate bookmaker/outcome offers are excluded. Snapshot and quote data are retained only in memory and returned to the local dashboard, never generated into Git.
+
+The documented source freshness is `meta.last_seen[bookmaker].soccer`, an upper bound on venue/sport price age, not an individual offer's update time. `meta.processed_at` and response receipt time are stored separately and do not replace missing evidence. At an injected/current evaluation clock, **age ≤120 seconds** is accepted; older, missing, invalid or future timestamps are excluded. Kickoff must be strictly later than the evaluation time. Null/invalid decimal prices, unavailable markets/offers, unknown competitions, mismatched fixture/settlement definitions and exchanges cannot qualify. Best eligible prices remain attached to their bookmaker.
+
+For complete HOME/DRAW/AWAY evidence from at least two verified bookmakers, with best arbitrage legs spanning at least two bookmakers:
+
+```text
+S = 1/homeOdds + 1/drawOdds + 1/awayOdds
+theoretical arbitrage: S < 1
+theoretical gross ROI = 1/S - 1
+illustrative fraction_i = (1/odds_i)/S
+equalized gross payout per illustrative total unit = 1/S
+```
+
+Calculations use full precision. Display rounding never determines eligibility. Opportunities rank by highest theoretical gross ROI, then the freshest oldest supporting evidence, then exact event ID. `NO ARBITRAGE FOUND`, `INSUFFICIENT DATA` and `NO VERIFIED OPPORTUNITY` are normal outcomes. Prices are not guarantees of availability, accepted stakes, identical bookmaker execution rules or profit. There is no probability estimate, value-betting algorithm, bankroll, stake input or bet placement.
+
+The synthetic arbitrage fixture offers HOME **2.20 / Synthetic Book A**, DRAW **3.80 / Synthetic Book B**, AWAY **4.00 / Synthetic Book C**. It has `S ≈ 0.96770335`, theoretical gross ROI **≈3.34%**, with fractions approximately **46.97% / 27.19% / 25.83%**. Before rounding, each fraction times its odds equals the same `1/S` payout. These are synthetic educational figures, not available bookmaker prices or a staking recommendation.
+
+### Caches and first real scan
+
+Free catalogue/event responses retain ETags and may reuse a body on 304 within a **120-second** cache, bounded to 32 entries. Approved odds requests reuse an ETag only for the exact canonical bookmaker request and a valid **five-minute**, eight-entry snapshot cache. Every conditional odds request still needs a new free quote and one-time confirmation: updated data can cost tokens. A 304 reuses original evidence timestamps and recomputes eligibility at the current clock; it does not turn stale prices fresh. A 304 without a usable cache fails without a second request. No cache has a polling timer or disk persistence.
+
+Before the first real scan, configure a server key, refresh authenticated discovery, verify at least two fresh covered bookmakers and suitable football markets, obtain a quote within both budgets, review the exact request and token warning, then confirm before expiry. This account's actual access, balance and offered live prices remain unverified because implementation and verification made no authenticated provider calls. Even a successful scan may return insufficient matched coverage: standard can omit outcomes without both a back and a matched lay; this scanner uses only its surviving bookmaker back offers. It does not silently retrieve raw boards.
+
+V1.0 adds **166 mocked/synthetic tests across four files** for normalization, market/outcome/bookmaker identities, freshness, kickoff, best prices, arbitrage math/fractions/ranking, failures, discovery/scope, quote-before-scan, budgets, one-time expiry/session approval, ETags/cache staleness, demo isolation and the server key boundary. Origin checks use the real Host header because Next can normalize its internal handler URL to localhost; mismatching browser origins and nonlocal hosts remain blocked. No dependency was added. Prior **511 tests** remain intact. Verification results are recorded below; no V1.1 work is implemented.
 
 Offline generation uses Node's native TypeScript stripping (Node 22.18+; verified with Node 24.21). The existing data generator needs no added dependency; model generation uses the pinned Numeric.js optimiser documented below. Neither script needs a new TypeScript loader:
 
@@ -104,7 +183,7 @@ Fictional completed matches → derived current profiles → poisson-v1
 - `src/data/mock-played-matches.ts`: retained 48-match fictional scanner source and deterministic test fixture; it is not labelled EPL
 - `src/app/backtest/page.tsx`: real-result summary, per-season table, recent audit rows, calibration, and warm-up records
 - `src/app/diagnostics/page.tsx`: benchmark hierarchy, paired intervals, history slices, outcome calibration, leave-one-season-out results, and weakest-season breakdown
-- `src/app/research-header.tsx`: four-route navigation that distinguishes real historical results from the fictional market scanner
+- `src/app/research-header.tsx`: eight-route navigation distinguishing historical research, the fictional scanner and separate odds research
 
 The page reads generated JSON instead of parsing source text per request. Next.js prerenders the local backtest. The audit table shows the latest 80 evaluated records and 20 recent skips to keep the page compact; the returned backtest result retains every record. Model forecasts never read prices or target-match scores.
 
@@ -861,7 +940,7 @@ The code/protocol fingerprint fixed before the historical calibration run is `f1
 
 Raw Dixon–Coles shows meaningful calibration problems: high-confidence buckets overstate observed accuracy, and classwise/top-confidence ECE exceeds the market’s. All fitted fold temperatures soften forecasts and both candidates improve pooled secondary log loss. However temperature worsens pooled Brier, and multinomial Brier gains are not robustly separated from zero under the predeclared development interval. These results **do not establish that calibration is the primary cause of the market gap**, or that either simple map fixes it out of sample. Identity is retained, no gap is closed, and neither candidate is tried on recent seasons after its failure to qualify. Historical dependence, prior outcome inspection, four folds and fixed-bin ECE limit interpretation.
 
-No source, fitting or selection-protocol deviations occurred. The pre-evaluation interpretation choice for calibrated market disagreement is explicitly recorded as the same per-fixture maximum absolute class norm as raw disagreement. No V0.9 betting metrics or altered V0.8 strategy were calculated. No V1.0 work is implemented.
+No source, fitting or selection-protocol deviations occurred. The pre-evaluation interpretation choice for calibrated market disagreement is explicitly recorded as the same per-fixture maximum absolute class norm as raw disagreement. No V0.9 betting metrics or altered V0.8 strategy were calculated. V0.9 did not implement the separate V1.0 odds scanner described above.
 
 ## Fictional scanner value analysis and ranking
 
@@ -946,3 +1025,5 @@ If an execution sandbox blocks Turbopack's local CSS-worker port, `pnpm build --
 V0.8 verification: `data:build`, `model:build`, `corners:build`, `value:build`, all **374 tests in 33 files**, `typecheck` and `lint` passed. Prior generated artifacts remained byte-for-byte unchanged. `pnpm build` encountered the known Turbopack CSS-worker port-binding sandbox restriction; `pnpm build --webpack` passed and prerendered all six routes. Production HTTP checks returned 200 for `/`, `/backtest`, `/diagnostics`, `/models`, `/corners`, `/value` and all 14 referenced local assets, with six navigation links and the correct active page. Value results, all ten seasons and diagnostic groups rendered without private row data. The in-app browser was unavailable, so visual screenshot verification was not performed; rendered HTML and production dependency traces were checked instead.
 
 V0.9 verification: `data:build`, `model:build`, `corners:build`, `value:build`, `calibration:build`, all **511 tests in 38 files**, `typecheck` and `lint` passed. The existing model-build commands were run solely as required preservation checks; calibration itself consumes recorded V0.6 predictions without refitting Dixon–Coles. All **110 frozen prior files**, including V0.6/V0.7/V0.8 artifacts, and all **12 pre-evaluation calibration implementation files** remained unchanged. Repeated calibration generation reproduced identical public and private artifacts. `pnpm build` encountered the known Turbopack CSS-worker port-binding sandbox restriction; `pnpm build --webpack` passed and prerendered all seven routes. Production HTTP checks returned 200 for `/`, `/backtest`, `/diagnostics`, `/models`, `/corners`, `/value`, `/calibration` and all **18 referenced local assets**, with seven navigation links and the correct active page on every route. Calibration statuses, metrics, every recent season and diagnostic tables rendered without private row data; prior V0.8 results remained intact. The calibration production dependency trace contains no private data, optimizer or build-script dependencies. The in-app browser was unavailable, so visual screenshot verification was not performed. A new real-data isolation test required an explicit integration-test timeout under concurrent verification load; its assertions were unchanged. A concurrent build/type-check race was resolved by rerunning type checking after the build completed.
+
+V1.0 verification: `data:build`, `model:build`, `corners:build`, `value:build`, `calibration:build`, all **677 tests in 42 files** (166 new), `typecheck` and `lint` passed. All **153 frozen prior files**, including existing models, tests, generated artifacts, build scripts and the lockfile, remained byte-for-byte unchanged after regeneration. V0.8 remains **INCONCLUSIVE** and V0.9 remains **IDENTITY_RETAINED**. `pnpm build` encountered the known Turbopack CSS-worker port-binding sandbox restriction; `pnpm build --webpack` passed. Production HTTP checks returned 200 for all eight pages and all **19 referenced local assets**, with eight navigation links and the correct active page on every route. DEMO API calculations passed; unapproved confirmations, self-declared costs, cross-origin actions and unsupported GET requests were rejected. A temporary verification-only network guard recorded **zero OddsRelay request attempts** during builds, startup, navigation and production checks. Client bundles contain no provider runtime or key-handling code; the two new production dependency traces contain no private historical data or statistical fitting dependencies. Private data and `.env.local` remain ignored and untracked. The in-app browser was unavailable, so visual screenshot verification was not performed; production HTML, assets and API behavior were checked instead. No actual account access or live bookmaker prices were tested, and no V1.1 work was started.

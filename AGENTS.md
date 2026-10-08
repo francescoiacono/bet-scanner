@@ -63,3 +63,18 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Calibration diagnostics must distinguish sharpness from accuracy and proper scoring performance.
 - Market disagreement is a benchmark diagnostic, not evidence of betting value.
 - Do not promote a calibrated model solely because it reduces disagreement with bookmaker prices.
+- Real-odds scanners must remain separate from frozen statistical models and historical research.
+- Keep provider response mappings outside the provider-independent arbitrage domain; never guess fixture, outcome or settlement identities.
+- OddsRelay API keys must remain server-only and outside logs, URLs, client bundles and committed files.
+- Chargeable provider requests require a free quote, a server-bound exact request approval and a separate explicit user confirmation.
+- Scan approvals expire after 60 seconds and must be consumed synchronously once before any asynchronous confirmation work.
+- Never request chargeable odds during loading, rendering, startup, builds, tests, navigation or timers; never automatically retry an ambiguous charged request.
+- Use authenticated account usage for budget decisions and actual response token headers for receipts; unknown balances must remain unknown.
+- Live V1.0 scans are capped at 500 quoted tokens, with two or three freshly discovered bookmaker filters; do not widen to an expensive raw board automatically.
+- Bookmaker back offers and exchange lay offers must never be mixed in a bookmaker-only arbitrage calculation.
+- Require complete identical-settlement outcomes and at least two verified bookmakers; exclude stale, future, missing-freshness, unavailable and started-fixture data.
+- Provider receipt times and 304 responses do not refresh bookmaker evidence timestamps; conditional requests still require quote approval.
+- Label arbitrage as theoretical and before costs, with no guarantee of execution; illustrative fractions are educational, not staking functionality.
+- Demo odds must be explicitly synthetic, offline and isolated from provider calls; failed live scans must not fall back to fictional prices.
+- All provider HTTP tests must use mocks and spend zero real API tokens.
+- Keep local token-spending controls on a loopback-bound server; same-origin checks alone are not network access control.

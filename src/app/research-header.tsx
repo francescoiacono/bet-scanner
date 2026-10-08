@@ -1,9 +1,10 @@
 import Link from "next/link";
 import styles from "./scanner-dashboard.module.css";
+import header from "./research-header.module.css";
 
-export default function ResearchHeader({ activePage }: { activePage: "scanner" | "backtest" | "diagnostics" | "models" | "corners" | "value" | "calibration" }) {
+export default function ResearchHeader({ activePage }: { activePage: "scanner" | "backtest" | "diagnostics" | "models" | "corners" | "value" | "calibration" | "odds" }) {
   return (
-    <header className={styles.topbar}>
+    <header className={`${styles.topbar} ${header.wrap}`}>
       <div className={styles.brand}>
         <span className={styles.brandMark}>
           <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -12,7 +13,7 @@ export default function ResearchHeader({ activePage }: { activePage: "scanner" |
         </span>
         <span>BET SCANNER<span className={styles.brandSubline}>RESEARCH WORKSPACE</span></span>
       </div>
-      <nav className={styles.navigation} aria-label="Research views">
+      <nav className={`${styles.navigation} ${header.navigation}`} aria-label="Research views">
         <Link href="/" aria-current={activePage === "scanner" ? "page" : undefined}>Scanner</Link>
         <Link href="/backtest" aria-current={activePage === "backtest" ? "page" : undefined}>Backtest</Link>
         <Link href="/diagnostics" aria-current={activePage === "diagnostics" ? "page" : undefined}>Diagnostics</Link>
@@ -20,10 +21,11 @@ export default function ResearchHeader({ activePage }: { activePage: "scanner" |
         <Link href="/corners" aria-current={activePage === "corners" ? "page" : undefined}>Corners</Link>
         <Link href="/value" aria-current={activePage === "value" ? "page" : undefined}>Value</Link>
         <Link href="/calibration" aria-current={activePage === "calibration" ? "page" : undefined}>Calibration</Link>
+        <Link href="/odds" aria-current={activePage === "odds" ? "page" : undefined}>Odds</Link>
       </nav>
       <div className={styles.headerMeta}>
-        <span className={styles.simulationBadge}>{activePage === "calibration" ? "RESEARCH ONLY" : activePage === "value" ? "PAPER RESEARCH ONLY" : activePage !== "scanner" ? "REAL HISTORICAL RESULTS" : "SIMULATION / FICTIONAL MARKET SCANNER"}</span>
-        <span className={styles.version}>V0.9</span>
+        <span className={styles.simulationBadge}>{activePage === "odds" ? "ODDS RESEARCH ONLY" : activePage === "calibration" ? "RESEARCH ONLY" : activePage === "value" ? "PAPER RESEARCH ONLY" : activePage !== "scanner" ? "REAL HISTORICAL RESULTS" : "SIMULATION / FICTIONAL MARKET SCANNER"}</span>
+        <span className={styles.version}>V1.0</span>
       </div>
     </header>
   );
