@@ -6,7 +6,7 @@ import { board, BOOKS, NOW, SPORTS, USAGE } from "../lib/odds/test-helpers";
 import { normalizeOddsRelay } from "../lib/odds/providers/oddsrelay-normalize";
 import { analyseSnapshot } from "../lib/odds/arbitrage";
 import type { ScanHistoryReply } from "../lib/odds/history-types";
-import OddsDashboard, { BookmakerSelector, ProviderErrorNotice, Results } from "./odds-dashboard";
+import OddsDashboard, { BookmakerSelector, ProviderErrorNotice, Results, SavedScanView } from "./odds-dashboard";
 import type { ScannerState } from "./scanner-state";
 
 type Effect = { setup: () => void | (() => void); deps: unknown[]; cleanup?: void | (() => void) };
@@ -50,14 +50,17 @@ const discovery = (now = NOW): Discovery => ({
 const response = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json" } });
 const state = () => hooks.slots[0] as ScannerState;
 type Node = ReactElement<Record<string, unknown>>;
+// Expand this hook-free presentation component to keep exercising the real
+// dashboard controls; SSR tests also verify the full saved-view markup.
+const children = (tree: Node): ReactNode => tree.type === SavedScanView ? SavedScanView(tree.props as unknown as Parameters<typeof SavedScanView>[0]) : tree.props.children as ReactNode;
 function nodes(tree: ReactNode): Node[] {
   if (Array.isArray(tree)) return tree.flatMap(nodes);
   if (!isValidElement<Record<string, unknown>>(tree)) return [];
-  return [tree, ...nodes(tree.props.children as ReactNode)];
+  return [tree, ...nodes(children(tree))];
 }
 function content(tree: ReactNode): string {
   if (Array.isArray(tree)) return tree.map(content).join("");
-  if (isValidElement<Record<string, unknown>>(tree)) return content(tree.props.children as ReactNode);
+  if (isValidElement<Record<string, unknown>>(tree)) return content(children(tree));
   return typeof tree === "string" || typeof tree === "number" ? String(tree) : "";
 }
 function render(configured = true, commit = true) {
@@ -224,15 +227,35 @@ describe("explicit local history and separate refresh workflow", () => {
     await click(button(tree, "View previous scan"));
     expect(JSON.parse(fetch.mock.calls[0][1]!.body as string)).toEqual({ action: "history", mode: configured ? "LIVE" : "DEMO" });
     const opened = render(configured); expect(state().usage).toBeNull(); expect(state().history).toEqual(saved);
-    expect(content(opened)).toContain("Original token cost97"); expect(content(opened)).toContain("Current freshness status");
+    expect(content(opened)).toContain("Original token cost97"); expect(content(opened)).toContain("HISTORICAL ODDS — NOT LIVE");
+    expect(content(opened)).toContain("Current freshness diagnostics");
     const original = nodes(opened).find((node) => node.type === Results && node.props.historical)!;
     expect(original.props.analysis).toEqual(saved.view!.originalAnalysis);
     expect(button(opened, "Check for updated odds").props.disabled).toBe(!configured);
     await vi.advanceTimersByTimeAsync(100_001); const expired = render(configured);
-    expect(content(expired)).toContain("no currently eligible complete comparison");
+    expect(content(expired)).toContain("no longer provide a currently eligible complete comparison");
     expect(state().history!.view!.originalAnalysis.opportunities).toHaveLength(1);
     await vi.advanceTimersByTimeAsync(20_000); render(configured);
     expect(fetch).toHaveBeenCalledTimes(1); expect(vi.getTimerCount()).toBe(0);
+  });
+  it("opens original results outside collapsed details and selects another scan through one zero-token history action", async () => {
+    const saved = history(), secondId = "history-00000000-0000-4000-8000-000000000001";
+    saved.entries.push({ ...saved.entries[0], id: secondId });
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(saved));
+    await click(button(render(), "View previous scan")); const opened = render();
+    const view = nodes(opened).find((node) => node.type === SavedScanView)!;
+    const renderedView = SavedScanView(view.props as unknown as Parameters<typeof SavedScanView>[0]);
+    const result = nodes(renderedView).find((node) => node.type === Results && node.props.historical)!;
+    expect(result.props.analysis).toEqual(saved.view!.originalAnalysis);
+    for (const detail of nodes(renderedView).filter((node) => node.type === "details")) {
+      expect(nodes(detail).some((node) => node === result)).toBe(false); expect(detail.props.open).toBeUndefined();
+    }
+    const selector = nodes(opened).find((node) => node.type === "select" && node.props.id === "saved-scan")!;
+    expect(selector.props.value).toBe(saved.view!.id);
+    fetch.mockResolvedValueOnce(response({ ...saved, view: { ...saved.view!, id: secondId } }));
+    await (selector.props.onChange as (event: { target: { value: string } }) => Promise<void>)({ target: { value: secondId } });
+    expect(JSON.parse(fetch.mock.calls[1][1]!.body as string)).toEqual({ action: "history", mode: "LIVE", id: secondId });
+    expect(state().history!.view!.id).toBe(secondId); expect(fetch).toHaveBeenCalledTimes(2); expect(state().usage).toBeNull();
   });
   it("Check for updated odds makes no request and uses exactly the historical books after manual discovery", async () => {
     const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(history()));

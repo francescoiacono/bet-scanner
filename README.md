@@ -3,8 +3,9 @@
 A local-first football odds-comparison app. Compare bookmaker BACK prices for
 full-time HOME / DRAW / AWAY and identify **theoretical arbitrage**, before costs
 and market movement. The homepage is the scanner; `/research` is a compact
-archive of frozen experiments. Version **1.0.3** adds zero-token local scan history
-and an explicitly approved update workflow. It introduces no betting feature or statistical model.
+archive of frozen experiments. Version **1.0.4** makes saved historical results
+immediately visible and keeps technical diagnostics collapsed. The zero-token
+local history and explicitly approved update workflow remain unchanged.
 
 There is no bet placement, staking, bankroll management, value-betting model,
 authentication, database, cloud infrastructure or AI service.
@@ -222,16 +223,25 @@ because changed data can cost tokens. No secret headers are persisted.
 ### Zero-token local history
 
 Click **View previous scan · 0 tokens** inside **Scan history** to reopen the last
-saved live response, or choose **Open · 0 tokens** from the saved list. This reads
+saved live response, or choose another entry in the **Saved scan** selector. This reads
 only this computer: no OddsRelay call, including usage or discovery, and no API key
 or session cookie is needed. Opening the page does not load history automatically.
 History survives page refreshes and local server restarts; scans made before
 V1.0.3 were not saved to disk and cannot be recovered after their old cache is lost.
 
-The read-only view shows scan time, exact source bookmaker IDs, original actual
-token cost, snapshot age at the freshness check, the historical receipt, original
-research results and a separate current eligibility check. Original results are
-reproduced at their recorded evaluation time with the unchanged engine. Stale
+The read-only view is labelled **HISTORICAL ODDS — NOT LIVE** and immediately shows
+the original scan time, bookmaker IDs, token cost, snapshot age, fixture/comparison
+counts, original theoretical findings and all original bookmaker price comparisons.
+These results use the saved `originalAnalysis` and its original evaluation timestamp.
+Complete comparisons appear first; insufficient rows keep their original eligible
+prices, while detailed reasons stay in **Technical details**. The table scrolls
+horizontally on narrow screens. A short warning summarises original data quality
+and explains that recorded prices may no longer be available.
+
+The layout is selector → historical summary → original results → warning →
+**Check for updated odds** → collapsed **Technical details**. Technical details
+contains provider metadata, the full original receipt, original validation errors,
+individual stale-price exclusions and current freshness diagnostics. Stale
 prices and started fixtures never appear as current verified opportunities. A
 local one-shot timer updates the view at evidence expiry/kickoff; it makes no
 request. Historical balances never replace the current account budget.

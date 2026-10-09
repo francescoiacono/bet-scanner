@@ -98,16 +98,23 @@
 @media (max-width: 768px) { .coverageStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .advancedGrid { grid-template-columns: 1fr; gap: 20px; } .opportunity { padding: 20px; } .opportunityHeading { flex-wrap: wrap; } .roiBlock { text-align: left; } .comparisonHeading { flex-wrap: wrap; } }
 @media (max-width: 480px) { .bookmakerSearch { max-width: none; flex-basis: 100%; } .bookmakerCount { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 0; } .bookmakerInfo { flex-basis: 100%; } .meta { gap: 18px 24px; } .meta > div { flex: 1 1 125px; } .legs { gap: 8px; } .legs > div { padding: 12px 9px; } .legs strong { font-size: 1.2rem; } .legs > div > span:last-child { font-size: .78rem; } .opportunity { padding: 18px; } .opportunityHeading h3 { font-size: 1.1rem; } }
 .history { margin-top: 24px; }
-.historyList { margin-top: 16px; }
-.historyList summary, .originalResults summary { cursor: pointer; font-weight: 600; }
-.historyList ul { padding: 0; list-style: none; max-height: 320px; overflow: auto; }
-.historyList li { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); padding: 12px 0; }
-.historyList li div { display: grid; gap: 4px; font-size: .8rem; }
-.historyList li span { color: var(--muted); }
+.historySelector { display: grid; gap: 8px; margin-top: 16px; min-width: 0; }
+.historySelector label { font-size: .8rem; font-weight: 650; }
+.historySelector select { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: .85rem; text-overflow: ellipsis; }
+.historySelector span { font-size: .75rem; color: var(--muted); }
 .historyView { margin-top: 24px; display: grid; gap: 16px; }
-.originalResults { border-top: 1px solid var(--border); padding-top: 16px; }
+.historyView .results { margin-top: 0; min-width: 0; }
+.historyView .coverageStats { gap: 12px; margin: 16px 0; }
+.historyView .coverageStats > div { padding: 12px 14px; }
+.historyView .coverageStats dd { font-size: 1.4rem; margin-top: 6px; }
+.historySummary .meta { margin-bottom: 0; }
+.historyLabel { font-size: .8rem; border: 1px solid var(--border); white-space: normal; }
+.historyWarning { color: var(--muted); }
+.historyTechnical section + section { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 6px; }
+.historyTechnical .sourceMeta { grid-template-columns: 130px minmax(0, 1fr); }
+.historyTechnical .excluded { padding-left: 0; }
+.historyTable { min-width: 760px; }
+.historyTable th, .historyTable td { padding: 12px; }
+.historyTable tbody td { min-width: 120px; }
 .historical { border-color: var(--border); background: var(--surface); }
 .historical .roi { color: var(--text); }
-@media (max-width: 600px) {
-  .historyList li { align-items: flex-start; flex-direction: column; }
-}

@@ -223,6 +223,31 @@ approval expiry after disk delay, duplicate confirmations, corrupt data, retenti
 file safety, persistence failure receipts and unchanged mathematical output.
 No authenticated OddsRelay requests are used in development or verification.
 
+### V1.0.4 saved-view presentation
+
+The saved-scan selector is visible above `SavedScanView`, a presentation component
+inside the existing dashboard. It performs no requests and receives the saved
+scan plus the existing current-time analysis. Selecting another scan invokes only
+the unchanged explicit zero-token history action. The original `Results` component
+is rendered directly from `scan.originalAnalysis`, outside expandable details.
+Counts, original opportunities and complete/insufficient bookmaker comparison
+rows use that analysis and its recorded evaluation timestamp exclusively.
+
+A neutral **HISTORICAL ODDS — NOT LIVE** label precedes the summary. Original
+findings remain explicitly at scan time, with neutral ROI styling. The horizontally
+scrollable historical table omits per-price evidence timestamps and individual
+validation reasons from the main view. A short data-quality/availability warning
+follows the results, then the unchanged update control. **Technical details** is
+collapsed initially and holds original validation errors, source exclusions,
+provider metadata, the full historical receipt and current freshness diagnostics.
+The current analysis never supplies the displayed historical opportunity list.
+
+This change touches presentation only. Persistence, retention, provider contracts,
+ETags, calculations, freshness validation, history read isolation and all quote,
+approval and API token controls are unchanged. Mocked interaction and rendering
+tests verify default visibility, layout order, collapsed diagnostics, original
+timestamps, stale-scan labelling and provider-free saved-scan selection.
+
 ## Frozen research boundary
 
 Historical numerical modules, tests, source manifests, licensing and generated

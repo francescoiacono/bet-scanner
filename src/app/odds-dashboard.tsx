@@ -6,7 +6,7 @@ import { OUTCOMES, type ArbitrageOpportunity, type MarketAnalysis, type OddsMode
 import { scanDiagnostics } from "@/lib/odds/scan-diagnostics";
 import { analyseSnapshot } from "@/lib/odds/arbitrage";
 import { nextHistoryBoundary } from "@/lib/odds/history-freshness";
-import type { ScanHistoryReply } from "@/lib/odds/history-types";
+import type { HistoricalScan, ScanHistoryReply } from "@/lib/odds/history-types";
 import type { Discovery, ScanQuote } from "@/lib/odds/server/service";
 import { canConfirm, canQuote, discoveryFreshness, discoveryStatus, initialScannerState, resultStatus, scannerReducer, scannerStatus, type Scan } from "./scanner-state";
 import SiteHeader from "./site-header";
@@ -19,28 +19,32 @@ const percent = (value: number) => (value * 100).toFixed(2) + "%";
 const tokens = (value: ProviderUsage["remaining"]) => value === null ? "Unknown" : value === "unlimited" ? "Unlimited" : value.toLocaleString("en-GB");
 const time = (value: string | null) => typeof value !== "string" ? "Unknown" : value.replace("T", " ").replace("Z", " UTC");
 const badge = (tone: string) => ui.badge + " " + ui[tone];
+const elapsed = (milliseconds: number) => {
+  const seconds = Math.floor(milliseconds / 1000), minutes = Math.floor(seconds / 60), hours = Math.floor(minutes / 60), days = Math.floor(hours / 24);
+  return days ? `${days}d ${hours % 24}h` : hours ? `${hours}h ${minutes % 60}m` : minutes ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
+};
 
 function TheoreticalOpportunity({ opportunity: a, rank, historical = false }: { opportunity: ArbitrageOpportunity; rank: number; historical?: boolean }) {
   return <article className={styles.opportunity + (historical ? " " + styles.historical : "")} aria-label={(historical ? "Historical theoretical result " : "Theoretical opportunity ") + rank}>
     <div className={styles.opportunityHeading}>
       <div><p className={ui.eyebrow}>{historical ? "HISTORICAL RESULT AT SCAN TIME · READ ONLY" : rank === 1 ? "BEST THEORETICAL OPPORTUNITY" : "OPPORTUNITY " + rank}</p><h3>{a.fixture.homeTeam} vs {a.fixture.awayTeam}</h3><p className={styles.fixtureMeta}>{a.fixture.competition} · <time dateTime={a.fixture.kickoff}>{time(a.fixture.kickoff)}</time></p></div>
-      <div className={styles.roiBlock}><span>Theoretical gross ROI</span><strong className={styles.roi}>{percent(a.theoreticalGrossROI)}</strong></div>
+      <div className={styles.roiBlock}><span>Theoretical gross ROI{historical && " at scan time"}</span><strong className={styles.roi}>{percent(a.theoreticalGrossROI)}</strong></div>
     </div>
     <div className={styles.legs}>{OUTCOMES.map((outcome) => <div key={outcome}><span className={ui.eyebrow}>{outcome}</span><strong>{a.selections[outcome].decimalOdds.toFixed(3)}</strong><span>{a.selections[outcome].bookmaker.name}</span></div>)}</div>
-    <p className={styles.evidence}>Oldest supporting venue/sport evidence: <time dateTime={a.oldestEvidenceAt}>{time(a.oldestEvidenceAt)}</time>. All accepted evidence is at most 120 seconds old at evaluation.</p>
-    <p className={styles.caution}>Before costs and market movement. Prices, acceptance and settlement terms need independent verification; this is not guaranteed or executable profit.</p>
+    {!historical && <><p className={styles.evidence}>Oldest supporting venue/sport evidence: <time dateTime={a.oldestEvidenceAt}>{time(a.oldestEvidenceAt)}</time>. All accepted evidence is at most 120 seconds old at evaluation.</p>
+    <p className={styles.caution}>Before costs and market movement. Prices, acceptance and settlement terms need independent verification; this is not guaranteed or executable profit.</p></>}
     <details className={styles.math}><summary>Illustrative fractions &amp; calculation</summary><p>S = {a.inverseOddsSum.toFixed(8)} · gross ROI = 1/S − 1. Educational fractions: HOME {percent(a.illustrativeFractions.HOME)}, DRAW {percent(a.illustrativeFractions.DRAW)}, AWAY {percent(a.illustrativeFractions.AWAY)}. Before rounding, each fraction × odds gives the same {a.grossPayoutPerUnit.toFixed(8)} gross payout per illustrative total unit. No staking recommendation.</p></details>
   </article>;
 }
 
-function FixtureComparisons({ markets, label }: { markets: MarketAnalysis[]; label: string }) {
+function FixtureComparisons({ markets, label, historical = false }: { markets: MarketAnalysis[]; label: string; historical?: boolean }) {
   return <div className={ui.tableScroll} role="region" aria-label={label} tabIndex={0}>
-      <table className={ui.table + " " + styles.table}><caption className={ui.srOnly}>Best eligible full-time HOME, DRAW and AWAY bookmaker back prices, using decimal odds.</caption>
+      <table className={ui.table + " " + styles.table + (historical ? " " + styles.historyTable : "")}><caption className={ui.srOnly}>{historical ? "Original HOME, DRAW and AWAY bookmaker prices at the original evaluation time. Historical odds, not live." : "Best eligible full-time HOME, DRAW and AWAY bookmaker back prices, using decimal odds."}</caption>
         <thead><tr><th scope="col">Fixture / UTC kickoff</th>{OUTCOMES.map((o) => <th key={o} scope="col">{o} / bookmaker</th>)}<th scope="col">Comparison</th></tr></thead>
         <tbody>{markets.map((r) => <tr key={r.fixture.id}>
           <th scope="row">{r.fixture.homeTeam} vs {r.fixture.awayTeam}<span>{r.fixture.competition}</span><time dateTime={r.fixture.kickoff}>{time(r.fixture.kickoff)}</time></th>
-          {OUTCOMES.map((o) => <td key={o}>{r.best[o] ? <><strong>{r.best[o]!.decimalOdds.toFixed(3)}</strong><span>{r.best[o]!.bookmaker.name}</span><small>Evidence {time(r.best[o]!.evidenceAt)}</small></> : <span>Excluded / missing</span>}</td>)}
-          <td><strong>{r.status === "ARBITRAGE" ? "THEORETICAL ARBITRAGE" : r.status}</strong><span>S: {r.inverseOddsSum?.toFixed(8) ?? "—"}</span>{r.reasons.map((reason) => <small key={reason}>{reason}</small>)}</td>
+          {OUTCOMES.map((o) => <td key={o}>{r.best[o] ? <><strong>{r.best[o]!.decimalOdds.toFixed(3)}</strong><span>{r.best[o]!.bookmaker.name}</span>{!historical && <small>Evidence {time(r.best[o]!.evidenceAt)}</small>}</> : <span>Excluded / missing</span>}</td>)}
+          <td><strong>{historical && "AT SCAN TIME · "}{r.status === "ARBITRAGE" ? "THEORETICAL ARBITRAGE" : r.status}</strong><span>S: {r.inverseOddsSum?.toFixed(8) ?? "—"}</span>{!historical && r.reasons.map((reason) => <small key={reason}>{reason}</small>)}</td>
         </tr>)}</tbody>
       </table>
     </div>;
@@ -51,7 +55,6 @@ export function Results({ analysis, mode, unchanged, historical = false }: { ana
   const coverage = scanDiagnostics(analysis);
   return <section id={historical ? "history-results" : "scan-results"} className={styles.results} aria-labelledby={historical ? "history-results-title" : "results-title"}>
     <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>{historical ? "HISTORICAL ODDSRELAY RESULTS · READ ONLY" : mode === "DEMO" ? "SYNTHETIC RESULTS" : "ODDSRELAY RESULTS"}</p><h2 id={historical ? "history-results-title" : "results-title"}>{historical ? "Original research results" : "Scan results"}</h2></div><span className={badge(historical ? "neutral" : status.tone)}>{historical ? "AT SCAN TIME · " : ""}{status.label}</span></div>
-    {historical && <p className={ui.notice}>These results describe the original scan time. They are read-only historical research, not current verified opportunities.</p>}
     <p className={styles.resultMeta}>Evaluated {time(analysis.evaluatedAt)}. Coverage describes this response at evaluation time.</p>
     <dl className={styles.coverageStats} aria-label="Scan coverage">
       <div><dt>Fixtures scanned</dt><dd>{coverage.total}</dd></div>
@@ -59,15 +62,19 @@ export function Results({ analysis, mode, unchanged, historical = false }: { ana
       <div><dt>Insufficient data</dt><dd>{coverage.insufficient.length}</dd></div>
       <div><dt>Theoretical opportunities</dt><dd>{analysis.opportunities.length}</dd></div>
     </dl>
-    {unchanged && <p className={ui.notice}>Provider data unchanged (304). Original freshness evidence was retained and rechecked.</p>}
+    {unchanged && !historical && <p className={ui.notice}>Provider data unchanged (304). Original freshness evidence was retained and rechecked.</p>}
     {!analysis.opportunities.length && <div className={ui.emptyState}><h3>{status.label}</h3><p>{analysis.status === "INSUFFICIENT DATA" ? "No verified opportunity: missing, stale or otherwise ineligible prices prevent a complete comparison." : "Complete eligible markets were compared. No theoretical arbitrage was found in " + coverage.comparable.length + (coverage.comparable.length === 1 ? " complete fixture." : " complete fixtures.")}</p>{coverage.insufficient.length > 0 && <p>{coverage.insufficient.length} {coverage.insufficient.length === 1 ? "fixture could" : "fixtures could"} not be assessed. Missing data does not establish whether arbitrage exists.</p>}</div>}
     {analysis.opportunities.map((a, i) => <TheoreticalOpportunity key={a.fixture.id} opportunity={a} rank={i + 1} historical={historical} />)}
-    {coverage.comparable.length > 0 && <>
+    {historical && coverage.total > 0 && <>
+      <div className={styles.comparisonHeading}><h3>Original bookmaker comparisons ({coverage.total})</h3><span>Complete comparisons first · decimal odds</span></div>
+      <FixtureComparisons markets={[...coverage.comparable, ...coverage.insufficient]} label="Original bookmaker price comparisons" historical />
+    </>}
+    {!historical && coverage.comparable.length > 0 && <>
       <div className={styles.comparisonHeading}><h3>Complete comparisons ({coverage.comparable.length})</h3><span>Opportunities: ROI ranking · other markets: S ↑, kickoff, event ID</span></div>
       <p className={styles.resultMeta}>Eligible HOME, DRAW and AWAY prices with evidence from at least two bookmakers. S below 1 is the theoretical arbitrage threshold.</p>
       <FixtureComparisons markets={coverage.comparable} label="Complete fixture price comparisons" />
     </>}
-    {coverage.insufficient.length > 0 && <div className={ui.card + " " + styles.coverageIssues}>
+    {!historical && coverage.insufficient.length > 0 && <div className={ui.card + " " + styles.coverageIssues}>
       <h3>Why fixtures could not be compared</h3>
       <p className={styles.resultMeta}>Counts show affected fixtures and can overlap. Repeated exclusions within one fixture count once per reason.</p>
       <ul className={styles.reasonCounts}>{coverage.reasons.map(({ reason, fixtures }) => <li key={reason}><span>{reason}</span><strong>{fixtures} {fixtures === 1 ? "fixture" : "fixtures"}</strong></li>)}</ul>
@@ -82,6 +89,58 @@ export function Results({ analysis, mode, unchanged, historical = false }: { ana
       </details>
     </div>}
   </section>;
+}
+
+function ValidationDetails({ analysis }: { analysis: ScanAnalysis }) {
+  return <div className={styles.excluded}>
+    {analysis.excluded.length > 0 && <ul>{analysis.excluded.map((item, i) => <li key={i}><strong>{item.eventId ?? "Unknown event"}</strong>: {item.reason}<small>Source: {item.source}</small></li>)}</ul>}
+    {analysis.markets.some((market) => market.reasons.length) && <ul>{analysis.markets.filter((market) => market.reasons.length).map((market) => <li key={market.fixture.id}><strong>{market.fixture.homeTeam} vs {market.fixture.awayTeam}</strong>: {market.reasons.join("; ")}</li>)}</ul>}
+    {!analysis.excluded.length && !analysis.markets.some((market) => market.reasons.length) && <p>No data-validation exclusions.</p>}
+  </div>;
+}
+
+export function SavedScanView({ scan, currentAnalysis, disabled, onRefresh, error }: {
+  scan: HistoricalScan;
+  currentAnalysis: ScanAnalysis;
+  disabled: boolean;
+  onRefresh: () => void;
+  error: ProviderError | null;
+}) {
+  const original = scanDiagnostics(scan.originalAnalysis), current = scanDiagnostics(currentAnalysis);
+  return <div className={styles.historyView}>
+    <div className={styles.historySummary}>
+      <span className={badge("neutral") + " " + styles.historyLabel}>HISTORICAL ODDS — NOT LIVE</span>
+      <dl className={styles.meta}>
+        <div><dt>Original scan</dt><dd><time dateTime={scan.scannedAt}>{time(scan.scannedAt)}</time></dd></div>
+        <div><dt>Source bookmakers</dt><dd>{scan.bookmakers.join(", ")}</dd></div>
+        <div><dt>Original token cost</dt><dd>{scan.originalUsage.cost ?? "Unknown"}</dd></div>
+        <div><dt>Snapshot age</dt><dd>{elapsed(Date.parse(currentAnalysis.evaluatedAt) - Date.parse(scan.snapshot.receivedAt))} at last freshness check</dd></div>
+      </dl>
+    </div>
+    <Results analysis={scan.originalAnalysis} mode="LIVE" historical />
+    <div className={ui.notice + " " + styles.historyWarning}>
+      <strong>Recorded prices may be stale or unavailable.</strong>
+      <p>Prices were recorded at the original scan time and are not guaranteed to remain available. Historical arbitrage findings are theoretical, before costs, and never current verified opportunities.</p>
+      {!current.comparable.length && <p>These saved prices no longer provide a currently eligible complete comparison.</p>}
+      {(original.insufficient.length > 0 || scan.originalAnalysis.excluded.length > 0) && <p>Data quality at scan time: {original.insufficient.length} of {original.total} fixtures had insufficient data; {scan.originalAnalysis.excluded.length} source or price records were excluded. See Technical details for reasons.</p>}
+    </div>
+    <div>
+      <button type="button" className={ui.secondaryButton} disabled={disabled} onClick={onRefresh}>Check for updated odds</button>
+      <p className={styles.resultMeta}>Starts the manual discovery → free quote → explicit confirmation workflow below. An ETag does not guarantee a free refresh. Only documented response headers establish actual token cost.</p>
+    </div>
+    <details className={ui.details + " " + styles.historyTechnical}>
+      <summary>Technical details</summary>
+      {error && <div className={ui.notice + " " + ui.warning}>LOCAL HISTORY · {error.code}: {error.message}</div>}
+      <section><h3>Provider response metadata</h3><dl className={styles.sourceMeta}>
+        <dt>Provider</dt><dd>{scan.snapshot.provider}</dd><dt>Response</dt><dd>{scan.unchanged ? "Unchanged (304); original evidence retained" : "Updated snapshot"}</dd>
+        <dt>Processed</dt><dd>{time(scan.snapshot.processedAt)}</dd><dt>Received</dt><dd>{time(scan.snapshot.receivedAt)}</dd>
+        <dt>Original evaluation</dt><dd>{time(scan.originalAnalysis.evaluatedAt)}</dd>
+      </dl></section>
+      <section><h3>Full original token receipt</h3><p>This receipt records the original response. Its balance is historical and does not update the current budget.</p><UsageReceipt usage={scan.originalUsage} /></section>
+      <section><h3>Original data-validation details</h3><ValidationDetails analysis={scan.originalAnalysis} /></section>
+      <section><h3>Current freshness diagnostics</h3><p>Checked {time(currentAnalysis.evaluatedAt)} · {current.comparable.length} complete, {current.insufficient.length} insufficient. The unchanged 120-second freshness rule applies. Cached results remain read-only; stale evidence never verifies a current opportunity.</p><ValidationDetails analysis={currentAnalysis} /></section>
+    </details>
+  </div>;
 }
 
 function UsageReceipt({ usage }: { usage: ProviderUsage }) {
@@ -234,7 +293,6 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
   }
   const historical = state.history?.view;
   const historicalNow = historical ? analyseSnapshot(historical.snapshot, Math.max(clock, Date.parse(historical.viewedAt))) : null;
-  const currentCoverage = historicalNow ? scanDiagnostics(historicalNow) : null;
   const displayAnalysis = scan ? mode === "LIVE" ? analyseSnapshot(scan.snapshot, clock) : scan.analysis : null;
 
   return <div className={ui.shell}>
@@ -254,22 +312,18 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
       <section className={ui.card + " " + styles.history} aria-labelledby="history-title">
         <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>LOCAL · READ ONLY</p><h2 id="history-title">Scan history</h2></div><button type="button" className={ui.secondaryButton} disabled={Boolean(busy)} onClick={() => viewHistory()}>{busy === "history" ? "Reading local history…" : "View previous scan · 0 tokens"}</button></div>
         <p className={styles.resultMeta}>Read saved results from this computer. No usage check, discovery or OddsRelay request. Up to 20 scans are retained locally.</p>
-        {state.historyError && <p className={ui.notice + " " + ui.warning} role="alert">LOCAL HISTORY · {state.historyError.code}: {state.historyError.message}</p>}
+        {state.historyError && <p className={ui.notice + " " + ui.warning} role="alert">Could not open the saved scan. Current results and approvals are unchanged. See Technical details for the error.</p>}
         {state.history && !state.history.entries.length && <p className={ui.notice}>No saved scans yet. A confirmed live scan will be saved locally.</p>}
-        {Boolean(state.history?.entries.length) && <details className={styles.historyList}><summary>Saved scans ({state.history!.entries.length})</summary><ul>{state.history!.entries.map((entry) => <li key={entry.id}><div><time dateTime={entry.scannedAt}>{time(entry.scannedAt)}</time><span>{entry.bookmakers.join(", ")} · original cost {entry.originalUsage.cost ?? "unknown"} tokens{entry.unchanged ? " · unchanged (304)" : ""}</span></div><button className={ui.secondaryButton} type="button" disabled={Boolean(busy)} onClick={() => viewHistory(entry.id)}>Open · 0 tokens</button></li>)}</ul></details>}
-        {historical && <div className={styles.historyView}>
-          <dl className={styles.meta}>
-            <div><dt>Last scan time</dt><dd>{time(historical.scannedAt)}</dd></div>
-            <div><dt>Source bookmakers</dt><dd>{historical.bookmakers.join(", ")}</dd></div>
-            <div><dt>Original token cost</dt><dd>{historical.originalUsage.cost ?? "Unknown"}</dd></div>
-            <div><dt>Snapshot age</dt><dd>{Math.floor((Math.max(clock, Date.parse(historical.viewedAt)) - Date.parse(historical.snapshot.receivedAt)) / 1000).toLocaleString("en-GB")} seconds at freshness check</dd></div>
-          </dl>
-          <div className={ui.notice + " " + (currentCoverage!.comparable.length ? "" : ui.warning)} role="status"><strong>Current freshness status: {currentCoverage!.comparable.length ? "eligible prices remain at this check" : "no currently eligible complete comparison"}</strong><p>Checked {time(historicalNow!.evaluatedAt)} · {currentCoverage!.comparable.length} complete, {currentCoverage!.insufficient.length} insufficient. Cached results remain read-only; stale evidence never verifies a current opportunity.</p></div>
-          <details className={styles.math}><summary>Historical provider receipt &amp; current exclusions</summary><p>This receipt records the original response. Its balance is historical and does not update the current budget.</p><UsageReceipt usage={historical.originalUsage} /><p>Original provider processing: {time(historical.snapshot.processedAt)} · received: {time(historical.snapshot.receivedAt)}.</p><ul className={styles.excluded}>{historicalNow!.excluded.map((item, i) => <li key={i}>{item.eventId ?? "Unknown event"}: {item.reason}</li>)}</ul></details>
-          <button type="button" className={ui.secondaryButton} disabled={!configured || Boolean(busy)} onClick={() => { setClock(Date.now()); dispatch({ type: "prepare-refresh", bookmakers: historical.bookmakers }); setEvents(null); setPricing(null); }}>Check for updated odds</button>
-          <p className={styles.resultMeta}>Starts the manual discovery → free quote → explicit confirmation workflow below. An ETag does not guarantee a free refresh. Only documented response headers establish actual token cost.</p>
-          <details className={styles.originalResults}><summary>Original research results · at scan time</summary><Results analysis={historical.originalAnalysis} mode="LIVE" unchanged={historical.unchanged} historical /></details>
+        {Boolean(state.history?.entries.length) && <div className={styles.historySelector}>
+          <label htmlFor="saved-scan">Saved scan ({state.history!.entries.length})</label>
+          <select id="saved-scan" disabled={Boolean(busy)} value={state.history!.entries.some((entry) => entry.id === historical?.id) ? historical!.id : ""} onChange={(event) => viewHistory(event.target.value)} aria-describedby="history-read-cost">
+            <option value="" disabled>Choose a saved scan…</option>
+            {state.history!.entries.map((entry) => <option key={entry.id} value={entry.id}>{time(entry.scannedAt)} · {entry.bookmakers.join(", ")} · {entry.originalUsage.cost ?? "unknown"} original tokens</option>)}
+          </select>
+          <span id="history-read-cost">Local read · 0 OddsRelay tokens</span>
         </div>}
+        {historical && <SavedScanView key={historical.id} scan={historical} currentAnalysis={historicalNow!} error={state.historyError} disabled={!configured || Boolean(busy)} onRefresh={() => { setClock(Date.now()); dispatch({ type: "prepare-refresh", bookmakers: historical.bookmakers }); setEvents(null); setPricing(null); }} />}
+        {!historical && state.historyError && <details className={ui.details}><summary>Technical details</summary><p>LOCAL HISTORY · {state.historyError.code}: {state.historyError.message}</p></details>}
       </section>
 
       {mode === "LIVE" && <div className={styles.workflow}>
