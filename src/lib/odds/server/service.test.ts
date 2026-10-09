@@ -75,6 +75,17 @@ describe("fresh authenticated discovery and coverage", () => {
     h.provider.free.mockImplementation(async (endpoint, cursor) => endpoint === "sports" && !cursor ? relayResponse({ meta: { next_cursor: "next" }, data: [] }) : original(endpoint, cursor));
     const d = await h.service.discover(); expect(d.competitionCount).toBe(1); expect(h.provider.free).toHaveBeenCalledWith("sports", "next"); expect(h.provider.scan).not.toHaveBeenCalled();
   });
+  it("an unrelated catalogue title with a trailing tab cannot block football discovery on a later page", async () => {
+    const h = harness(), original = h.provider.free.getMockImplementation()!;
+    h.state.account.key.regions = [];
+    h.provider.free.mockImplementation(async (endpoint, cursor) => endpoint === "sports" && !cursor
+      ? relayResponse({ meta: { next_cursor: "next" }, data: [{ key: "basketball_lega_a", title: "Lega A\t", group: "Basketball", active: true, regions: ["uk"], markets: ["h2h"] }] })
+      : original(endpoint, cursor));
+    const discovery = await h.service.discover();
+    expect(discovery.competitionCount).toBe(1); expect(discovery.bookmakers.filter((b) => b.eligible)).toHaveLength(3);
+    expect(h.provider.free).toHaveBeenCalledWith("sports", "next");
+    expect(h.provider.quote).not.toHaveBeenCalled(); expect(h.provider.scan).not.toHaveBeenCalled();
+  });
 });
 describe("approved conditional odds requests and cache", () => {
   it("ETag never bypasses quote and confirmation; 304 retains original snapshot", async () => {

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "seasons": {
+    "recent": [
+      "2021-22",
+      "2022-23",
+      "2023-24",
+      "2024-25",
+      "2025-26"
+    ],
+    "older": [
+      "2014-15",
+      "2015-16",
+      "2016-17",
+      "2017-18",
+      "2018-19"
+    ]
+  },
+  "earlyPoisson": {
+    "recentBrier": 0.634404090022038,
+    "recentLeagueBaseRateBrier": 0.6495926545501354,
+    "recentLeaguePoissonBrier": 0.648719016880322
+  },
+  "dixonColes": {
+    "recentBrier": 0.6096214837100087,
+    "olderBrier": 0.5931332816914757,
+    "recentMatches": 1688,
+    "olderMatches": 1691,
+    "recentAdvantage": 0.024782606312029446,
+    "olderAdvantage": 0.02213787844928618,
+    "recentInterval": {
+      "observedMean": 0.024782606312029477,
+      "lowerBound": 0.014703588641431056,
+      "upperBound": 0.03503952214293828
+    },
+    "olderInterval": {
+      "observedMean": 0.02213787844928622,
+      "lowerBound": 0.01180029684929461,
+      "upperBound": 0.03291429555179791
+    }
+  },
+  "corners": {
+    "status": "NONE / INCONCLUSIVE",
+    "recentPoissonRPS": 0.0657872115848728,
+    "recentNegativeBinomialRPS": 0.06567643443725063,
+    "olderPoissonRPS": 0.06641981381937244,
+    "olderNegativeBinomialRPS": 0.06642274324607479
+  },
+  "historicalValue": {
+    "status": "INCONCLUSIVE",
+    "recentModelBrier": 0.6096214837100087,
+    "recentMarketBrier": 0.5760293595563422,
+    "recentROI": -0.04737162162162161,
+    "olderROI": -0.07438755670771229,
+    "recentBets": 1480,
+    "olderBets": 1543
+  },
+  "calibration": {
+    "status": "IDENTITY_RETAINED",
+    "selectedFamily": "identity",
+    "researchModelVersion": null,
+    "gapClosedFraction": 0
+  },
+  "artifactHashes": {
+    "model-comparison-v06.json": "deb9fac92ebd104fcc15cf713b5e2600cfba5e56a8f58b30d219f469dccf8262",
+    "corners-v07-summary.json": "bf4475b082608bf78a9f92b7986355745c62279d54b05509497a0699494fa4a7",
+    "value-v08-summary.json": "d1fbf53cfd513bd9329893f5cb9205d039f455ed725c2cebc55a4b7de1990bb9",
+    "calibration-v09-summary.json": "0324c424c7acbccd7bcf531d8375690078a11a087b3874f3a1f896f3e3b27449"
+  }
+}

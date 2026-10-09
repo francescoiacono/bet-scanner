@@ -1,0 +1,99 @@
+.source { margin-bottom: 24px; }
+.modeSwitch { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: var(--background); gap: 2px; }
+.modeSwitch button { min-height: 44px; border: 0; border-radius: 6px; background: transparent; padding: 10px 16px; color: var(--muted); font-size: .85rem; font-weight: 650; }
+.modeSwitch button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px #17273b14; }
+.modeSwitch button:disabled { cursor: not-allowed; opacity: .55; }
+.meta { display: flex; flex-wrap: wrap; gap: 20px 38px; margin: 20px 0; }
+.meta > div { min-width: 0; }
+.meta dt { margin-bottom: 7px; color: var(--muted); font-size: .78rem; }
+.meta dd { margin: 0; font-size: .92rem; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.workflowStatus { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-top: 1px solid var(--border); padding-top: 18px; font-size: .85rem; color: var(--muted); line-height: 1.6; }
+.demoActions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.demoActions p { margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.workflow { display: grid; gap: 18px; margin-bottom: 32px; }
+.workflow h2 { margin-top: 0; }
+.bookmakerSelector { margin-top: 18px; }
+.bookmakerToolbar { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; }
+.bookmakerSearch { flex: 1 1 220px; max-width: 360px; min-width: 0; }
+.bookmakerSearch label { display: block; margin-bottom: 7px; font-size: .78rem; font-weight: 650; }
+.bookmakerSearch input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: .85rem; }
+.bookmakerSearch input::placeholder { color: var(--muted); opacity: 1; }
+.bookmakerCount { display: grid; gap: 5px; padding-bottom: 4px; font-size: .78rem; }
+.bookmakerCount span { color: var(--muted); }
+.selectedBookmakers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.bookmakerChip { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; max-width: 100%; padding: 4px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--accent-soft); color: var(--accent); font-size: .75rem; font-weight: 650; line-height: 1.2; overflow-wrap: anywhere; }
+.bookmakerChip span { font-size: 1rem; font-weight: 400; line-height: 1; }
+.bookmakerChip:hover:not(:disabled) { border-color: var(--accent); }
+.bookmakerChip:disabled { cursor: not-allowed; opacity: .55; }
+.bookmakerHint { margin: 12px 0; color: var(--muted); font-size: .78rem; line-height: 1.6; }
+.bookmakers { min-inline-size: 0; border: 0; padding: 0; margin: 0; }
+.bookmakerViewport { max-height: 320px; overflow-y: auto; overscroll-behavior-y: contain; border: 1px solid var(--border); border-radius: 9px; }
+.bookmakerList { list-style: none; padding: 0; margin: 0; }
+.bookmakerList li + li { border-top: 1px solid var(--border); }
+.bookmakerRow { display: flex; gap: 10px; align-items: center; padding: 10px 12px; min-height: 44px; line-height: 1.5; cursor: pointer; }
+.bookmakerRow:hover { background: var(--background); }
+.bookmakerRow[data-selected="true"] { background: var(--accent-soft); }
+.bookmakerRow:focus-within { box-shadow: inset 0 0 0 2px var(--focus); }
+.bookmakerRow input { margin: 0; }
+.bookmakerDetails { display: flex; flex: 1; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 3px 16px; min-width: 0; }
+.bookmakerDetails strong { font-size: .85rem; overflow-wrap: anywhere; }
+.bookmakerInfo { display: flex; flex-wrap: wrap; gap: 3px 12px; color: var(--muted); font-size: .75rem; overflow-wrap: anywhere; }
+.bookmakerEmpty { margin: 0; padding: 24px 12px; font-size: .85rem; color: var(--muted); }
+.unavailable { background: var(--background); }
+.unavailable, .unavailable:hover { cursor: not-allowed; }
+.acknowledgement { display: flex; gap: 12px; align-items: flex-start; margin: 18px 0; font-size: .88rem; line-height: 1.7; max-width: 80ch; }
+.acknowledgement input { margin-top: 4px; }
+.resultMeta { font-size: .8rem; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; margin: 12px 0; }
+.errorNotice { margin-top: 18px; }
+.receipt { margin-bottom: 24px; }
+.results { margin-top: 32px; }
+.coverageStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
+.coverageStats > div { padding: 16px 18px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.coverageStats dt { color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.coverageStats dd { margin: 8px 0 0; font-size: 1.65rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.coverageIssues { margin-top: 24px; }
+.coverageIssues h3 { margin: 0; }
+.reasonCounts { list-style: none; margin: 14px 0; padding: 0; }
+.reasonCounts li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px 20px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: .82rem; line-height: 1.6; }
+.reasonCounts li > span { min-width: 0; overflow-wrap: anywhere; }
+.reasonCounts strong { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.coverageGuidance { color: var(--muted); font-size: .82rem; line-height: 1.7; }
+.coverageGuidance a { color: var(--accent); text-decoration: underline; }
+.incompleteComparisons { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 18px; }
+.incompleteComparisons summary { cursor: pointer; color: var(--accent); font-size: .85rem; font-weight: 650; line-height: 1.6; }
+.opportunity { padding: 24px; margin: 20px 0; border: 1px solid #b6d8c9; border-top: 3px solid var(--positive); border-radius: 12px; background: var(--surface); }
+.opportunityHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 22px; }
+.opportunityHeading h3 { font-size: 1.25rem; margin: 0; letter-spacing: -.025em; }
+.fixtureMeta { font-size: .82rem; color: var(--muted); margin: 8px 0 0; line-height: 1.6; }
+.roiBlock { text-align: right; flex-shrink: 0; }
+.roiBlock > span { color: var(--muted); font-size: .78rem; }
+.roi { display: block; font-size: 2rem; letter-spacing: -.04em; color: var(--positive); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.legs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.legs > div { padding: 14px 16px; background: var(--background); border-radius: 8px; min-width: 0; }
+.legs strong { display: block; font-size: 1.5rem; margin: 4px 0; font-variant-numeric: tabular-nums; }
+.legs > div > span:last-child { font-size: .85rem; overflow-wrap: anywhere; }
+.evidence, .caution { font-size: .8rem; color: var(--muted); line-height: 1.6; margin: 14px 0 0; }
+.math { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 14px; }
+.math summary { cursor: pointer; color: var(--accent); font-size: .85rem; font-weight: 650; }
+.math p { font-size: .85rem; color: var(--muted); line-height: 1.7; }
+.comparisonHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 14px; }
+.comparisonHeading h3 { margin: 0; }
+.comparisonHeading > span { color: var(--muted); font-size: .75rem; }
+.table { min-width: 880px; }
+.table tbody th { min-width: 220px; max-width: 290px; }
+.table tbody td { min-width: 145px; }
+.table span, .table time, .table small { display: block; margin-top: 5px; color: var(--muted); font-size: .75rem; font-weight: 400; line-height: 1.55; }
+.table td > strong { font-size: .9rem; }
+.table td:last-child > strong { font-size: .72rem; }
+.advanced { margin-top: 28px; }
+.advancedGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.sourceMeta { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 10px; font-size: .8rem; color: var(--muted); }
+.sourceMeta dd { margin: 0; overflow-wrap: anywhere; }
+.excluded { max-height: 300px; overflow-y: auto; padding-left: 20px; }
+.excluded small { display: block; margin-top: 5px; overflow-wrap: anywhere; }
+.providerDetails { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 18px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.providerDetails > details + details { margin-top: 16px; }
+.pricing { max-height: 300px; overflow: auto; font-size: .78rem; }
+@media (max-width: 768px) { .coverageStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .advancedGrid { grid-template-columns: 1fr; gap: 20px; } .opportunity { padding: 20px; } .opportunityHeading { flex-wrap: wrap; } .roiBlock { text-align: left; } .comparisonHeading { flex-wrap: wrap; } }
+@media (max-width: 480px) { .bookmakerSearch { max-width: none; flex-basis: 100%; } .bookmakerCount { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 0; } .bookmakerInfo { flex-basis: 100%; } .meta { gap: 18px 24px; } .meta > div { flex: 1 1 125px; } .legs { gap: 8px; } .legs > div { padding: 12px 9px; } .legs strong { font-size: 1.2rem; } .legs > div > span:last-child { font-size: .78rem; } .opportunity { padding: 18px; } .opportunityHeading h3 { font-size: 1.1rem; } }

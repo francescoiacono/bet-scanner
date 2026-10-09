@@ -23,8 +23,12 @@ export interface AccountInfo {
 }
 export function parseUsage(value: unknown): AccountInfo {
   const r = object(value), tokens = object(r.tokens), key = object(r.key), account = object(r.account);
+  // An empty key region list inherits the account regions; it does not deny all regions.
+  // Keep an explicit key restriction intersected with the account's authorized regions.
+  const accountRegions = strings(r.regions), keyRegions = strings(key.regions);
+  const regions = accountRegions.filter((region) => keyRegions.length === 0 || keyRegions.includes(region));
   return { usage: { cost: null, used: tokens.used === null ? null : integer(tokens.used), remaining: balance(tokens.remaining), limit: balance(tokens.limit), resetsAt: nullableTime(tokens.resets_at) },
-    plan: r.plan === null ? null : text(r.plan, "plan"), active: account.status === "active" && key.kind === "server", products: strings(key.products), regions: strings(key.regions), scope: r.scope === null ? null : object(r.scope) };
+    plan: r.plan === null ? null : text(r.plan, "plan"), active: account.status === "active" && key.kind === "server", products: strings(key.products), regions, scope: r.scope === null ? null : object(r.scope) };
 }
 export function parseVenues(value: unknown): VenueInfo[] {
   const rows = array(object(value).data).map((v) => {
@@ -36,7 +40,9 @@ export function parseVenues(value: unknown): VenueInfo[] {
 }
 export function parseSportPage(value: unknown): { sports: SportInfo[]; cursor: string | null } {
   const r = object(value), meta = object(r.meta);
-  const sports = array(r.data).map((v) => { const s = object(v); return { key: text(s.key, "sport key"), title: text(s.title, "competition title"), group: text(s.group, "sport group"), active: s.active === true, markets: strings(s.markets), regions: strings(s.regions) }; });
+  // Catalogue display labels can contain surrounding whitespace (e.g. "Lega A\t").
+  // Normalize that label only; identifiers, group, markets and board matching stay strict.
+  const sports = array(r.data).map((v) => { const s = object(v); return { key: text(s.key, "sport key"), title: text(typeof s.title === "string" ? s.title.trim() : s.title, "competition title"), group: text(s.group, "sport group"), active: s.active === true, markets: strings(s.markets), regions: strings(s.regions) }; });
   return { sports, cursor: meta.next_cursor === null ? null : text(meta.next_cursor, "sport cursor") };
 }
 export function footballSport(s: SportInfo): boolean { return s.key.startsWith("soccer_") && ["Soccer", "Football"].includes(s.group) && s.active && s.regions.includes("uk") && s.markets.includes("h2h"); }

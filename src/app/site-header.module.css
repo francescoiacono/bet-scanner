@@ -1,0 +1,12 @@
+.header { background: var(--surface); border-bottom: 1px solid var(--border); }
+.inner { width: min(1160px, calc(100% - 64px)); margin: auto; min-height: 80px; display: flex; align-items: center; gap: 38px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; color: var(--text); font-size: 1rem; font-weight: 750; letter-spacing: -.025em; white-space: nowrap; }
+.logo { display: inline-flex; width: 34px; height: 34px; padding: 4px; border-radius: 9px; background: var(--accent); color: white; }
+.logo svg { width: 100%; height: 100%; }
+.navigation { display: flex; align-items: center; gap: 6px; }
+.navigation a { min-height: 44px; display: inline-flex; align-items: center; padding: 10px 14px; border-radius: 8px; color: var(--muted); font-size: .88rem; text-decoration: none; font-weight: 600; }
+.navigation a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+.navigation a:hover { color: var(--text); background: var(--background); }
+.source { margin-left: auto; }
+@media (max-width: 768px) { .inner { width: calc(100% - 40px); gap: 20px; } }
+@media (max-width: 480px) { .inner { width: calc(100% - 32px); flex-wrap: wrap; gap: 4px 12px; padding-block: 14px 10px; } .brand { font-size: .95rem; } .navigation { order: 3; flex-basis: 100%; } .navigation a { flex: 1; justify-content: center; } .source { font-size: .65rem; padding: 6px 8px; } }

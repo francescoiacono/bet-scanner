@@ -78,3 +78,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Demo odds must be explicitly synthetic, offline and isolated from provider calls; failed live scans must not fall back to fictional prices.
 - All provider HTTP tests must use mocks and spend zero real API tokens.
 - Keep local token-spending controls on a loopback-bound server; same-origin checks alone are not network access control.
+- The live odds scanner is the product-facing interface; historical model research is retained for reproducibility and consolidated under a research archive. Avoid restoring one top-level navigation item per experiment.

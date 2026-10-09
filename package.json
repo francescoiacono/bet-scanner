@@ -1,6 +1,6 @@
 {
   "name": "bet-scanner",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "private": true,
   "scripts": {
@@ -20,7 +20,8 @@
     "value:model:build": "node --import ./scripts/register-typescript.mjs scripts/build-value-models.mjs",
     "value:build": "pnpm value:data:build && pnpm value:model:build",
     "calibration:model:build": "node --import ./scripts/register-typescript.mjs scripts/build-calibration-models.mjs",
-    "calibration:build": "pnpm value:data:build && pnpm calibration:model:build"
+    "calibration:build": "pnpm value:data:build && pnpm calibration:model:build",
+    "research:build": "node scripts/build-research-index.mjs"
   },
   "dependencies": {
     "next": "16.3.8",

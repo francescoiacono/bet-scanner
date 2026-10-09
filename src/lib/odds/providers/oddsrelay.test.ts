@@ -46,7 +46,30 @@ describe("official OddsRelay normalization", () => {
 describe("provider discovery and exact request shape", () => {
   it("reads account allowance without hardcoding 2500", () => { const u = usageBody(); u.tokens.limit = 777; u.tokens.remaining = 321; expect(parseUsage(u).usage).toMatchObject({ remaining: 321, limit: 777 }); });
   it("supports unlimited and unknown allowance without manufacturing numbers", () => { const u = usageBody(); u.tokens.remaining = "unlimited"; expect(parseUsage(u).usage.remaining).toBe("unlimited"); u.tokens.remaining = null; expect(parseUsage(u).usage.remaining).toBeNull(); });
+  it("an unrestricted key inherits only the authenticated account's regions", () => {
+    const usage = usageBody(); usage.key.regions = [];
+    expect(parseUsage(usage).regions).toEqual(["uk"]); expect(scopeAllows(parseUsage(usage))).toBe(true);
+    usage.regions = ["us"]; expect(scopeAllows(parseUsage(usage))).toBe(false);
+    usage.regions = []; expect(parseUsage(usage).regions).toEqual([]); expect(scopeAllows(parseUsage(usage))).toBe(false);
+  });
+  it("explicit key and account region restrictions are both enforced", () => {
+    const usage = usageBody(); usage.regions = ["uk", "us"]; usage.key.regions = ["us"];
+    expect(parseUsage(usage).regions).toEqual(["us"]); expect(scopeAllows(parseUsage(usage))).toBe(false);
+    usage.regions = ["us"]; usage.key.regions = ["uk"];
+    expect(parseUsage(usage).regions).toEqual([]); expect(scopeAllows(parseUsage(usage))).toBe(false);
+  });
   it("reads explicit venue kind and sport pagination", () => { expect(parseVenues({ data: [{ key: "x", name: "Exchange", is_exchange: true, regions: ["uk"] }] })[0].isExchange).toBe(true); expect(parseSportPage({ meta: { next_cursor: "next" }, data: SPORTS }).cursor).toBe("next"); });
+  it("trims only surrounding whitespace from catalogue display titles", () => {
+    const row = { ...SPORTS[0], key: "basketball_lega_a", group: "Basketball", title: " Lega A\t" };
+    const page = parseSportPage({ meta: { next_cursor: "next" }, data: [row] });
+    expect(page.sports[0]).toEqual({ ...row, title: "Lega A" }); expect(page.cursor).toBe("next");
+    expect(row.title).toBe(" Lega A\t");
+  });
+  it("still rejects empty or non-string titles and whitespace in exact catalogue fields", () => {
+    for (const changes of [{ title: " \t" }, { title: 42 }, { key: " soccer_demo_league" }, { group: "Football\t" }, { markets: ["h2h "] }, { regions: [" uk"] }]) {
+      expect(() => parseSportPage({ meta: { next_cursor: null }, data: [{ ...SPORTS[0], ...changes }] })).toThrow();
+    }
+  });
   it("rejects missing/duplicate venue identity and kind", () => { const b = { key: "x", name: "X", is_exchange: false, regions: ["uk"] }; expect(() => parseVenues({ data: [b, b] })).toThrow(); expect(() => parseVenues({ data: [{ ...b, is_exchange: undefined }] })).toThrow(); });
   it("restricts products, regions, sports, markets and bookmakers by authenticated scope", () => {
     const account = parseUsage(usageBody()); expect(scopeAllows(account, "a")).toBe(true);
