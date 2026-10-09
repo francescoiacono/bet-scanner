@@ -20,6 +20,18 @@ async function quoted() {
 afterEach(() => vi.restoreAllMocks());
 
 describe("scanner workflow presentation", () => {
+  it("local history transitions and errors preserve an independent approved quote and budget", async () => {
+    const { state } = await quoted(), acknowledged = { ...state, acknowledged: true, scan: demo };
+    let updated = scannerReducer(acknowledged, { type: "begin", action: "history" });
+    updated = scannerReducer(updated, { type: "history", history: { readCost: 0, entries: [], view: null } });
+    updated = scannerReducer(updated, { type: "history-error", error: { code: "HISTORY_INVALID", message: "Local error", status: 409, retryAfter: null } });
+    updated = scannerReducer(updated, { type: "finish" });
+    expect(updated.quote).toBe(acknowledged.quote); expect(updated.acknowledged).toBe(true); expect(updated.scan).toBe(demo);
+    expect(updated.usage).toBe(acknowledged.usage); expect(updated.error).toBeNull(); expect(canConfirm(updated, NOW)).toBe(true);
+    const refreshed = scannerReducer(updated, { type: "prepare-refresh", bookmakers: ["a", "b"] });
+    expect(refreshed.quote).toBeNull(); expect(refreshed.acknowledged).toBe(false); expect(refreshed.discovery).toBeNull(); expect(refreshed.scan).toBeNull();
+    expect(refreshed.history).toBe(updated.history); expect(refreshed.refreshBookmakers).toEqual(["a", "b"]); expect(canConfirm(refreshed, NOW)).toBe(false);
+  });
   it("initial demo has results but no account discovery or approval", () => {
     const state = initial();
     expect(state.scan).toBe(demo); expect(state.discovery).toBeNull(); expect(state.quote).toBeNull();

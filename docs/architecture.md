@@ -128,7 +128,8 @@ Discovery counts describe individual bookmakers, not their shared fixtures.
 | Free HTTP bodies and ETags | 32 entries / 120 seconds | 304 may reuse body; no polling |
 | Discovery | 60 seconds | Fresh verification required before quote |
 | Server approvals | 128 entries / 60 seconds | Owner-bound, one-time; process-local |
-| Odds snapshots and ETags | 8 entries / 5 minutes | Exact request identity; approved conditional fetch only |
+| Odds snapshots and ETags in memory | 8 entries / 5 minutes | Exact request identity; approved conditional fetch only |
+| Private disk scan history | 20 receipts / 32 MiB file / 8 MiB per record | Oldest-first eviction; no storage TTL; explicit local reads |
 
 304 never changes source evidence timestamps. Price eligibility is always
 recomputed at the current evaluation clock, with the existing 120-second maximum.
@@ -137,6 +138,90 @@ Cache loss/restart cannot authorize a scan or trigger a fallback request.
 One process serializes charged scans. This is a trusted loopback app, not a
 multi-user/distributed service. Memory state is intentionally not shared between
 processes; database, cloud coordination, login and deployment are outside scope.
+
+## V1.0.3 local history boundary
+
+`FileScanHistory` lives in the server-only module `server/scan-history.ts`. Its
+constructor performs no IO. The explicit `history` POST action runs after all
+existing loopback, same-origin and strict-body checks, but before provider service
+construction, LIVE-only external-action validation or session-cookie creation.
+It works in either mode without a key and never calls usage/discovery. Runtime
+history is independent of the API-key fingerprint; key changes discard approvals
+without deleting local research receipts.
+
+```text
+View previous scan / Open (explicit local POST)
+  -> local origin + JSON guards
+  -> private filesystem history (no provider service)
+  -> original analysis at recorded scan time
+  -> unchanged engine at current time
+  -> separate read-only historical view
+
+Check for updated odds (local state only)
+  -> manual discovery -> free quote -> acknowledge -> confirm once
+  -> consume approval synchronously
+  -> restore exact request snapshot/ETag if memory is absent
+  -> fresh usage/scope/budget/approval-expiry verification
+  -> one conditional provider request
+  -> current analysis + actual response receipt -> atomic local save
+```
+
+`requestIdentity` remains the canonical JSON identity of fixed UK/soccer/h2h
+parameters and sorted two/three bookmaker IDs. No fuzzy matching or wider request
+is introduced. The memory Map remains bounded; an evicted or expired memory entry
+may be restored from retained disk history for a new approved conditional request.
+Storage retention does not extend price eligibility or authorize provider calls.
+Async disk lookup occurs before the final usage/expiry check, so disk delay cannot
+extend the 60-second approval. Missing disk history allows an ordinary approved
+scan; corrupt history fails explicitly before any charged request, without a
+fallback or retry.
+
+Each successful response saves its recorded analysis clock, canonical request,
+normalized snapshot, exact ETag and actual usage receipt under an independent
+history UUID. Original analysis is deterministically reproduced with the same
+engine at that recorded clock; no model, formula, ranking or freshness rule changes.
+304 creates a new scan receipt but retains original snapshot/evidence timestamps.
+Only actual response headers establish a zero charge; missing headers stay unknown.
+200 creates a new normalized snapshot. A disk-save failure after the request returns
+the successful live result and actual receipt with a warning, never an ambiguous
+failed scan or a paid retry.
+
+The single versioned JSON file is `data/private/odds-history/history.json`.
+Retention is the newest 20 receipts within 32 MiB, at most 8 MiB each; eviction is
+oldest first. There is no age TTL. Atomic temporary-file replacement, fsync and an
+exclusive empty lock protect writers; the committed file is at most 32 MiB and a
+temporary replacement at most another 32 MiB during a write. A crashed writer's
+lock fails explicitly and must be removed after stopping local processes. The next
+locked write removes owned orphan temporary filenames. Readers see a complete
+old/new file and do not acquire the write lock.
+
+Strict allowlist decoding, SHA-256 integrity checks, bounded reads before parsing,
+regular-file/owner/permission checks, no-follow opens and rejection of symlink
+directories/hard-linked files protect local handling. Directory/file modes are
+0700/0600. The checksum detects accidental changes; it does not authenticate
+malicious local edits. The app assumes a trusted local user and filesystem.
+Persistence projects only necessary fields: bookmaker source URLs and extra
+metadata are stripped, and keys, authorization, approval IDs and cookies are
+never supplied to the store. ETags are retained exactly but omitted from public
+history replies. `/data/private` is gitignored; Next's tracing explicitly excludes
+its contents. No history is imported by the server page, static/public assets or
+research generators. History is not encrypted.
+
+The UI keeps history, local-history errors and historical receipts separate from
+live results, provider errors and current account usage. Local reads leave quotes
+and acknowledgments intact. Preparing an update clears approvals and requires
+every original book to be freshly eligible; an unavailable book is not replaced.
+Original results use neutral historical labels/styles; current eligibility is
+displayed separately. The unchanged pure arbitrage engine is re-run on local
+snapshot reads and in the read-only view, including a local evidence/kickoff
+one-shot boundary update. There is no polling or automatic fetch on startup,
+render, hydration, navigation or timers.
+
+Mocked integration tests cover provider-isolated reads without configuration,
+restart/ETag persistence, 304 and updated responses, timestamp preservation,
+approval expiry after disk delay, duplicate confirmations, corrupt data, retention,
+file safety, persistence failure receipts and unchanged mathematical output.
+No authenticated OddsRelay requests are used in development or verification.
 
 ## Frozen research boundary
 

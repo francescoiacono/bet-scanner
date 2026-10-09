@@ -3,8 +3,8 @@
 A local-first football odds-comparison app. Compare bookmaker BACK prices for
 full-time HOME / DRAW / AWAY and identify **theoretical arbitrage**, before costs
 and market movement. The homepage is the scanner; `/research` is a compact
-archive of frozen experiments. Version **1.0.2** makes provider discovery manual
-and displays discovery expiry; it introduces no betting feature or statistical model.
+archive of frozen experiments. Version **1.0.3** adds zero-token local scan history
+and an explicitly approved update workflow. It introduces no betting feature or statistical model.
 
 There is no bet placement, staking, bankroll management, value-betting model,
 authentication, database, cloud infrastructure or AI service.
@@ -211,12 +211,66 @@ formulas are expandable educational details, not stake recommendations.
 - Retained research libraries, fixtures, artifacts and `scripts/`: offline
   reproduction; no statistical fitting occurs in the product.
 
-Free responses have a 32-entry, 120-second cache; snapshots have an eight-entry,
-five-minute cache. ETags are reused only for exact requests. A 304 preserves
-original evidence and rechecks its age. Conditional odds requests still require
-a fresh quote/confirmation, because changed data can cost tokens. Restarting the
-process or changing the key discards approvals and caches. Nothing writes secret
-headers or live source data to disk.
+Free responses have a 32-entry, 120-second memory cache; snapshots have an
+eight-entry, five-minute memory cache. Approvals and these caches reset on restart
+or key change. The separate private snapshot store survives a restart. ETags are
+reused only for exact canonical requests, including a restored snapshot. A 304
+preserves original receipt, processing and evidence timestamps and rechecks their
+age. Conditional odds requests always require a new quote and confirmation,
+because changed data can cost tokens. No secret headers are persisted.
+
+### Zero-token local history
+
+Click **View previous scan · 0 tokens** inside **Scan history** to reopen the last
+saved live response, or choose **Open · 0 tokens** from the saved list. This reads
+only this computer: no OddsRelay call, including usage or discovery, and no API key
+or session cookie is needed. Opening the page does not load history automatically.
+History survives page refreshes and local server restarts; scans made before
+V1.0.3 were not saved to disk and cannot be recovered after their old cache is lost.
+
+The read-only view shows scan time, exact source bookmaker IDs, original actual
+token cost, snapshot age at the freshness check, the historical receipt, original
+research results and a separate current eligibility check. Original results are
+reproduced at their recorded evaluation time with the unchanged engine. Stale
+prices and started fixtures never appear as current verified opportunities. A
+local one-shot timer updates the view at evidence expiry/kickoff; it makes no
+request. Historical balances never replace the current account budget.
+
+**Check for updated odds** prepares the original bookmaker selection and clears
+old approvals; it requests nothing. Then manually refresh discovery, get a free
+quote, acknowledge its possible charge and confirm once. All original bookmakers
+must be eligible; there is no automatic substitute. Changing books makes a
+different request. The server sends the exact saved ETag only for a matching
+request. An ETag never promises zero cost: a 304 is reported as zero actual tokens
+only when the response headers document zero, otherwise cost remains unknown.
+A 304 saves a new historical receipt against the original snapshot without
+refreshing price evidence. Updated data creates a new snapshot with its actual
+receipt. The 500-token ceiling and all approval controls remain in force.
+
+History is an atomic JSON file at **`data/private/odds-history/history.json`**,
+covered by the existing `/data/private` gitignore rule and excluded from Next
+output file tracing. It retains the **20 newest successful scan receipts**, with
+an **8 MiB per-record** limit and **32 MiB total-file** limit; oldest receipts are
+evicted first to meet either bound. There is no storage age expiry: price evidence
+still expires after 120 seconds independently. Persistence failures preserve the
+completed scan and actual receipt on screen with a warning, never a paid retry.
+
+The store uses an explicit schema, checksum, bounded reads, private directory
+permissions (0700), file permissions (0600), atomic replacement and an exclusive
+writer lock. It rejects symlinks, hard-linked files, malformed data, unexpected
+fields and unsafe permissions rather than inventing results or calling a provider.
+Only normalized odds/identities, original timestamps, selected IDs, an exact ETag
+and historical usage receipts are saved. Provider links, API keys, Authorization
+headers, approval IDs and session cookies are excluded. The ETag stays server-only.
+Detailed saved odds are returned only by an explicit same-origin local history
+POST, never in page props, public bundles or committed/generated research artifacts.
+
+If a process crashes while writing, stop local app processes before removing a
+leftover `data/private/odds-history/write.lock`. The next successful locked write
+removes orphan temporary files. Corrupt history is reported explicitly and is not
+silently overwritten; preserve it for inspection, then remove the local history
+file to start empty if desired. Removing the history directory deletes all saved
+scans and ETags. This is private local storage, not encryption or a cloud backup.
 
 [Architecture](docs/architecture.md) explains the boundaries.
 [Cleanup audit](docs/cleanup-v101.md) lists removals, retained dependencies and

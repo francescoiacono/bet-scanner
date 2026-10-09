@@ -2,8 +2,11 @@ import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Discovery, ScanQuote } from "../lib/odds/server/service";
 import { demoScan } from "../lib/odds/demo";
-import { NOW, USAGE } from "../lib/odds/test-helpers";
-import OddsDashboard, { BookmakerSelector, ProviderErrorNotice } from "./odds-dashboard";
+import { board, BOOKS, NOW, SPORTS, USAGE } from "../lib/odds/test-helpers";
+import { normalizeOddsRelay } from "../lib/odds/providers/oddsrelay-normalize";
+import { analyseSnapshot } from "../lib/odds/arbitrage";
+import type { ScanHistoryReply } from "../lib/odds/history-types";
+import OddsDashboard, { BookmakerSelector, ProviderErrorNotice, Results } from "./odds-dashboard";
 import type { ScannerState } from "./scanner-state";
 
 type Effect = { setup: () => void | (() => void); deps: unknown[]; cleanup?: void | (() => void) };
@@ -71,6 +74,11 @@ function button(tree: ReactNode, label: string) {
 const click = (node: Node) => (node.props.onClick as () => Promise<void> | void)();
 function effects() { return hooks.slots.filter((slot): slot is Effect => Boolean(slot && typeof slot === "object" && "setup" in slot)); }
 function unmount() { for (const effect of effects()) effect.cleanup?.(); }
+function history(): ScanHistoryReply {
+  const snapshot = normalizeOddsRelay(board(), BOOKS, SPORTS, ["a", "b"], NOW);
+  const entry = { id: "history-00000000-0000-4000-8000-000000000000", scannedAt: new Date(NOW).toISOString(), bookmakers: ["a", "b"], originalUsage: { ...USAGE, cost: 97, remaining: 2303 }, unchanged: false, snapshotReceivedAt: snapshot.receivedAt, ageMs: 0 };
+  return { readCost: 0, entries: [entry], view: { ...entry, readOnly: true, snapshot, originalAnalysis: analyseSnapshot(snapshot, NOW), currentAnalysis: analyseSnapshot(snapshot, NOW), viewedAt: new Date(NOW).toISOString() } };
+}
 
 beforeEach(() => { hooks.cursor = 0; hooks.slots = []; hooks.pending = []; vi.useFakeTimers(); vi.setSystemTime(NOW); });
 afterEach(() => { unmount(); vi.useRealTimers(); vi.restoreAllMocks(); });
@@ -196,5 +204,63 @@ describe("manual discovery and local expiration in the dashboard", () => {
     expect(vi.getTimerCount()).toBe(1);
     unmount(); expect(vi.getTimerCount()).toBe(0);
     await vi.advanceTimersByTimeAsync(120_000); expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("explicit local history and separate refresh workflow", () => {
+  it("live results expire locally too, so opening history never leaves stale verified opportunities on screen", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No requests"));
+    render(); const saved = history().view!;
+    hooks.slots[0] = { ...state(), scan: { snapshot: saved.snapshot, analysis: saved.originalAnalysis } };
+    let tree = render();
+    expect(nodes(tree).find((node) => node.type === Results)!.props.analysis).toMatchObject({ status: "THEORETICAL ARBITRAGE" });
+    await vi.advanceTimersByTimeAsync(120_001); tree = render();
+    expect(nodes(tree).find((node) => node.type === Results)!.props.analysis).toMatchObject({ status: "INSUFFICIENT DATA", opportunities: [] });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it.each([false, true])("View previous scan only sends the local history action, even without a key (configured=%s)", async (configured) => {
+    const saved = history(), fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(response(saved));
+    const tree = render(configured); expect(fetch).not.toHaveBeenCalled();
+    await click(button(tree, "View previous scan"));
+    expect(JSON.parse(fetch.mock.calls[0][1]!.body as string)).toEqual({ action: "history", mode: configured ? "LIVE" : "DEMO" });
+    const opened = render(configured); expect(state().usage).toBeNull(); expect(state().history).toEqual(saved);
+    expect(content(opened)).toContain("Original token cost97"); expect(content(opened)).toContain("Current freshness status");
+    const original = nodes(opened).find((node) => node.type === Results && node.props.historical)!;
+    expect(original.props.analysis).toEqual(saved.view!.originalAnalysis);
+    expect(button(opened, "Check for updated odds").props.disabled).toBe(!configured);
+    await vi.advanceTimersByTimeAsync(100_001); const expired = render(configured);
+    expect(content(expired)).toContain("no currently eligible complete comparison");
+    expect(state().history!.view!.originalAnalysis.opportunities).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(20_000); render(configured);
+    expect(fetch).toHaveBeenCalledTimes(1); expect(vi.getTimerCount()).toBe(0);
+  });
+  it("Check for updated odds makes no request and uses exactly the historical books after manual discovery", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(history()));
+    await click(button(render(), "View previous scan"));
+    await click(button(render(), "Check for updated odds"));
+    expect(fetch).toHaveBeenCalledTimes(1); expect(state().discovery).toBeNull(); expect(state().quote).toBeNull(); expect(state().acknowledged).toBe(false);
+    expect(state().refreshBookmakers).toEqual(["a", "b"]); expect(button(render(), "Get quote").props.disabled).toBe(true);
+    const next = discovery(); next.bookmakers = next.bookmakers.map((book, i) => ({ ...book, id: ["a", "b", "c"][i] }));
+    fetch.mockResolvedValueOnce(response(next)); await click(button(render(), "Refresh discovery"));
+    expect(state().selected).toEqual(["a", "b"]); expect(button(render(), "Get quote").props.disabled).toBe(false);
+    expect(fetch.mock.calls.map(([, options]) => JSON.parse(options!.body as string).action)).toEqual(["history", "discover"]);
+    expect(content(render())).toContain("An ETag does not guarantee a free refresh");
+  });
+  it("does not substitute books or allow a changed exact request when a historical book is unavailable", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(history()));
+    await click(button(render(), "View previous scan")); await click(button(render(), "Check for updated odds"));
+    const next = discovery(); next.bookmakers.push({ ...next.bookmakers[0], id: "a" });
+    fetch.mockResolvedValueOnce(response(next)); await click(button(render(), "Refresh discovery"));
+    expect(state().selected).toEqual(["a"]); expect(button(render(), "Get quote").props.disabled).toBe(true); expect(state().refreshBookmakers).toEqual(["a", "b"]);
+  });
+  it("a local history error preserves discovery, live results, account budget and approvals", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(discovery()));
+    await click(button(render(), "Refresh discovery"));
+    const before = state();
+    fetch.mockResolvedValueOnce(response({ error: { code: "HISTORY_INVALID", message: "Local file invalid", status: 409, retryAfter: null } }, 409));
+    await click(button(render(), "View previous scan"));
+    expect(state().discovery).toBe(before.discovery); expect(state().usage).toBe(before.usage); expect(state().scan).toBe(before.scan); expect(state().quote).toBe(before.quote);
+    expect(state().error).toBeNull(); expect(content(render())).toContain("LOCAL HISTORY · HISTORY_INVALID");
+    expect(button(render(), "Get quote").props.disabled).toBe(false); expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

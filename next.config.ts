@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingExcludes: { "/*": ["./data/private/**/*"] },
   redirects() {
     return [
       { source: "/odds", destination: "/", permanent: true },

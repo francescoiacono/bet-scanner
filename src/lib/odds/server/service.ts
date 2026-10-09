@@ -4,6 +4,8 @@ import { APPROVAL_LIFETIME_MS, MAX_TOKENS_PER_SCAN, priceEvidenceError, text } f
 import { array, footballSport, integer, nullableTime, object, parseSportPage, parseUsage, parseVenues, scopeAllows, strings, type AccountInfo, type SportInfo, type VenueInfo } from "../providers/oddsrelay-contract";
 import { canonicalRequest, OddsProviderError, requestIdentity, type OddsProvider, type ScanRequest } from "../providers/oddsrelay-http";
 import { normalizeOddsRelay } from "../providers/oddsrelay-normalize";
+import type { ScanHistoryStore } from "./scan-history";
+import type { ScanHistoryEntry } from "../history-types";
 
 const CACHE_LIFETIME_MS = 300_000;
 export interface AvailableBookmaker extends VenueInfo { events: number; lastSeen: string | null; eligible: boolean; reason: string | null; }
@@ -36,13 +38,13 @@ function budgetReasons(cost: number, usage: ProviderUsage): string[] {
   if (typeof usage.remaining === "number" && cost > usage.remaining) reasons.push("Quoted cost exceeds remaining tokens. Narrow the filters or wait for reset.");
   return reasons;
 }
-/** Process-local service. No timers, startup requests, disk writes or automatic retries. */
+/** Explicit actions only; approvals stay process-local. No startup requests or retries. */
 export class OddsScannerService {
   private discoveryCache: DiscoveryCache | null = null;
   private readonly approvals = new Map<string, Approval>();
   private readonly snapshots = new Map<string, CachedSnapshot>();
   private scanning = false;
-  constructor(private readonly provider: OddsProvider, private readonly clock: () => number, private readonly newId: () => string) {}
+  constructor(private readonly provider: OddsProvider, private readonly clock: () => number, private readonly newId: () => string, private readonly history?: ScanHistoryStore) {}
   private prune() {
     const now = this.clock();
     for (const [id, a] of this.approvals) if (now - a.at >= APPROVAL_LIFETIME_MS || now < a.at) this.approvals.delete(id);
@@ -117,26 +119,47 @@ export class OddsScannerService {
     if (this.scanning) fail("SCAN_IN_PROGRESS", "Another scan is already in progress. Obtain a new quote when it finishes.");
     this.scanning = true;
     try {
+      const identity = requestIdentity(approval.request), entry = this.snapshots.get(identity);
+      let cached = entry && this.clock() - entry.at < CACHE_LIFETIME_MS ? entry : undefined;
+      // Restore only the exact request. Local IO follows synchronous consumption,
+      // and precedes the final asynchronous usage/expiry verification.
+      if (!cached && this.history) {
+        const saved = await this.history.latestForRequest(approval.request);
+        if (saved) cached = { snapshot: saved.snapshot, etag: saved.etag, at: Date.parse(saved.scannedAt) };
+      }
       const account = parseUsage((await this.provider.free("usage")).body);
       const blocked = budgetReasons(approval.cost, account.usage);
       if (request.bookmakers.some((b) => !scopeAllows(account, b))) blocked.push("The account/key scope no longer permits this request.");
       if (this.clock() - approval.at >= APPROVAL_LIFETIME_MS || this.clock() < approval.at) blocked.push("Approval expired during usage verification.");
       if (blocked.length) fail("SCAN_BLOCKED", blocked.join(" "));
-      const identity = requestIdentity(approval.request), entry = this.snapshots.get(identity);
-      const cached = entry && this.clock() - entry.at < CACHE_LIFETIME_MS ? entry : undefined;
       // Exactly one potentially chargeable request. Never retry, including 304/cache failure.
       const response = await this.provider.scan(approval.request, cached?.etag ?? undefined);
       let snapshot: OddsSnapshot;
       if (response.unchanged) {
         if (!cached) fail("CACHE_MISSING", "304 received without a usable cached snapshot. No retry was made; obtain a new quote.", 502);
         snapshot = cached.snapshot;
+        if (!this.snapshots.has(identity) && this.snapshots.size >= 8) this.snapshots.delete(this.snapshots.keys().next().value!);
+        this.snapshots.set(identity, { ...cached, etag: response.etag ?? cached.etag });
       } else {
         try { snapshot = normalizeOddsRelay(response.body, approval.discovery.venues, approval.discovery.sports, approval.request.bookmakers, this.clock()); }
         catch { throw new OddsProviderError({ code: "INVALID_ODDS_DATA", status: 502, message: "Provider odds could not be verified. Actual response usage is shown; no retry or fictional fallback was made.", retryAfter: null, usage: response.usage }); }
         if (this.snapshots.size >= 8) this.snapshots.delete(this.snapshots.keys().next().value!);
         this.snapshots.set(identity, { snapshot, etag: response.etag, at: this.clock() });
       }
-      return { snapshot, analysis: analyseSnapshot(snapshot, this.clock()), usage: response.usage, unchanged: response.unchanged, quotedCost: approval.cost };
+      const analysis = analyseSnapshot(snapshot, this.clock());
+      let historyId: string | null = null, historyWarning: string | null = null;
+      let historyEntries: ScanHistoryEntry[] | undefined;
+      if (this.history) {
+        try {
+          const saved = await this.history.save({ scannedAt: analysis.evaluatedAt, request: approval.request, etag: response.etag ?? (response.unchanged ? cached!.etag : null), snapshot, originalUsage: response.usage, unchanged: response.unchanged });
+          historyId = saved.id; historyEntries = saved.entries;
+        } catch {
+          // A successful charge must remain a successful result with its actual
+          // receipt even if persistence fails. Never retry the provider request.
+          historyWarning = "This completed scan could not be saved to local history. Its actual token receipt is shown; no retry was made.";
+        }
+      }
+      return { snapshot, analysis, usage: response.usage, unchanged: response.unchanged, quotedCost: approval.cost, historyId, historyWarning, historyEntries };
     } finally { this.scanning = false; }
   }
   async events(cursor?: string) {

@@ -4,6 +4,9 @@ import { useCallback, useEffect, useId, useReducer, useRef, useState } from "rea
 import type { demoScan } from "@/lib/odds/demo";
 import { OUTCOMES, type ArbitrageOpportunity, type MarketAnalysis, type OddsMode, type ProviderError, type ProviderUsage, type ScanAnalysis } from "@/lib/odds/types";
 import { scanDiagnostics } from "@/lib/odds/scan-diagnostics";
+import { analyseSnapshot } from "@/lib/odds/arbitrage";
+import { nextHistoryBoundary } from "@/lib/odds/history-freshness";
+import type { ScanHistoryReply } from "@/lib/odds/history-types";
 import type { Discovery, ScanQuote } from "@/lib/odds/server/service";
 import { canConfirm, canQuote, discoveryFreshness, discoveryStatus, initialScannerState, resultStatus, scannerReducer, scannerStatus, type Scan } from "./scanner-state";
 import SiteHeader from "./site-header";
@@ -17,10 +20,10 @@ const tokens = (value: ProviderUsage["remaining"]) => value === null ? "Unknown"
 const time = (value: string | null) => typeof value !== "string" ? "Unknown" : value.replace("T", " ").replace("Z", " UTC");
 const badge = (tone: string) => ui.badge + " " + ui[tone];
 
-function TheoreticalOpportunity({ opportunity: a, rank }: { opportunity: ArbitrageOpportunity; rank: number }) {
-  return <article className={styles.opportunity} aria-label={"Theoretical opportunity " + rank}>
+function TheoreticalOpportunity({ opportunity: a, rank, historical = false }: { opportunity: ArbitrageOpportunity; rank: number; historical?: boolean }) {
+  return <article className={styles.opportunity + (historical ? " " + styles.historical : "")} aria-label={(historical ? "Historical theoretical result " : "Theoretical opportunity ") + rank}>
     <div className={styles.opportunityHeading}>
-      <div><p className={ui.eyebrow}>{rank === 1 ? "BEST THEORETICAL OPPORTUNITY" : "OPPORTUNITY " + rank}</p><h3>{a.fixture.homeTeam} vs {a.fixture.awayTeam}</h3><p className={styles.fixtureMeta}>{a.fixture.competition} · <time dateTime={a.fixture.kickoff}>{time(a.fixture.kickoff)}</time></p></div>
+      <div><p className={ui.eyebrow}>{historical ? "HISTORICAL RESULT AT SCAN TIME · READ ONLY" : rank === 1 ? "BEST THEORETICAL OPPORTUNITY" : "OPPORTUNITY " + rank}</p><h3>{a.fixture.homeTeam} vs {a.fixture.awayTeam}</h3><p className={styles.fixtureMeta}>{a.fixture.competition} · <time dateTime={a.fixture.kickoff}>{time(a.fixture.kickoff)}</time></p></div>
       <div className={styles.roiBlock}><span>Theoretical gross ROI</span><strong className={styles.roi}>{percent(a.theoreticalGrossROI)}</strong></div>
     </div>
     <div className={styles.legs}>{OUTCOMES.map((outcome) => <div key={outcome}><span className={ui.eyebrow}>{outcome}</span><strong>{a.selections[outcome].decimalOdds.toFixed(3)}</strong><span>{a.selections[outcome].bookmaker.name}</span></div>)}</div>
@@ -43,11 +46,12 @@ function FixtureComparisons({ markets, label }: { markets: MarketAnalysis[]; lab
     </div>;
 }
 
-export function Results({ analysis, mode, unchanged }: { analysis: ScanAnalysis; mode: OddsMode; unchanged?: boolean }) {
+export function Results({ analysis, mode, unchanged, historical = false }: { analysis: ScanAnalysis; mode: OddsMode; unchanged?: boolean; historical?: boolean }) {
   const status = resultStatus(analysis.status);
   const coverage = scanDiagnostics(analysis);
-  return <section id="scan-results" className={styles.results} aria-labelledby="results-title">
-    <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>{mode === "DEMO" ? "SYNTHETIC RESULTS" : "ODDSRELAY RESULTS"}</p><h2 id="results-title">Scan results</h2></div><span className={badge(status.tone)}>{status.label}</span></div>
+  return <section id={historical ? "history-results" : "scan-results"} className={styles.results} aria-labelledby={historical ? "history-results-title" : "results-title"}>
+    <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>{historical ? "HISTORICAL ODDSRELAY RESULTS · READ ONLY" : mode === "DEMO" ? "SYNTHETIC RESULTS" : "ODDSRELAY RESULTS"}</p><h2 id={historical ? "history-results-title" : "results-title"}>{historical ? "Original research results" : "Scan results"}</h2></div><span className={badge(historical ? "neutral" : status.tone)}>{historical ? "AT SCAN TIME · " : ""}{status.label}</span></div>
+    {historical && <p className={ui.notice}>These results describe the original scan time. They are read-only historical research, not current verified opportunities.</p>}
     <p className={styles.resultMeta}>Evaluated {time(analysis.evaluatedAt)}. Coverage describes this response at evaluation time.</p>
     <dl className={styles.coverageStats} aria-label="Scan coverage">
       <div><dt>Fixtures scanned</dt><dd>{coverage.total}</dd></div>
@@ -57,7 +61,7 @@ export function Results({ analysis, mode, unchanged }: { analysis: ScanAnalysis;
     </dl>
     {unchanged && <p className={ui.notice}>Provider data unchanged (304). Original freshness evidence was retained and rechecked.</p>}
     {!analysis.opportunities.length && <div className={ui.emptyState}><h3>{status.label}</h3><p>{analysis.status === "INSUFFICIENT DATA" ? "No verified opportunity: missing, stale or otherwise ineligible prices prevent a complete comparison." : "Complete eligible markets were compared. No theoretical arbitrage was found in " + coverage.comparable.length + (coverage.comparable.length === 1 ? " complete fixture." : " complete fixtures.")}</p>{coverage.insufficient.length > 0 && <p>{coverage.insufficient.length} {coverage.insufficient.length === 1 ? "fixture could" : "fixtures could"} not be assessed. Missing data does not establish whether arbitrage exists.</p>}</div>}
-    {analysis.opportunities.map((a, i) => <TheoreticalOpportunity key={a.fixture.id} opportunity={a} rank={i + 1} />)}
+    {analysis.opportunities.map((a, i) => <TheoreticalOpportunity key={a.fixture.id} opportunity={a} rank={i + 1} historical={historical} />)}
     {coverage.comparable.length > 0 && <>
       <div className={styles.comparisonHeading}><h3>Complete comparisons ({coverage.comparable.length})</h3><span>Opportunities: ROI ranking · other markets: S ↑, kickoff, event ID</span></div>
       <p className={styles.resultMeta}>Eligible HOME, DRAW and AWAY prices with evidence from at least two bookmakers. S below 1 is the theoretical arbitrage threshold.</p>
@@ -174,6 +178,16 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
     return () => clearTimeout(timer);
   }, [quote]);
 
+  // Local evidence/kickoff boundaries only. No polling or network work.
+  useEffect(() => {
+    const now = Date.now();
+    const snapshots = [state.history?.view?.snapshot, mode === "LIVE" ? scan?.snapshot : undefined];
+    const boundaries = snapshots.flatMap((snapshot) => { const boundary = snapshot ? nextHistoryBoundary(snapshot, now) : null; return boundary === null ? [] : [boundary]; });
+    if (!boundaries.length) return;
+    const timer = setTimeout(() => setClock(Date.now()), Math.min(...boundaries) - now);
+    return () => clearTimeout(timer);
+  }, [state.history, scan, mode, clock]);
+
   const action = useCallback(async function action<T>(name: string, extra: Record<string, unknown> = {}): Promise<T | null> {
     if (inFlight.current) return null;
     inFlight.current = true;
@@ -182,11 +196,11 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
     try {
       const response = await fetch("/api/odds", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", cache: "no-store", body: JSON.stringify({ action: name, mode, ...extra }) });
       const result = await response.json();
-      if (!response.ok) { dispatch({ type: "error", error: result.error }); return null; }
+      if (!response.ok) { dispatch({ type: name === "history" ? "history-error" : "error", error: result.error }); return null; }
       if (result.usage) dispatch({ type: "usage", usage: result.usage });
       return result as T;
     } catch {
-      dispatch({ type: "error", error: { code: "LOCAL_NETWORK_ERROR", status: 502, retryAfter: null, message: "The local request failed. Do not retry confirmation; obtain a new free quote. Token use may be uncertain." } satisfies ProviderError });
+      dispatch({ type: name === "history" ? "history-error" : "error", error: { code: "LOCAL_NETWORK_ERROR", status: 502, retryAfter: null, message: name === "history" ? "The local history read failed. This action requests no provider data and spends no tokens." : "The local request failed. Do not retry confirmation; obtain a new free quote. Token use may be uncertain." } satisfies ProviderError });
       return null;
     } finally { inFlight.current = false; setClock(Date.now()); dispatch({ type: "finish" }); }
   }, [mode]);
@@ -214,6 +228,14 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
     const result = await action<Scan>("confirm", { approvalId: approval.approvalId, bookmakers: approval.request.bookmakers });
     if (result) dispatch({ type: "scan", scan: result });
   }
+  async function viewHistory(id?: string) {
+    const result = await action<ScanHistoryReply>("history", id ? { id } : {});
+    if (result) dispatch({ type: "history", history: result });
+  }
+  const historical = state.history?.view;
+  const historicalNow = historical ? analyseSnapshot(historical.snapshot, Math.max(clock, Date.parse(historical.viewedAt))) : null;
+  const currentCoverage = historicalNow ? scanDiagnostics(historicalNow) : null;
+  const displayAnalysis = scan ? mode === "LIVE" ? analyseSnapshot(scan.snapshot, clock) : scan.analysis : null;
 
   return <div className={ui.shell}>
     <a href="#main-content" className={ui.skipLink}>Skip to scanner</a>
@@ -229,7 +251,29 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
           !configured && <p className={ui.notice + " " + ui.warning}>Add ODDSRELAY_KEY in your gitignored .env.local and restart the app. The key stays on the server; never enter it in this page.</p>}
       </section>
 
+      <section className={ui.card + " " + styles.history} aria-labelledby="history-title">
+        <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>LOCAL · READ ONLY</p><h2 id="history-title">Scan history</h2></div><button type="button" className={ui.secondaryButton} disabled={Boolean(busy)} onClick={() => viewHistory()}>{busy === "history" ? "Reading local history…" : "View previous scan · 0 tokens"}</button></div>
+        <p className={styles.resultMeta}>Read saved results from this computer. No usage check, discovery or OddsRelay request. Up to 20 scans are retained locally.</p>
+        {state.historyError && <p className={ui.notice + " " + ui.warning} role="alert">LOCAL HISTORY · {state.historyError.code}: {state.historyError.message}</p>}
+        {state.history && !state.history.entries.length && <p className={ui.notice}>No saved scans yet. A confirmed live scan will be saved locally.</p>}
+        {Boolean(state.history?.entries.length) && <details className={styles.historyList}><summary>Saved scans ({state.history!.entries.length})</summary><ul>{state.history!.entries.map((entry) => <li key={entry.id}><div><time dateTime={entry.scannedAt}>{time(entry.scannedAt)}</time><span>{entry.bookmakers.join(", ")} · original cost {entry.originalUsage.cost ?? "unknown"} tokens{entry.unchanged ? " · unchanged (304)" : ""}</span></div><button className={ui.secondaryButton} type="button" disabled={Boolean(busy)} onClick={() => viewHistory(entry.id)}>Open · 0 tokens</button></li>)}</ul></details>}
+        {historical && <div className={styles.historyView}>
+          <dl className={styles.meta}>
+            <div><dt>Last scan time</dt><dd>{time(historical.scannedAt)}</dd></div>
+            <div><dt>Source bookmakers</dt><dd>{historical.bookmakers.join(", ")}</dd></div>
+            <div><dt>Original token cost</dt><dd>{historical.originalUsage.cost ?? "Unknown"}</dd></div>
+            <div><dt>Snapshot age</dt><dd>{Math.floor((Math.max(clock, Date.parse(historical.viewedAt)) - Date.parse(historical.snapshot.receivedAt)) / 1000).toLocaleString("en-GB")} seconds at freshness check</dd></div>
+          </dl>
+          <div className={ui.notice + " " + (currentCoverage!.comparable.length ? "" : ui.warning)} role="status"><strong>Current freshness status: {currentCoverage!.comparable.length ? "eligible prices remain at this check" : "no currently eligible complete comparison"}</strong><p>Checked {time(historicalNow!.evaluatedAt)} · {currentCoverage!.comparable.length} complete, {currentCoverage!.insufficient.length} insufficient. Cached results remain read-only; stale evidence never verifies a current opportunity.</p></div>
+          <details className={styles.math}><summary>Historical provider receipt &amp; current exclusions</summary><p>This receipt records the original response. Its balance is historical and does not update the current budget.</p><UsageReceipt usage={historical.originalUsage} /><p>Original provider processing: {time(historical.snapshot.processedAt)} · received: {time(historical.snapshot.receivedAt)}.</p><ul className={styles.excluded}>{historicalNow!.excluded.map((item, i) => <li key={i}>{item.eventId ?? "Unknown event"}: {item.reason}</li>)}</ul></details>
+          <button type="button" className={ui.secondaryButton} disabled={!configured || Boolean(busy)} onClick={() => { setClock(Date.now()); dispatch({ type: "prepare-refresh", bookmakers: historical.bookmakers }); setEvents(null); setPricing(null); }}>Check for updated odds</button>
+          <p className={styles.resultMeta}>Starts the manual discovery → free quote → explicit confirmation workflow below. An ETag does not guarantee a free refresh. Only documented response headers establish actual token cost.</p>
+          <details className={styles.originalResults}><summary>Original research results · at scan time</summary><Results analysis={historical.originalAnalysis} mode="LIVE" unchanged={historical.unchanged} historical /></details>
+        </div>}
+      </section>
+
       {mode === "LIVE" && <div className={styles.workflow}>
+        {state.refreshBookmakers && <p className={ui.notice}>Checking for updated odds for exactly: {state.refreshBookmakers.join(", ")}. Refresh discovery, review a new quote and confirm separately. All original bookmakers must be eligible; changing selection starts a different request.</p>}
         <section className={ui.card} aria-labelledby="bookmaker-title">
           <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>1 · FREE DISCOVERY</p><h2 id="bookmaker-title">Choose bookmakers</h2></div><button className={ui.secondaryButton} type="button" disabled={!configured || Boolean(busy)} onClick={discover}>{busy === "discover" ? "Checking coverage…" : "Refresh discovery · free"}</button></div>
           <p className={ui.muted}>Select two or three bookmakers to compare prices across the same match. Fresh coverage is required.</p>
@@ -261,7 +305,9 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
       </div>}
 
       {mode === "LIVE" && scan?.usage && <section className={ui.card + " " + styles.receipt} aria-label="Actual scan token receipt"><h2>Actual response usage</h2><UsageReceipt usage={scan.usage} /><p className={styles.resultMeta}>Missing headers remain unknown. Quoted cost is not substituted for an actual charge.</p></section>}
-      {scan ? <Results analysis={scan.analysis} mode={mode} unchanged={scan.unchanged} /> : <section id="scan-results" className={styles.results} aria-labelledby="results-title"><h2 id="results-title">Scan results</h2><div className={ui.emptyState}><h3>{busy === "confirm" ? "SCAN IN PROGRESS" : error ? "DATA NOT VERIFIED" : "No live scan requested"}</h3><p>{error ? "The request failed. No synthetic prices were substituted for live results." : "Verify free discovery, choose bookmakers, get a free quote, and confirm separately."}</p></div></section>}
+      {scan?.historyWarning && <p className={ui.notice + " " + ui.warning} role="alert">{scan.historyWarning}</p>}
+      {mode === "LIVE" && scan?.historyId && <p className={styles.resultMeta}>Scan and actual token receipt saved locally. Reopen it through Scan history · 0 tokens.</p>}
+      {scan ? <Results analysis={displayAnalysis!} mode={mode} unchanged={scan.unchanged} /> : <section id="scan-results" className={styles.results} aria-labelledby="results-title"><h2 id="results-title">Scan results</h2><div className={ui.emptyState}><h3>{busy === "confirm" ? "SCAN IN PROGRESS" : error ? "DATA NOT VERIFIED" : "No live scan requested"}</h3><p>{error ? "The request failed. No synthetic prices were substituted for live results." : "Verify free discovery, choose bookmakers, get a free quote, and confirm separately."}</p></div></section>}
 
       <details className={ui.details + " " + styles.advanced}><summary>Advanced details</summary>
         <div className={styles.advancedGrid}><section><h2>Method &amp; source</h2><p>Full-time 1X2 bookmaker BACK offers only. Exact fixture, competition and settlement identities; no exchange LAY prices or fuzzy joining. Evidence must be no older than 120 seconds. A recent upstream snapshot does not establish individual bookmaker execution.</p><p>Best HOME, DRAW and AWAY prices form S = 1/H + 1/D + 1/A. S &lt; 1 gives theoretical gross ROI = 1/S − 1. No probability model, value betting, staking or bet placement.</p>

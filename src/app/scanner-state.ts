@@ -2,8 +2,10 @@ import type { demoScan } from "@/lib/odds/demo";
 import type { OddsMode, ProviderError, ProviderUsage } from "@/lib/odds/types";
 import type { Discovery, ScanQuote } from "@/lib/odds/server/service";
 import { APPROVAL_LIFETIME_MS, instant } from "@/lib/odds/validation";
+import type { ScanHistoryEntry, ScanHistoryReply } from "@/lib/odds/history-types";
+import { analyseSnapshot } from "@/lib/odds/arbitrage";
 
-export type Scan = ReturnType<typeof demoScan> & { usage?: ProviderUsage; unchanged?: boolean };
+export type Scan = ReturnType<typeof demoScan> & { usage?: ProviderUsage; unchanged?: boolean; historyId?: string | null; historyWarning?: string | null; historyEntries?: ScanHistoryEntry[] };
 export interface ScannerState {
   mode: OddsMode;
   scan: Scan | null;
@@ -16,6 +18,9 @@ export interface ScannerState {
   usage: ProviderUsage | null;
   error: ProviderError | null;
   busy: string;
+  history: ScanHistoryReply | null;
+  historyError: ProviderError | null;
+  refreshBookmakers: string[] | null;
 }
 export type ScannerAction =
   | { type: "mode"; mode: OddsMode; demo: Scan }
@@ -29,28 +34,34 @@ export type ScannerAction =
   | { type: "expire"; approvalId: string }
   | { type: "scan"; scan: Scan }
   | { type: "usage"; usage: ProviderUsage }
+  | { type: "history"; history: ScanHistoryReply }
+  | { type: "history-error"; error: ProviderError }
+  | { type: "prepare-refresh"; bookmakers: string[] }
   | { type: "error"; error: ProviderError };
 
 export function initialScannerState(demo: Scan, configured = false): ScannerState {
-  return { mode: configured ? "LIVE" : "DEMO", scan: configured ? null : demo, discovery: null, discoveryExpired: false, selected: [], quote: null, quoteExpired: false, acknowledged: false, usage: null, error: null, busy: "" };
+  return { mode: configured ? "LIVE" : "DEMO", scan: configured ? null : demo, discovery: null, discoveryExpired: false, selected: [], quote: null, quoteExpired: false, acknowledged: false, usage: null, error: null, busy: "", history: null, historyError: null, refreshBookmakers: null };
 }
 
 /** UI transitions only. Token authorization remains entirely in the existing server. */
 export function scannerReducer(state: ScannerState, action: ScannerAction): ScannerState {
   switch (action.type) {
-    case "mode": return { ...state, mode: action.mode, scan: action.mode === "DEMO" ? action.demo : null, quote: null, quoteExpired: false, acknowledged: false, error: null };
-    case "bookmaker": return { ...state, selected: state.selected.includes(action.id) ? state.selected.filter((id) => id !== action.id) : [...state.selected, action.id], quote: null, quoteExpired: false, acknowledged: false };
+    case "mode": return { ...state, mode: action.mode, scan: action.mode === "DEMO" ? action.demo : null, quote: null, quoteExpired: false, acknowledged: false, error: null, refreshBookmakers: null };
+    case "bookmaker": return { ...state, selected: state.selected.includes(action.id) ? state.selected.filter((id) => id !== action.id) : [...state.selected, action.id], quote: null, quoteExpired: false, acknowledged: false, refreshBookmakers: null };
     case "acknowledge": return { ...state, acknowledged: action.value };
-    case "begin": return { ...state, busy: action.action, error: null,
+    case "begin": return { ...state, busy: action.action, ...(action.action === "history" ? { historyError: null } : { error: null }),
       ...(action.action === "discover" ? { discovery: null, discoveryExpired: false, selected: [], quote: null, quoteExpired: false, acknowledged: false } : {}),
       ...(action.action === "quote" || action.action === "confirm" ? { quote: null, quoteExpired: false, acknowledged: false } : {}),
       ...(action.action === "confirm" ? { scan: null } : {}) };
     case "finish": return { ...state, busy: "" };
-    case "discovery": return { ...state, discovery: action.discovery, discoveryExpired: !discoveryFreshness(action.discovery, action.now).fresh, usage: action.discovery.usage, selected: ["bet365", "ladbrokes"].filter((id) => action.discovery.bookmakers.some((b) => b.id === id && b.eligible)) };
+    case "discovery": return { ...state, discovery: action.discovery, discoveryExpired: !discoveryFreshness(action.discovery, action.now).fresh, usage: action.discovery.usage, selected: (state.refreshBookmakers ?? ["bet365", "ladbrokes"]).filter((id) => action.discovery.bookmakers.some((b) => b.id === id && b.eligible)) };
     case "discovery-expire": return state.discovery?.capturedAt === action.capturedAt ? { ...state, discoveryExpired: true } : state;
     case "quote": return { ...state, quote: action.quote, quoteExpired: false, acknowledged: false, usage: action.quote.usage };
     case "expire": return state.quote?.approvalId === action.approvalId ? { ...state, quoteExpired: true, acknowledged: false } : state;
-    case "scan": return { ...state, scan: action.scan, usage: action.scan.usage ?? null };
+    case "scan": return { ...state, scan: action.scan, usage: action.scan.usage ?? null, ...(action.scan.historyEntries ? { history: { readCost: 0, entries: action.scan.historyEntries, view: state.history?.view ?? null } as ScanHistoryReply } : {}) };
+    case "history": return { ...state, history: action.history, historyError: null };
+    case "history-error": return { ...state, historyError: action.error };
+    case "prepare-refresh": return { ...state, mode: "LIVE", scan: null, discovery: null, discoveryExpired: false, selected: [], quote: null, quoteExpired: false, acknowledged: false, error: null, refreshBookmakers: [...action.bookmakers] };
     case "usage": return { ...state, usage: action.usage };
     case "error": return { ...state, error: action.error, usage: action.error.usage ?? state.usage, ...(state.mode === "LIVE" ? { scan: null } : {}) };
   }
@@ -88,7 +99,7 @@ export function discoveryStatus(state: ScannerState, configured: boolean, now: n
 }
 
 export function canQuote(state: ScannerState, configured: boolean, now: number): boolean {
-  return state.mode === "LIVE" && !state.busy && discoveryStatus(state, configured, now).ready && state.selected.length >= 2 && state.selected.length <= 3 && state.selected.every((id) => state.discovery!.bookmakers.some((b) => b.id === id && b.eligible));
+  return state.mode === "LIVE" && !state.busy && discoveryStatus(state, configured, now).ready && state.selected.length >= 2 && state.selected.length <= 3 && (!state.refreshBookmakers || state.refreshBookmakers.length === state.selected.length && state.refreshBookmakers.every((id) => state.selected.includes(id))) && state.selected.every((id) => state.discovery!.bookmakers.some((b) => b.id === id && b.eligible));
 }
 
 export function scannerStatus(state: ScannerState, configured: boolean, now: number): Status {
@@ -100,7 +111,7 @@ export function scannerStatus(state: ScannerState, configured: boolean, now: num
   if (state.quote) return { label: state.quote.blocked.length ? "QUOTE BLOCKED" : "QUOTE AVAILABLE", tone: state.quote.blocked.length ? "warning" : "positive" };
   const readiness = discoveryStatus(state, configured, now);
   if (!readiness.ready) return { label: readiness.kind, tone: readiness.tone };
-  if (state.scan) return resultStatus(state.scan.analysis.status);
+  if (state.scan) return resultStatus(analyseSnapshot(state.scan.snapshot, now).status);
   return { label: "READY FOR FREE QUOTE", tone: "neutral" };
 }
 

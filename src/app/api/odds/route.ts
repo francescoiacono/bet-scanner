@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createOddsHandler } from "@/lib/odds/server/handler";
-import { scannerService } from "@/lib/odds/server/runtime";
+import { scannerService, scanHistory } from "@/lib/odds/server/runtime";
 
 export const runtime = "nodejs";
-export const POST = createOddsHandler(scannerService, Date.now, randomUUID);
+export const POST = createOddsHandler(scannerService, Date.now, randomUUID, scanHistory);

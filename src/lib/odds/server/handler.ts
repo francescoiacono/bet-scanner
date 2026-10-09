@@ -2,10 +2,11 @@ import { demoScan } from "../demo";
 import { object } from "../providers/oddsrelay-contract";
 import { OddsProviderError } from "../providers/oddsrelay-http";
 import type { OddsScannerService } from "./service";
+import { ScanHistoryError, type ScanHistoryStore } from "./scan-history";
 
-const ACTION_FIELDS: Record<string, string[]> = { demo: ["action", "mode"], discover: ["action", "mode"], pricing: ["action", "mode"], events: ["action", "mode", "cursor"], quote: ["action", "mode", "bookmakers"], confirm: ["action", "mode", "bookmakers", "approvalId"] };
+const ACTION_FIELDS: Record<string, string[]> = { history: ["action", "mode", "id"], demo: ["action", "mode"], discover: ["action", "mode"], pricing: ["action", "mode"], events: ["action", "mode", "cursor"], quote: ["action", "mode", "bookmakers"], confirm: ["action", "mode", "bookmakers", "approvalId"] };
 const SESSION_COOKIE = "bet-scanner-odds-session";
-export function createOddsHandler(getService: () => OddsScannerService, clock: () => number, newId: () => string) {
+export function createOddsHandler(getService: () => OddsScannerService, clock: () => number, newId: () => string, getHistory?: () => ScanHistoryStore) {
   return async function handle(request: Request): Promise<Response> {
     const responseHeaders = { "Cache-Control": "no-store" };
     try {
@@ -21,6 +22,13 @@ export function createOddsHandler(getService: () => OddsScannerService, clock: (
       const raw = await request.text(); if (raw.length > 4096) throw new RangeError("Action request is too large.");
       const body = object(JSON.parse(raw)), action = typeof body.action === "string" ? body.action : "";
       if (!Object.hasOwn(ACTION_FIELDS, action) || Object.keys(body).some((k) => !ACTION_FIELDS[action].includes(k))) throw new RangeError("Unknown action or unsupported request fields.");
+      if (action === "history") {
+        if (body.mode !== "LIVE" && body.mode !== "DEMO") throw new RangeError("Choose a scanner mode.");
+        if (body.id !== undefined && typeof body.id !== "string") throw new RangeError("Invalid history identifier.");
+        if (!getHistory) throw new ScanHistoryError("HISTORY_UNAVAILABLE", "Local scan history is unavailable.");
+        // No provider service, account verification or session cookie is needed.
+        return Response.json(await getHistory().browse(body.id as string | undefined), { headers: responseHeaders });
+      }
       if (action === "demo") {
         if (body.mode !== "DEMO") throw new RangeError("Demo action requires DEMO mode.");
         return Response.json(demoScan(clock()), { headers: responseHeaders });
@@ -38,6 +46,7 @@ export function createOddsHandler(getService: () => OddsScannerService, clock: (
       else { if (typeof body.approvalId !== "string" || !/^[a-f0-9-]{36}$/.test(body.approvalId)) throw new RangeError("Invalid approval identifier."); result = await service.confirm(owner, body.approvalId, body.bookmakers); }
       return Response.json(result, { headers });
     } catch (error) {
+      if (error instanceof ScanHistoryError) return Response.json({ error: { code: error.code, message: error.message, status: 409, retryAfter: null } }, { status: 409, headers: responseHeaders });
       if (error instanceof OddsProviderError) return Response.json({ error: error.detail }, { status: error.detail.status, headers: responseHeaders });
       return Response.json({ error: { code: "INVALID_ACTION_OR_DATA", message: error instanceof RangeError ? error.message : "Invalid request or provider data. No automatic retry; obtain a new quote if needed." } }, { status: 400, headers: responseHeaders });
     }

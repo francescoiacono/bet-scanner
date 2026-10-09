@@ -37,6 +37,15 @@ describe("consolidated product rendering and routes", () => {
     expect(html).toContain("Configured but unverified"); expect(html).toContain("Choose bookmakers");
     expect(html).toContain("Refresh discovery is free and manual"); expect(html).toContain("No provider requests run automatically"); expect(html).not.toContain("SYNTHETIC RESULTS");
     expect(html).not.toContain(secret); expect(fetch).not.toHaveBeenCalled();
+    expect(html).toContain("Scan history"); expect(html).toContain("View previous scan · 0 tokens");
+    expect(html).not.toContain("Original research results"); expect(html).not.toContain("history-0000");
+  });
+  it("original research opportunities are explicitly historical and use neutral styling", () => {
+    const html = renderToStaticMarkup(createElement(Results, { analysis: demoScan(NOW).analysis, mode: "LIVE", historical: true }));
+    expect(html).toContain('id="history-results"'); expect(html).not.toContain('id="scan-results"');
+    for (const label of ["Original research results", "HISTORICAL ODDSRELAY RESULTS · READ ONLY", "HISTORICAL RESULT AT SCAN TIME · READ ONLY", "not current verified opportunities", "AT SCAN TIME · THEORETICAL ARBITRAGE"]) expect(text(html)).toContain(label);
+    expect(html).not.toContain("BEST THEORETICAL OPPORTUNITY");
+    expect(html).not.toMatch(/class="[^"]*positive/);
   });
   it("both destinations render exactly two primary links with the correct active page", () => {
     for (const [element, active] of [[Home(), "/"], [createElement(ResearchPage), "/research"]] as const) {
@@ -62,6 +71,10 @@ describe("consolidated product rendering and routes", () => {
     const expected = { "/odds": "/", "/backtest": "/research#early-poisson", "/diagnostics": "/research#early-poisson", "/models": "/research#dixon-coles", "/corners": "/research#corners", "/value": "/research#historical-value", "/calibration": "/research#calibration" };
     expect(redirects).toHaveLength(7);
     for (const [source, destination] of Object.entries(expected)) expect(redirects).toContainEqual({ source, destination, permanent: true });
+  });
+  it("private datasets and history are excluded from production file tracing", () => {
+    expect(config.outputFileTracingExcludes).toEqual({ "/*": ["./data/private/**/*"] });
+    const page = read("src/app/page.tsx"); expect(page).not.toContain("scanHistory"); expect(page).not.toContain("FileScanHistory");
   });
   it("complete no-arbitrage and insufficient evidence have distinct empty states", () => {
     const demo = demoScan(NOW);
