@@ -66,6 +66,15 @@ describe("manual quote/confirmation and budget gate", () => {
 describe("fresh authenticated discovery and coverage", () => {
   it("no discovery means no quote request", async () => { const h = harness(); await expect(h.service.quote("browser", ["a", "b"])).rejects.toThrow(); expect(h.provider.quote).not.toHaveBeenCalled(); });
   it("discovery expires at 60 seconds", async () => { const h = harness(); await h.service.discover(); h.advance(60000); await expect(h.service.quote("browser", ["a", "b"])).rejects.toThrow(); expect(h.provider.quote).not.toHaveBeenCalled(); });
+  it("an approval issued during fresh discovery remains confirmable after discovery expires", async () => {
+    const h = harness(); await h.service.discover(); h.advance(30000);
+    const quote = await h.service.quote("browser", ["a", "b"]);
+    h.advance(30000);
+    const result = await h.service.confirm("browser", quote.approvalId!, ["a", "b"]);
+    expect(h.provider.scan).toHaveBeenCalledTimes(1); expect(result.analysis.opportunities).toHaveLength(1);
+    await expect(h.service.quote("browser", ["a", "b"])).rejects.toMatchObject({ detail: { code: "DISCOVERY_EXPIRED" } });
+    expect(h.provider.quote).toHaveBeenCalledTimes(1);
+  });
   it("one covered venue is insufficient despite three global catalogue entries", async () => { const h = harness(); h.state.coverageBooks = ["a"]; const d = await h.service.discover(); expect(d.restrictions.join(" ")).toContain("Fewer than two"); await expect(h.service.quote("browser", ["a", "b"])).rejects.toThrow(); expect(h.provider.quote).not.toHaveBeenCalled(); });
   it("stale coverage cannot be selected", async () => { const h = harness(); h.state.seenAt = NOW - 120001; const d = await h.service.discover(); expect(d.bookmakers.every((b) => !b.eligible)).toBe(true); await expect(h.service.quote("browser", ["a", "b"])).rejects.toThrow(); });
   it("scope restrictions prohibit market/bookmaker selections before quote", async () => { const h = harness(); h.state.account.scope = { products: { standard: { sports: ["soccer"], markets: ["totals"], bookmakers: null } } }; const d = await h.service.discover(); expect(d.restrictions).not.toHaveLength(0); await expect(h.service.quote("browser", ["a", "b"])).rejects.toThrow(); expect(h.provider.quote).not.toHaveBeenCalled(); });

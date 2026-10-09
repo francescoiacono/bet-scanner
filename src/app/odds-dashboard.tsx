@@ -5,8 +5,7 @@ import type { demoScan } from "@/lib/odds/demo";
 import { OUTCOMES, type ArbitrageOpportunity, type MarketAnalysis, type OddsMode, type ProviderError, type ProviderUsage, type ScanAnalysis } from "@/lib/odds/types";
 import { scanDiagnostics } from "@/lib/odds/scan-diagnostics";
 import type { Discovery, ScanQuote } from "@/lib/odds/server/service";
-import { canConfirm, initialScannerState, resultStatus, scannerReducer, scannerStatus, type Scan } from "./scanner-state";
-import { useFreeDiscovery } from "./use-free-discovery";
+import { canConfirm, canQuote, discoveryFreshness, discoveryStatus, initialScannerState, resultStatus, scannerReducer, scannerStatus, type Scan } from "./scanner-state";
 import SiteHeader from "./site-header";
 import SiteFooter from "./site-footer";
 import ui from "./ui.module.css";
@@ -15,7 +14,7 @@ import styles from "./odds-dashboard.module.css";
 type EventPage = { events: { id: string; competition: string; home: string | null; away: string | null; kickoff: string | null; status: string; coverage: string[] }[]; cursor: string | null };
 const percent = (value: number) => (value * 100).toFixed(2) + "%";
 const tokens = (value: ProviderUsage["remaining"]) => value === null ? "Unknown" : value === "unlimited" ? "Unlimited" : value.toLocaleString("en-GB");
-const time = (value: string | null) => value === null ? "Unknown" : value.replace("T", " ").replace("Z", " UTC");
+const time = (value: string | null) => typeof value !== "string" ? "Unknown" : value.replace("T", " ").replace("Z", " UTC");
 const badge = (tone: string) => ui.badge + " " + ui[tone];
 
 function TheoreticalOpportunity({ opportunity: a, rank }: { opportunity: ArbitrageOpportunity; rank: number }) {
@@ -95,10 +94,11 @@ export function ProviderErrorNotice({ error }: { error: ProviderError }) {
   return <div className={ui.notice + " " + ui.error + " " + styles.errorNotice} role="alert"><strong>PROVIDER ERROR · {error.code}</strong><p>{error.message}</p>{error.retryAfter && <p>Retry-After: {error.retryAfter}. No automatic retry.</p>}{error.usage && <UsageReceipt usage={error.usage} />}</div>;
 }
 
-export function BookmakerSelector({ bookmakers, selected, busy, onToggle }: {
+export function BookmakerSelector({ bookmakers, selected, busy, verified, onToggle }: {
   bookmakers: Discovery["bookmakers"];
   selected: string[];
   busy: boolean;
+  verified: boolean;
   onToggle: (id: string) => void;
 }) {
   const id = useId();
@@ -120,10 +120,10 @@ export function BookmakerSelector({ bookmakers, selected, busy, onToggle }: {
     {selected.length > 0 && <div className={styles.selectedBookmakers} role="group" aria-label="Selected bookmakers">
       {selected.map((bookmakerId) => {
         const name = bookmakers.find((b) => b.id === bookmakerId)?.name ?? bookmakerId;
-        return <button key={bookmakerId} type="button" className={styles.bookmakerChip} disabled={busy} aria-label={"Remove " + name} onClick={() => onToggle(bookmakerId)}>{name}<span aria-hidden="true">×</span></button>;
+        return <button key={bookmakerId} type="button" className={styles.bookmakerChip} disabled={busy || !verified} aria-label={"Remove " + name} onClick={() => onToggle(bookmakerId)}>{name}<span aria-hidden="true">×</span></button>;
       })}
     </div>}
-    <p id={id + "-limit"} className={styles.bookmakerHint}>{selected.length >= 3 ? "Three selected. Remove one to choose another." : "Choose at least two bookmakers to compare prices. Maximum three per scan."}</p>
+    <p id={id + "-limit"} className={styles.bookmakerHint}>{!verified ? "Previous bookmaker coverage is shown for context. Refresh discovery · free before changing selection or requesting a new quote." : selected.length >= 3 ? "Three selected. Remove one to choose another." : "Choose at least two bookmakers to compare prices. Maximum three per scan."}</p>
     <fieldset className={styles.bookmakers} aria-describedby={id + "-limit"}>
       <legend className={ui.srOnly}>Select two or three eligible bookmakers</legend>
       <div className={styles.bookmakerViewport} role="region" aria-label="Bookmaker list" tabIndex={0}>
@@ -131,10 +131,10 @@ export function BookmakerSelector({ bookmakers, selected, busy, onToggle }: {
           const checked = selected.includes(b.id);
           return <li key={b.id}>
             <label className={styles.bookmakerRow + (!b.eligible ? " " + styles.unavailable : "")} data-selected={checked || undefined}>
-              <input type="checkbox" checked={checked} disabled={busy || !b.eligible || (!checked && selected.length >= 3)} onChange={() => onToggle(b.id)} />
+              <input type="checkbox" checked={checked} disabled={busy || !verified || !b.eligible || (!checked && selected.length >= 3)} onChange={() => onToggle(b.id)} />
               <span className={styles.bookmakerDetails}>
                 <strong>{b.name}</strong>
-                <span className={styles.bookmakerInfo}>{b.eligible ? <><span>{b.events} football events</span><span>Evidence <time dateTime={b.lastSeen ?? undefined}>{time(b.lastSeen)}</time></span></> : <span>Unavailable: {b.reason}</span>}</span>
+                <span className={styles.bookmakerInfo}>{b.eligible ? <><span>{b.events} football events{!verified && " at previous check"}</span><span>Evidence <time dateTime={b.lastSeen ?? undefined}>{time(b.lastSeen)}</time></span></> : <span>Unavailable{!verified && " at previous check"}: {b.reason}</span>}</span>
               </span>
             </label>
           </li>;
@@ -149,21 +149,35 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
   const { mode, scan, discovery, selected, quote, usage, error, busy, acknowledged, quoteExpired } = state;
   const [events, setEvents] = useState<EventPage | null>(null);
   const [pricing, setPricing] = useState<string | null>(null);
+  const [clock, setClock] = useState(() => Date.now());
   const inFlight = useRef(false);
-  const status = scannerStatus(state, configured);
-  const accountStatus = !configured ? "Not configured" : error ? "Provider unavailable / verification failed" : discovery ? "Verified" : "Configured but unverified";
+  const status = scannerStatus(state, configured, clock);
+  const readiness = discoveryStatus(state, configured, clock);
+
+  // One local expiry update per discovery. This never calls the API or clears an approved quote.
+  useEffect(() => {
+    if (!discovery) return;
+    const now = Date.now();
+    const freshness = discoveryFreshness(discovery, now);
+    const timer = setTimeout(() => {
+      setClock(Date.now());
+      dispatch({ type: "discovery-expire", capturedAt: discovery.capturedAt });
+    }, freshness.fresh ? freshness.expiresAt! - now : 0);
+    return () => clearTimeout(timer);
+  }, [discovery]);
 
   // This timer only expires local presentation. It never requests provider data.
   useEffect(() => {
     if (!quote?.approvalId) return;
     const approvalId = quote.approvalId;
-    const timer = setTimeout(() => dispatch({ type: "expire", approvalId }), Math.max(0, Date.parse(quote.expiresAt) - Date.now()));
+    const timer = setTimeout(() => { setClock(Date.now()); dispatch({ type: "expire", approvalId }); }, Math.max(0, Date.parse(quote.expiresAt) - Date.now()));
     return () => clearTimeout(timer);
   }, [quote]);
 
   const action = useCallback(async function action<T>(name: string, extra: Record<string, unknown> = {}): Promise<T | null> {
     if (inFlight.current) return null;
     inFlight.current = true;
+    setClock(Date.now());
     dispatch({ type: "begin", action: name });
     try {
       const response = await fetch("/api/odds", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", cache: "no-store", body: JSON.stringify({ action: name, mode, ...extra }) });
@@ -174,17 +188,23 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
     } catch {
       dispatch({ type: "error", error: { code: "LOCAL_NETWORK_ERROR", status: 502, retryAfter: null, message: "The local request failed. Do not retry confirmation; obtain a new free quote. Token use may be uncertain." } satisfies ProviderError });
       return null;
-    } finally { inFlight.current = false; dispatch({ type: "finish" }); }
+    } finally { inFlight.current = false; setClock(Date.now()); dispatch({ type: "finish" }); }
   }, [mode]);
   function changeMode(next: OddsMode) {
-    dispatch({ type: "mode", mode: next, demo: initialDemo }); setEvents(null); setPricing(null);
+    setClock(Date.now()); dispatch({ type: "mode", mode: next, demo: initialDemo }); setEvents(null); setPricing(null);
   }
-  const discover = useCallback(async () => {
+  async function discover() {
+    if (!configured || mode !== "LIVE") return;
     const result = await action<Discovery>("discover");
-    if (result) dispatch({ type: "discovery", discovery: result });
-  }, [action]);
-  useFreeDiscovery(mode, configured, discover);
+    if (result) dispatch({ type: "discovery", discovery: result, now: Date.now() });
+  }
+  function toggleBookmaker(id: string) {
+    const now = Date.now(); setClock(now);
+    if (!busy && discoveryStatus(state, configured, now).ready) dispatch({ type: "bookmaker", id });
+  }
   async function getQuote() {
+    const now = Date.now(); setClock(now);
+    if (!canQuote(state, configured, now)) return;
     const result = await action<ScanQuote>("quote", { bookmakers: selected });
     if (result) dispatch({ type: "quote", quote: result });
   }
@@ -202,8 +222,8 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
       <div className={ui.pageHeading}><div><p className={ui.eyebrow}>FOOTBALL · FULL-TIME 1X2</p><h1>Odds Scanner</h1><p className={ui.intro}>Compare bookmaker prices and identify theoretical arbitrage.</p></div></div>
       <section className={ui.card + " " + styles.source} aria-labelledby="source-title">
         <div className={ui.sectionHeading}><h2 id="source-title">Source &amp; budget</h2><div className={styles.modeSwitch} role="group" aria-label="Odds source"><button type="button" aria-pressed={mode === "DEMO"} disabled={Boolean(busy)} onClick={() => changeMode("DEMO")}>Demo</button><button type="button" aria-pressed={mode === "LIVE"} disabled={Boolean(busy)} onClick={() => changeMode("LIVE")}>Live Source</button></div></div>
-        <dl className={styles.meta}><div><dt>API status</dt><dd>{accountStatus}</dd></div><div><dt>Remaining tokens</dt><dd>{usage ? tokens(usage.remaining) : "Unknown"}</dd></div><div><dt>Maximum per scan</dt><dd>500 quoted tokens</dd></div></dl>
-        <div className={styles.workflowStatus} role="status" aria-live="polite" aria-atomic="true"><span className={badge(status.tone)}>{status.label}</span><span>{mode === "DEMO" ? "All teams, bookmakers and prices are synthetic. Zero API tokens." : "Discovery loads automatically for free. Only Confirm Scan can request charged odds."}</span></div>
+        <dl className={styles.meta}><div><dt>API status</dt><dd>{readiness.label}</dd></div><div><dt>Remaining tokens</dt><dd>{usage ? tokens(usage.remaining) : "Unknown"}</dd></div><div><dt>Maximum per scan</dt><dd>500 quoted tokens</dd></div></dl>
+        <div className={styles.workflowStatus} role="status" aria-live="polite" aria-atomic="true"><span className={badge(status.tone)}>{status.label}</span><span>{mode === "DEMO" ? "All teams, bookmakers and prices are synthetic. Zero API tokens." : "Refresh discovery is free and manual. No provider requests run automatically. Only Confirm Scan can request charged odds."}</span></div>
         {error && <ProviderErrorNotice error={error} />}
         {mode === "DEMO" ? <div className={styles.demoActions}><p>Four examples: theoretical arbitrage, ordinary prices, missing DRAW and stale evidence.</p><button className={ui.secondaryButton} type="button" disabled={Boolean(busy)} onClick={async () => { const result = await action<Scan>("demo"); if (result) dispatch({ type: "scan", scan: result }); }}>Re-run demo · zero tokens</button></div> :
           !configured && <p className={ui.notice + " " + ui.warning}>Add ODDSRELAY_KEY in your gitignored .env.local and restart the app. The key stays on the server; never enter it in this page.</p>}
@@ -214,15 +234,17 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
           <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>1 · FREE DISCOVERY</p><h2 id="bookmaker-title">Choose bookmakers</h2></div><button className={ui.secondaryButton} type="button" disabled={!configured || Boolean(busy)} onClick={discover}>{busy === "discover" ? "Checking coverage…" : "Refresh discovery · free"}</button></div>
           <p className={ui.muted}>Select two or three bookmakers to compare prices across the same match. Fresh coverage is required.</p>
           <p className={styles.resultMeta}>Football-event counts describe each bookmaker separately; they do not guarantee overlapping fixtures or complete 1X2 prices.</p>
+          <div id="discovery-readiness" className={ui.notice + (readiness.tone === "warning" ? " " + ui.warning : "")} role="status" aria-live="polite"><strong>{readiness.label}</strong><p>{readiness.guidance}</p></div>
           {discovery ? <>
-            <p className={styles.resultMeta}>{discovery.competitionCount} football competitions · plan {discovery.plan ?? "unknown"} · checked {time(discovery.capturedAt)}. Refresh if older than 60 seconds.</p>
+            <p className={styles.resultMeta}>{discovery.competitionCount} football competitions · plan {discovery.plan ?? "unknown"} · checked {time(discovery.capturedAt)}. Discovery expires 60 seconds after this timestamp.</p>
             {discovery.restrictions.map((reason) => <p key={reason} className={ui.notice + " " + ui.warning}>{reason}</p>)}
-            {discovery.bookmakers.length ? <BookmakerSelector bookmakers={discovery.bookmakers} selected={selected} busy={Boolean(busy)} onToggle={(id) => dispatch({ type: "bookmaker", id })} /> : <p className={ui.notice + " " + ui.warning}>No UK bookmakers were verified for this account.</p>}
-          </> : <p className={ui.notice}>{busy === "discover" ? "Loading bookmakers and verifying free coverage…" : configured ? "Bookmaker discovery loads automatically. Use Refresh discovery to try again if it fails." : "Configure a server API key to load available bookmakers."}</p>}
+            {discovery.bookmakers.length ? <BookmakerSelector bookmakers={discovery.bookmakers} selected={selected} busy={Boolean(busy)} verified={readiness.ready} onToggle={toggleBookmaker} /> : <p className={ui.notice + " " + ui.warning}>No UK bookmakers were verified for this account.</p>}
+          </> : null}
         </section>
         <section className={ui.card} aria-labelledby="quote-title">
-          <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>2 · FREE COST QUOTE</p><h2 id="quote-title">Review the request</h2></div><button className={ui.button} type="button" disabled={!configured || Boolean(busy) || selected.length < 2 || selected.length > 3} onClick={getQuote}>{busy === "quote" ? "Quoting…" : "Get quote · free"}</button></div>
+          <div className={ui.sectionHeading}><div><p className={ui.eyebrow}>2 · FREE COST QUOTE</p><h2 id="quote-title">Review the request</h2></div><button className={ui.button} type="button" disabled={!canQuote(state, configured, clock)} aria-describedby={!readiness.ready ? "quote-readiness" : undefined} onClick={getQuote}>{busy === "quote" ? "Quoting…" : "Get quote · free"}</button></div>
           <p className={ui.muted}>UK · football · full-time 1X2 · {selected.length ? selected.map((id) => discovery?.bookmakers.find((b) => b.id === id)?.name ?? id).join(", ") : "Choose bookmakers first"}</p>
+          {!readiness.ready && <p id="quote-readiness" className={ui.notice}>New quotes are disabled. {readiness.guidance}{quote?.approvalId && !quoteExpired && " An existing approved quote keeps its own expiry; discovery expiration does not cancel it."}</p>}
           {quote ? <>
             <dl className={styles.meta}><div><dt>Quoted cost</dt><dd>{quote.cost} tokens</dd></div><div><dt>Remaining before scan</dt><dd>{tokens(quote.usage.remaining)}</dd></div><div><dt>Projected remaining</dt><dd>{tokens(quote.projectedRemaining)}</dd></div><div><dt>Allowance reset</dt><dd>{time(quote.usage.resetsAt)}</dd></div></dl>
             <p className={styles.resultMeta}>Exact requested bookmakers: {quote.request.bookmakers.join(", ")} · approval expires {time(quote.expiresAt)}</p>
@@ -233,7 +255,7 @@ export default function OddsDashboard({ configured, initialDemo }: { configured:
         <section className={ui.card} aria-labelledby="approval-title">
           <p className={ui.eyebrow}>3 · EXPLICIT APPROVAL</p><h2 id="approval-title">Confirm one scan</h2>
           <label className={styles.acknowledgement}><input type="checkbox" checked={acknowledged} disabled={Boolean(busy) || !quote?.approvalId || quoteExpired} onChange={(e) => dispatch({ type: "acknowledge", value: e.target.checked })} /><span>I understand this single scan can spend {quote?.cost ?? "the quoted number of"} API tokens. Prices may move or be unavailable. Theoretical arbitrage is not guaranteed profit.</span></label>
-          <button className={ui.button} type="button" disabled={Boolean(busy) || !quote?.approvalId || !acknowledged || quoteExpired} onClick={confirm}>{busy === "confirm" ? "Scan in progress…" : "Confirm Scan" + (quote?.approvalId ? " · " + quote.cost + " tokens" : "")}</button>
+          <button className={ui.button} type="button" disabled={!canConfirm(state, clock)} onClick={confirm}>{busy === "confirm" ? "Scan in progress…" : "Confirm Scan" + (quote?.approvalId ? " · " + quote.cost + " tokens" : "")}</button>
           <p className={styles.resultMeta}>One-time approval · 60-second expiry · no automatic charged retry</p>
         </section>
       </div>}

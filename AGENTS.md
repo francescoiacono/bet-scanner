@@ -66,6 +66,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Real-odds scanners must remain separate from frozen statistical models and historical research.
 - Keep provider response mappings outside the provider-independent arbitrage domain; never guess fixture, outcome or settlement identities.
 - OddsRelay API keys must remain server-only and outside logs, URLs, client bundles and committed files.
+- All external provider requests, including free discovery and usage checks, must follow an explicit user action; loading, hydration, navigation, mode changes and timers must never initiate them.
+- Discovery expiry blocks new quotes but must preserve an independently valid quote approval; local expiry timers update presentation only and never refresh provider data.
 - Chargeable provider requests require a free quote, a server-bound exact request approval and a separate explicit user confirmation.
 - Scan approvals expire after 60 seconds and must be consumed synchronously once before any asynchronous confirmation work.
 - Never request chargeable odds during loading, rendering, startup, builds, tests, navigation or timers; never automatically retry an ambiguous charged request.

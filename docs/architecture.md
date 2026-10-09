@@ -4,9 +4,10 @@
 
 `/` is the Odds Scanner. Its server page obtains an offline demo and a server-key
 configuration boolean, then renders the client dashboard. It does not construct
-a provider service or fetch data. Configured clients start in LIVE and make one
-free discovery attempt after hydration; unconfigured clients start in offline
-DEMO. `/research` is a server-rendered archive.
+a provider service or fetch data. Configured clients start in LIVE, configured but
+unverified; unconfigured clients start in offline DEMO. Hydration, navigation,
+browser refresh, mode changes, Strict Mode replay and hot reload trigger no
+provider requests. `/research` is a server-rendered archive.
 
 `SiteHeader` exposes exactly Scanner and Research. It receives explicit page and
 source state, with no global provider context or request. Shared CSS variables
@@ -30,7 +31,7 @@ destinations; query parameters pass through Next's redirect implementation.
 ## Price comparison boundary
 
 ```text
-automatic free discovery / explicit quote or confirmation
+explicit manual discovery / quote / confirmation
   -> unchanged POST /api/odds
   -> strict handler / local origin / owner cookie
   -> server-only runtime
@@ -69,14 +70,37 @@ there is no automatic charged retry.
 The UI reducer owns mode, selection, displayed quote, warning acknowledgment,
 results and errors. Selection/mode changes discard quote and acknowledgment.
 Starting confirmation clears the displayed approval before awaiting; an in-flight
-ref blocks duplicate submissions. A local timeout only marks quote expiry and is
-cleared when the quote changes or the component unmounts. It never fetches data.
+ref blocks duplicate submissions. **Refresh discovery · free** is the only
+discovery trigger; the obsolete automatic-discovery hook and its tests were removed
+in V1.0.2. Pricing, event discovery, quotes and scans also require explicit controls.
+There are no automatic retries or provider polling.
 
-`useFreeDiscovery` runs only in configured LIVE mode and marks its attempt before
-starting the free request, preventing duplicate requests under Strict Mode effect
-replay or rerenders. It never polls, retries, quotes or confirms. The refresh
-button remains an explicit free action. Discovery defaults use the exact
-`bet365` and `ladbrokes` IDs only when eligible; no arbitrary substitute is chosen.
+`discoveryFreshness` accepts an explicit clock, parses the strict UTC `capturedAt`
+timestamp with the existing validator and uses `APPROVAL_LIFETIME_MS` (60 seconds).
+It rejects missing, invalid and future times, and expires at the exact boundary.
+`discoveryStatus` supplies the same readiness for account labels, bookmaker
+controls and new quotes. Its states are not configured, configured but unverified,
+verifying, verified, discovery expired, insufficient coverage and provider error.
+
+The dashboard keeps a presentation clock updated by explicit actions and local
+expiry callbacks. A one-shot discovery timer schedules the remaining lifetime,
+marks that discovery expired, and never clears a quote or requests data. It is
+cleaned up when discovery changes or the dashboard unmounts. Its reducer action
+includes `capturedAt`, so an old callback cannot expire a newer discovery.
+Expired/invalid discovery remains unavailable until refreshed, including through
+mode changes. Click handlers recheck the current clock before selecting books or
+requesting a quote, even if a local timer is delayed.
+
+Discovery and approval lifetimes are independent. The separate existing quote
+timer remains in place; discovery expiry blocks only new quotes and preserves an
+existing approval/acknowledgment until its own expiry. Refresh still clears both.
+The server's confirmation rules and lifetime checks are unchanged. Neither local
+timer performs HTTP, quotes or confirmations, and neither uses an interval.
+
+Previous discovery timestamps/coverage stay visible with refresh guidance and
+disabled selection/new-quote controls. Refresh replaces discovery, drops old
+selections and selects only eligible exact `bet365` and `ladbrokes` IDs. Missing
+or unavailable defaults receive no substitute.
 
 The server remains authoritative even if client state or clocks are manipulated.
 The 500-token cap, actual-balance checks, 60-second expiry and one-time approval

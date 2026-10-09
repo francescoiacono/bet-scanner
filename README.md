@@ -3,8 +3,8 @@
 A local-first football odds-comparison app. Compare bookmaker BACK prices for
 full-time HOME / DRAW / AWAY and identify **theoretical arbitrage**, before costs
 and market movement. The homepage is the scanner; `/research` is a compact
-archive of frozen experiments. Version **1.0.1** consolidates the product and
-presentation; it introduces no betting feature or statistical model.
+archive of frozen experiments. Version **1.0.2** makes provider discovery manual
+and displays discovery expiry; it introduces no betting feature or statistical model.
 
 There is no bet placement, staking, bankroll management, value-betting model,
 authentication, database, cloud infrastructure or AI service.
@@ -21,10 +21,10 @@ pnpm dev
 
 Open **http://127.0.0.1:3000/**. Development and production scripts bind to
 127.0.0.1. Without a provider key, the app starts in **DEMO** and works offline.
-With a configured key, it starts in **Live Source** and loads free bookmaker
-discovery once after the page opens. Server rendering and builds make no provider
-requests. Re-running the demo uses only the local API and the same pure comparison
-engine.
+With a configured key, it starts in **Live Source**, **Configured but unverified**.
+Opening, hydrating, refreshing or navigating the app, switching modes and hot
+reload make no provider requests. All external requests require an explicit user
+action. Re-running the demo uses only the local API and the same pure comparison engine.
 
 For a production run:
 
@@ -67,11 +67,10 @@ a globally listed bookmaker does not establish access for this key.
 
 ## Manual live workflow
 
-1. With a configured key, **Live Source** opens and loads discovery automatically.
-   This free check verifies usage, scope, active football competitions and fresh
-   standard-product bookmaker coverage. It runs once per page mount, with no
-   automatic retry or polling. Use **Refresh discovery · free** to retry a failure
-   or refresh discovery after its 60-second expiry.
+1. With a configured key, **Live Source** opens unverified. Press **Refresh
+   discovery · free** to verify usage, scope, active football competitions and
+   standard-product bookmaker coverage. This is the only discovery trigger;
+   duplicate submissions are blocked and failures never retry automatically.
 2. Select **two or three** eligible bookmakers for a comparison across bookmakers.
    Search the compact, scrollable list by name. Selected bookmakers remain visible
    above it as compact removable badges; unavailable venues show a reason.
@@ -90,11 +89,25 @@ before asynchronous confirmation work, and requires a fresh usage/scope check.
 The client cannot supply a URL or self-declared cost. Double clicks, retries and
 expired approvals cannot reuse it.
 
+Discovery is fresh only while `capturedAt <= now < capturedAt + 60 seconds`,
+using the server's `APPROVAL_LIFETIME_MS` policy. Missing, invalid or future
+timestamps cannot verify availability. At expiry the UI shows **Discovery expired
+— refresh required** and retains the checked timestamp and previous coverage for
+context. Bookmaker selection and new quotes are disabled until a manual refresh.
+Refreshing replaces coverage, clears the previous quote/acknowledgment and selects
+only eligible preferred IDs; no other bookmaker is substituted automatically.
+
+Discovery validity and quote approval validity are separate. Discovery expiry
+blocks **new** quotes but preserves an already issued approval until its own
+expiry, subject to the unchanged server usage/scope checks. Switching Demo/Live
+neither requests data nor makes expired discovery fresh; it still clears any quote.
+
 **MAX_TOKENS_PER_SCAN = 500.** Quotes above this maximum or the actual balance are
 blocked. There is no subscription upgrade, wider fallback, polling or automatic
 charged retry. Page loading, navigation, startup, builds and tests never execute
-paid requests. The only UI timer marks a displayed approval expired; it makes no
-network request.
+provider requests automatically. Two separate one-shot local timers update
+discovery and approval expiry, with cleanup on replacement/unmount. Neither
+timer requests data, quotes or scans; there is no polling interval.
 
 Actual response usage uses optional `X-Tokens-Cost`, `X-Tokens-Used`,
 `X-Tokens-Remaining`, `X-Tokens-Limit` and `X-Tokens-Reset` headers. Missing values

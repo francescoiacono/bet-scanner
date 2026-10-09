@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Home from "./page";
 import ResearchPage from "./research/page";
-import { ProviderErrorNotice, Results } from "./odds-dashboard";
+import { BookmakerSelector, ProviderErrorNotice, Results } from "./odds-dashboard";
 import { demoScan } from "../lib/odds/demo";
 import { NOW } from "../lib/odds/test-helpers";
 import index from "../data/generated/research-index.json";
@@ -35,7 +35,7 @@ describe("consolidated product rendering and routes", () => {
     expect(JSON.stringify(element.props)).not.toContain(secret);
     const html = renderToStaticMarkup(element);
     expect(html).toContain("Configured but unverified"); expect(html).toContain("Choose bookmakers");
-    expect(html).toContain("Discovery loads automatically for free"); expect(html).not.toContain("SYNTHETIC RESULTS");
+    expect(html).toContain("Refresh discovery is free and manual"); expect(html).toContain("No provider requests run automatically"); expect(html).not.toContain("SYNTHETIC RESULTS");
     expect(html).not.toContain(secret); expect(fetch).not.toHaveBeenCalled();
   });
   it("both destinations render exactly two primary links with the correct active page", () => {
@@ -101,6 +101,16 @@ describe("consolidated product rendering and routes", () => {
     expect(html).toContain("Advanced details"); expect(html).toContain("Illustrative fractions");
     expect(html).not.toMatch(/<details[^>]+\bopen\b/); expect(html).toContain("Oldest supporting venue/sport evidence");
     for (const price of ["2.200", "3.800", "4.000"]) expect(html).toContain(price);
+  });
+  it("expired bookmaker coverage is historical context with disabled selection and removal controls", () => {
+    const bookmaker = { id: "test-book", name: "Synthetic Test Book", isExchange: false, regions: ["uk"], events: 10, lastSeen: new Date(NOW).toISOString(), eligible: true, reason: null };
+    const onToggle = vi.fn();
+    const html = renderToStaticMarkup(createElement(BookmakerSelector, { bookmakers: [bookmaker], selected: [bookmaker.id], verified: false, busy: false, onToggle }));
+    expect(text(html)).toContain("Previous bookmaker coverage is shown for context");
+    expect(text(html)).toContain("10 football events at previous check");
+    expect(html.match(/<input[^>]+type="checkbox"[^>]*>/)![0]).toContain("disabled");
+    expect(html.match(/<button[^>]+aria-label="Remove Synthetic Test Book"[^>]*>/)![0]).toContain("disabled");
+    expect(onToggle).not.toHaveBeenCalled();
   });
   it("shows the full sanitized error beside the source status before the quote workflow", () => {
     const html = renderToStaticMarkup(createElement(ProviderErrorNotice, { error: { code: "INVALID_ACTION_OR_DATA", message: "Invalid competition title.", status: 400, retryAfter: null } }));

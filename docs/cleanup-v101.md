@@ -214,11 +214,10 @@ run again for this repair.
 
 ## Bookmaker usability follow-up
 
-Configured pages now start in LIVE and make one free discovery attempt after
-hydration. `useFreeDiscovery` prevents duplicate development effect replay and
-does not retry or poll; manual refresh remains available. Unconfigured pages
-and explicit DEMO mode stay offline. Quotes and charged scans still require
-their separate explicit controls.
+Configured pages were changed to start in LIVE; unconfigured pages and explicit
+DEMO mode stayed offline. V1.0.2 subsequently retired the discovery trigger from
+this follow-up and removed its hook/tests. The current manual-only discovery
+workflow and expiry behavior are documented in README and architecture.md.
 
 Discovery defaults select the exact `bet365` and `ladbrokes` IDs when eligible,
 leaving unavailable/missing defaults unselected. Selected badges use a compact
@@ -226,8 +225,8 @@ leaving unavailable/missing defaults unselected. Selected badges use a compact
 or approval logic changed in this follow-up.
 
 Verification passed: **717 tests in 45 files**, `pnpm typecheck`, `pnpm lint`,
-`pnpm build --webpack` and `git diff --check`. Tests cover automatic discovery
-eligibility, effect replay, callback/mode changes, preferred selection and
-unavailable defaults. A temporary network guard recorded zero provider attempts
+`pnpm build --webpack` and `git diff --check`. That historical verification covered
+the then-current discovery trigger, preferred selection and unavailable defaults.
+A temporary network guard recorded zero provider attempts
 during verification. Browser preview was unavailable; hydrated visual checks were
 not performed.
